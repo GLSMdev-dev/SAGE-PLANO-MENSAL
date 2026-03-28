@@ -176,6 +176,7 @@
                 <p><strong>Admin:</strong> admin@escola.com / admin123</p>
                 <p><strong>Professor:</strong> joao.silva@escola.com / 123456</p>
                 <p><strong>Gestor:</strong> ana.paula@escola.com / 123456</p>
+                <p><strong>Dev:</strong> dev@escola.com / dev123</p>
             </div>
         </div>
     </div>
@@ -183,9 +184,25 @@
     <script src="assets/js/config.js"></script>
     <script src="assets/js/api.js"></script>
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/utils.js"></script>
     <script>
+        // Carregar tema visual
+        async function carregarTema() {
+            try {
+                const configs = await API.getConfigVisual();
+                if (configs.success && configs.dados) {
+                    Utils.aplicarTema(configs.dados);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar tema:', error);
+            }
+        }
+        
         // Aguardar carregamento da configuração
         document.addEventListener('DOMContentLoaded', function() {
+            // Carregar tema
+            carregarTema();
+            
             // Verificação de segurança: garantir que a API_KEY não está exposta
             if (window.APP_CONFIG) {
                 if (window.APP_CONFIG.API_KEY) {
@@ -195,7 +212,6 @@
                     console.log('✅ Configuração carregada com segurança. Nenhuma credencial sensível exposta.');
                 }
                 
-                // Verificar se a API_URL está configurada
                 if (!window.APP_CONFIG.API_URL) {
                     console.error('❌ API_URL não configurada. Verifique o arquivo config.js');
                 }
@@ -221,7 +237,6 @@
                 const email = document.getElementById('email').value;
                 const senha = document.getElementById('senha').value;
                 
-                // Desabilitar botão e mostrar loading
                 btnLogin.disabled = true;
                 loading.classList.add('active');
                 errorMessage.style.display = 'none';
@@ -230,10 +245,8 @@
                     const result = await Auth.login(email, senha);
                     
                     if (result.success) {
-                        // Redirecionar conforme perfil
                         Auth.redirecionarPorPerfil();
                     } else {
-                        // Mostrar erro
                         errorMessage.textContent = result.error || 'Erro ao fazer login';
                         errorMessage.style.display = 'block';
                         btnLogin.disabled = false;
