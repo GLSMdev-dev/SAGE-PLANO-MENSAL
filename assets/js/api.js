@@ -1,5 +1,5 @@
 // api.js - Comunicação com a API
-// A API_KEY permanece apenas no backend (Apps Script)
+// A API_KEY permanece apenas no backend (Apps Script) por segurança
 
 const API = (() => {
     const getConfig = () => window.APP_CONFIG;
@@ -103,6 +103,22 @@ const API = (() => {
         return request('planos_aula', 'deletar', null, id);
     }
     
+    // Configuração Visual
+    async function getConfigVisual() {
+        return request('config_visual', 'listar');
+    }
+    
+    async function salvarConfigVisual(chave, valor) {
+        // Primeiro, obter o ID da configuração
+        const configs = await getConfigVisual();
+        const config = configs.dados.find(c => c.chave === chave);
+        
+        if (config) {
+            return request('config_visual', 'atualizar', { valor: valor }, config.id);
+        }
+        return { success: false, error: 'Configuração não encontrada' };
+    }
+    
     return {
         listarUsuarios,
         criarUsuario,
@@ -119,6 +135,8 @@ const API = (() => {
         listarPlanos,
         criarPlano,
         atualizarPlano,
-        deletarPlano
+        deletarPlano,
+        getConfigVisual,
+        salvarConfigVisual
     };
 })();
