@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professor - Formulário de Plano | SAGE Planos</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        .semana-section {
+            background: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .semana-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>SAGE Planos</h1>
+                <p id="pageTitle">Novo Plano de Aula</p>
+            </div>
+            <div class="user-info">
+                <span class="user-name" id="userName">Carregando...</span>
+                <button class="btn-logout" onclick="Auth.logout()">Sair</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <form id="formPlano">
+            <input type="hidden" id="planoId">
+            
+            <div class="card">
+                <div class="form-group">
+                    <label for="mes_referencia">Mês de Referência *</label>
+                    <select id="mes_referencia" required>
+                        <option value="">Selecione...</option>
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ano_referencia">Ano de Referência *</label>
+                    <input type="number" id="ano_referencia" required value="2024" min="2020" max="2030">
+                </div>
+            </div>
+            
+            <!-- Semanas 1 a 4 -->
+            <div id="semanasContainer"></div>
+            
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='planos.html'">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarPlano('rascunho')">Salvar como Rascunho</button>
+                <button type="button" class="btn btn-success" onclick="salvarPlano('enviado')">Salvar e Enviar</button>
+            </div>
+        </form>
+    </div>
+    
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script>
+        let usuario = null;
+        let planoId = null;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!Auth.verificarAcesso()) return;
+            
+            usuario = Auth.getUsuarioLogado();
+            if (usuario.perfil !== 'professor') {
+                Auth.redirecionarPorPerfil();
+                return;
+            }
+            
+            document.getElementById('userName').textContent = usuario.nome;
+            
+            // Verificar se é edição
+            const urlParams = new URLSearchParams(window.location.search);
+            planoId = urlParams.get('id');
+            
+            if (planoId) {
+                document.getElementById('pageTitle').textContent = 'Editar Plano de Aula';
+                await carregarPlano(planoId);
+            } else {
+                criarFormularioSemanas();
+            }
+        });
+        
+        function criarFormularioSemanas(dados = null) {
+            const container = document.getElementById('semanasContainer');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= 4; i++) {
+                const semanaDiv = document.createElement('div');
+                semanaDiv.className = 'semana-section';
+                semanaDiv.innerHTML = `
+                    <div class="semana-title">Semana ${i}</div>
+                    <div class="form-group">
+                        <label for="semana_${i}_conteudo">Conteúdo Programático</label>
+                        <textarea id="semana_${i}_conteudo" placeholder="Descreva os conteúdos a serem abordados nesta semana...">${dados ? (dados[`semana_${i}_conteudo`] || '') : ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="semana_${i}_objetivos">Objetivos da Aula</label>
+                        <textarea id="semana_${i}_objetivos" placeholder="Quais objetivos pretende alcançar?">${dados ? (dados[`semana_${i}_objetivos`] || '') : ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="semana_${i}_metodologia">Metodologia</label>
+                        <textarea id="semana_${i}_metodologia" placeholder="Como será desenvolvida a aula?">${dados ? (dados[`semana_${i}_metodologia`] || '') : ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="semana_${i}_avaliacao">Avaliação</label>
+                        <textarea id="semana_${i}_avaliacao" placeholder="Como será feita a avaliação?">${dados ? (dados[`semana_${i}_avaliacao`] || '') : ''}</textarea>
+                    </div>
+                `;
+                container.appendChild(semanaDiv);
+            }
+        }
+        
+        async function carregarPlano(id) {
+            try {
+                Utils.mostrarLoading(true);
+                const result = await API.listarPlanos();
+                const plano = (result.dados || []).find(p => p.id == id);
+                
+                if (plano && plano.professor_id == usuario.id) {
+                    document.getElementById('planoId').value = plano.id;
+                    document.getElementById('mes_referencia').value = plano.mes_referencia;
+                    document.getElementById('ano_referencia').value = plano.ano_referencia;
+                    
+                    criarFormularioSemanas(plano);
+                    
+                    // Se o plano já foi enviado, desabilitar campos
+                    if (plano.status === 'enviado' || plano.status === 'aprovado') {
+                        desabilitarFormulario();
+                        Utils.mostrarMensagem('Este plano não pode mais ser editado.', 'warning');
+                    }
+                } else {
+                    Utils.mostrarMensagem('Plano não encontrado', 'error');
+                    window.location.href = 'planos.html';
+                }
+                
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                Utils.mostrarMensagem('Erro ao carregar plano: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+        
+        function desabilitarFormulario() {
+            document.getElementById('mes_referencia').disabled = true;
+            document.getElementById('ano_referencia').disabled = true;
+            
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`semana_${i}_conteudo`).disabled = true;
+                document.getElementById(`semana_${i}_objetivos`).disabled = true;
+                document.getElementById(`semana_${i}_metodologia`).disabled = true;
+                document.getElementById(`semana_${i}_avaliacao`).disabled = true;
+            }
+            
+            const botoes = document.querySelectorAll('.btn-group button');
+            botoes.forEach(btn => btn.style.display = 'none');
+        }
+        
+        function coletarDados() {
+            const mes = document.getElementById('mes_referencia').value;
+            const ano = document.getElementById('ano_referencia').value;
+            
+            if (!mes || !ano) {
+                Utils.mostrarMensagem('Preencha o mês e ano de referência', 'error');
+                return null;
+            }
+            
+            const dados = {
+                professor_id: usuario.id,
+                turma_id: usuario.turma_id,
+                disciplina_id: usuario.disciplina_id,
+                mes_referencia: parseInt(mes),
+                ano_referencia: parseInt(ano)
+            };
+            
+            for (let i = 1; i <= 4; i++) {
+                dados[`semana_${i}_conteudo`] = document.getElementById(`semana_${i}_conteudo`).value;
+                dados[`semana_${i}_objetivos`] = document.getElementById(`semana_${i}_objetivos`).value;
+                dados[`semana_${i}_metodologia`] = document.getElementById(`semana_${i}_metodologia`).value;
+                dados[`semana_${i}_avaliacao`] = document.getElementById(`semana_${i}_avaliacao`).value;
+            }
+            
+            return dados;
+        }
+        
+        async function salvarPlano(status) {
+            const id = document.getElementById('planoId').value;
+            const dados = coletarDados();
+            
+            if (!dados) return;
+            
+            dados.status = status;
+            
+            try {
+                Utils.mostrarLoading(true);
+                
+                if (id) {
+                    await API.atualizarPlano(id, dados);
+                    Utils.mostrarMensagem('Plano atualizado com sucesso!', 'success');
+                } else {
+                    await API.criarPlano(dados);
+                    Utils.mostrarMensagem('Plano criado com sucesso!', 'success');
+                }
+                
+                if (status === 'enviado') {
+                    Utils.mostrarMensagem('Plano enviado para o gestor!', 'success');
+                }
+                
+                setTimeout(() => {
+                    window.location.href = 'planos.html';
+                }, 1500);
+                
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                Utils.mostrarMensagem('Erro ao salvar: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+    </script>
+</body>
+</html>
