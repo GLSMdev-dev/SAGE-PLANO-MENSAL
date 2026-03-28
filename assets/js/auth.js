@@ -6,6 +6,10 @@ const Auth = (() => {
     async function login(email, senha) {
         try {
             const config = window.APP_CONFIG;
+            if (!config || !config.API_URL) {
+                throw new Error('Configuração não carregada');
+            }
+            
             const url = `${config.API_URL}?action=login&dados=${encodeURIComponent(JSON.stringify({ email, senha }))}`;
             
             const response = await fetch(url);
@@ -47,7 +51,7 @@ const Auth = (() => {
     
     function logout() {
         localStorage.removeItem(SESSION_KEY);
-        window.location.href = '/sage-planos/';
+        window.location.href = '/SAGE-PLANO-MENSAL/';
     }
     
     function getUsuarioLogado() {
@@ -74,11 +78,11 @@ const Auth = (() => {
     function redirecionarPorPerfil() {
         const usuario = getUsuarioLogado();
         if (!usuario) {
-            window.location.href = '/sage-planos/';
+            window.location.href = '/SAGE-PLANO-MENSAL/';
             return;
         }
         
-        const basePath = '/sage-planos/pages/';
+        const basePath = '/SAGE-PLANO-MENSAL/pages/';
         
         switch (usuario.perfil) {
             case 'admin':
@@ -91,14 +95,14 @@ const Auth = (() => {
                 window.location.href = `${basePath}professores/dashboard.html`;
                 break;
             default:
-                window.location.href = '/sage-planos/';
+                window.location.href = '/SAGE-PLANO-MENSAL/';
         }
     }
     
     function verificarAcesso() {
         const usuario = getUsuarioLogado();
         if (!usuario) {
-            window.location.href = '/sage-planos/';
+            window.location.href = '/SAGE-PLANO-MENSAL/';
             return false;
         }
         return true;
