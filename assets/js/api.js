@@ -1,4 +1,5 @@
 // api.js - Comunicação com a API
+// A API_KEY permanece apenas no backend (Apps Script)
 
 const API = (() => {
     const getConfig = () => window.APP_CONFIG;
@@ -19,14 +20,19 @@ const API = (() => {
             url += `&dados=${encodeURIComponent(JSON.stringify(dados))}`;
         }
         
-        const response = await fetch(url);
-        const result = await response.json();
-        
-        if (!result.success) {
-            throw new Error(result.erro || result.error || 'Erro na requisição');
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.erro || result.error || 'Erro na requisição');
+            }
+            
+            return result;
+        } catch (error) {
+            console.error('[API] Erro:', error);
+            throw error;
         }
-        
-        return result;
     }
     
     // Usuários
