@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEV - Configuração Visual | SAGE Planos</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: #4CAF50;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+        }
+
+        .logo p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .config-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .config-sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .config-sidebar h3 {
+            margin-bottom: 15px;
+            color: #4CAF50;
+        }
+        
+        .config-sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .config-sidebar li {
+            padding: 12px;
+            margin: 5px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .config-sidebar li:hover {
+            background: #f5f5f5;
+        }
+        
+        .config-sidebar li.active {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .config-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .config-section {
+            display: none;
+        }
+        
+        .config-section.active {
+            display: block;
+        }
+        
+        .config-group {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .config-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .config-group input[type="color"] {
+            width: 60px;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .config-group input[type="range"] {
+            width: 200px;
+        }
+        
+        .config-group input[type="text"],
+        .config-group select {
+            width: 100%;
+            max-width: 300px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .preview-box {
+            background: var(--bg-color, #f5f5f5);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .preview-card {
+            background: white;
+            border-radius: var(--card-radius, 8px);
+            box-shadow: var(--card-shadow, 0 2px 4px rgba(0,0,0,0.1));
+            padding: 20px;
+            margin-top: 15px;
+        }
+        
+        .preview-button {
+            background: var(--primary-color, #4CAF50);
+            color: white;
+            border: none;
+            padding: var(--button-padding, 12px) 24px;
+            border-radius: var(--button-radius, 8px);
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .preview-button-secondary {
+            background: var(--secondary-color, #2196F3);
+        }
+        
+        .btn-save {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        
+        .btn-save:hover {
+            background: #45a049;
+        }
+        
+        .status-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 5px;
+            color: white;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .status-success {
+            background: #4CAF50;
+        }
+        
+        .status-error {
+            background: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>SAGE Planos</h1>
+                <p>Configuração Visual - Modo DEV</p>
+            </div>
+            <div class="user-info">
+                <span class="user-name" id="userName">Carregando...</span>
+                <button class="btn-logout" onclick="Auth.logout()">Sair</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="config-container">
+            <div class="config-sidebar">
+                <h3>Configurações</h3>
+                <ul>
+                    <li class="active" data-section="cores">🎨 Cores</li>
+                    <li data-section="fontes">📝 Fontes</li>
+                    <li data-section="botoes">🔘 Botões</li>
+                    <li data-section="cards">🃏 Cards</li>
+                    <li data-section="espacamentos">📏 Espaçamentos</li>
+                </ul>
+            </div>
+            
+            <div class="config-content">
+                <div id="cores" class="config-section active">
+                    <h2>Cores do Sistema</h2>
+                    <div class="config-group">
+                        <label>Cor Primária (botões, cabeçalho)</label>
+                        <input type="color" id="cor_primaria" data-key="cor_primaria">
+                        <span id="cor_primaria_val"></span>
+                    </div>
+                    <div class="config-group">
+                        <label>Cor Secundária</label>
+                        <input type="color" id="cor_secundaria" data-key="cor_secundaria">
+                        <span id="cor_secundaria_val"></span>
+                    </div>
+                    <div class="config-group">
+                        <label>Cor de Fundo</label>
+                        <input type="color" id="cor_fundo" data-key="cor_fundo">
+                        <span id="cor_fundo_val"></span>
+                    </div>
+                    <div class="config-group">
+                        <label>Cor do Texto</label>
+                        <input type="color" id="cor_texto" data-key="cor_texto">
+                        <span id="cor_texto_val"></span>
+                    </div>
+                    <div class="config-group">
+                        <label>Cor do Cabeçalho</label>
+                        <input type="color" id="header_bg" data-key="header_bg">
+                        <span id="header_bg_val"></span>
+                    </div>
+                    <div class="config-group">
+                        <label>Texto do Cabeçalho</label>
+                        <input type="color" id="header_texto" data-key="header_texto">
+                        <span id="header_texto_val"></span>
+                    </div>
+                </div>
+                
+                <div id="fontes" class="config-section">
+                    <h2>Fontes</h2>
+                    <div class="config-group">
+                        <label>Fonte Principal</label>
+                        <select id="fonte_principal" data-key="fonte_principal">
+                            <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Open Sans', sans-serif">Open Sans</option>
+                            <option value="'Montserrat', sans-serif">Montserrat</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label>Tamanho Base da Fonte (px)</label>
+                        <input type="range" id="tamanho_fonte_base" data-key="tamanho_fonte_base" min="12" max="20" step="1">
+                        <span id="tamanho_fonte_base_val">16px</span>
+                    </div>
+                </div>
+                
+                <div id="botoes" class="config-section">
+                    <h2>Botões</h2>
+                    <div class="config-group">
+                        <label>Arredondamento dos Botões (px)</label>
+                        <input type="range" id="borda_arredondada" data-key="borda_arredondada" min="0" max="30" step="2">
+                        <span id="borda_arredondada_val">8px</span>
+                    </div>
+                    <div class="config-group">
+                        <label>Padding dos Botões (px)</label>
+                        <input type="range" id="botao_padding" data-key="botao_padding" min="6" max="20" step="1">
+                        <span id="botao_padding_val">12px</span>
+                    </div>
+                </div>
+                
+                <div id="cards" class="config-section">
+                    <h2>Cards</h2>
+                    <div class="config-group">
+                        <label>Sombra dos Cards</label>
+                        <select id="card_sombra" data-key="card_sombra">
+                            <option value="none">Sem sombra</option>
+                            <option value="0 2px 4px rgba(0,0,0,0.1)">Leve</option>
+                            <option value="0 4px 8px rgba(0,0,0,0.15)">Média</option>
+                            <option value="0 8px 16px rgba(0,0,0,0.2)">Forte</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label>Arredondamento dos Cards (px)</label>
+                        <input type="range" id="card_radius" data-key="card_radius" min="0" max="30" step="2">
+                        <span id="card_radius_val">8px</span>
+                    </div>
+                </div>
+                
+                <div id="espacamentos" class="config-section">
+                    <h2>Espaçamentos</h2>
+                    <div class="config-group">
+                        <label>Espaçamento Padrão (px)</label>
+                        <input type="range" id="espacamento_padrao" data-key="espacamento_padrao" min="10" max="40" step="2">
+                        <span id="espacamento_padrao_val">20px</span>
+                    </div>
+                </div>
+                
+                <div class="preview-box" id="previewBox">
+                    <h3>Pré-visualização</h3>
+                    <button class="preview-button" onclick="alert('Pré-visualização')">Botão Primário</button>
+                    <button class="preview-button preview-button-secondary" onclick="alert('Pré-visualização')">Botão Secundário</button>
+                    <div class="preview-card">
+                        <h4>Card de Exemplo</h4>
+                        <p>Este é um card de exemplo mostrando como ficará a aparência com as configurações atuais.</p>
+                    </div>
+                </div>
+                
+                <button class="btn-save" onclick="salvarConfiguracoes()">💾 Salvar Configurações</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="statusMessage" class="status-message"></div>
+    
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script>
+        let configAtual = {};
+        let usuario = null;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!Auth.verificarAcesso()) return;
+            
+            usuario = Auth.getUsuarioLogado();
+            if (usuario.perfil !== 'dev' && usuario.perfil !== 'admin') {
+                Auth.redirecionarPorPerfil();
+                return;
+            }
+            
+            document.getElementById('userName').textContent = usuario.nome;
+            
+            await carregarConfiguracoes();
+            setupEventListeners();
+            setupSidebarNavigation();
+        });
+        
+        async function carregarConfiguracoes() {
+            try {
+                Utils.mostrarLoading(true);
+                const result = await API.getConfigVisual();
+                
+                if (result.success && result.dados) {
+                    result.dados.forEach(item => {
+                        configAtual[item.chave] = item.valor;
+                        const elemento = document.querySelector(`[data-key="${item.chave}"]`);
+                        if (elemento) {
+                            if (elemento.type === 'color') {
+                                elemento.value = item.valor;
+                                const span = document.getElementById(`${item.chave}_val`);
+                                if (span) span.textContent = item.valor;
+                            } else if (elemento.type === 'range') {
+                                elemento.value = item.valor;
+                                const span = document.getElementById(`${item.chave}_val`);
+                                if (span) span.textContent = `${item.valor}px`;
+                            } else {
+                                elemento.value = item.valor;
+                            }
+                        }
+                    });
+                    Utils.aplicarTema(result.dados);
+                }
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                console.error('Erro ao carregar configurações:', error);
+                Utils.mostrarLoading(false);
+            }
+        }
+        
+        function setupEventListeners() {
+            const inputs = document.querySelectorAll('[data-key]');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const key = this.dataset.key;
+                    let valor = this.value;
+                    
+                    if (this.type === 'range') {
+                        const span = document.getElementById(`${key}_val`);
+                        if (span) span.textContent = `${valor}px`;
+                    } else if (this.type === 'color') {
+                        const span = document.getElementById(`${key}_val`);
+                        if (span) span.textContent = valor;
+                    }
+                    
+                    configAtual[key] = valor;
+                    aplicarPreview();
+                });
+            });
+        }
+        
+        function setupSidebarNavigation() {
+            const items = document.querySelectorAll('.config-sidebar li');
+            items.forEach(item => {
+                item.addEventListener('click', function() {
+                    items.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const sectionId = this.dataset.section;
+                    document.querySelectorAll('.config-section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    document.getElementById(sectionId).classList.add('active');
+                });
+            });
+        }
+        
+        function aplicarPreview() {
+            const previewBox = document.getElementById('previewBox');
+            if (previewBox) {
+                previewBox.style.backgroundColor = configAtual.cor_fundo || '#f5f5f5';
+                previewBox.style.fontFamily = configAtual.fonte_principal || "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+                previewBox.style.fontSize = `${configAtual.tamanho_fonte_base || 16}px`;
+            }
+            
+            const previewCard = document.querySelector('.preview-card');
+            if (previewCard) {
+                previewCard.style.borderRadius = `${configAtual.card_radius || 8}px`;
+                previewCard.style.boxShadow = configAtual.card_sombra || '0 2px 4px rgba(0,0,0,0.1)';
+            }
+            
+            const buttons = document.querySelectorAll('.preview-button');
+            buttons.forEach(btn => {
+                btn.style.borderRadius = `${configAtual.borda_arredondada || 8}px`;
+                btn.style.padding = `${configAtual.botao_padding || 12}px 24px`;
+            });
+            
+            const primaryBtn = document.querySelector('.preview-button:first-child');
+            if (primaryBtn) {
+                primaryBtn.style.backgroundColor = configAtual.cor_primaria || '#4CAF50';
+            }
+            
+            const secondaryBtn = document.querySelector('.preview-button-secondary');
+            if (secondaryBtn) {
+                secondaryBtn.style.backgroundColor = configAtual.cor_secundaria || '#2196F3';
+            }
+            
+            const headerPreview = document.querySelector('.header');
+            if (headerPreview) {
+                headerPreview.style.backgroundColor = configAtual.header_bg || '#4CAF50';
+                headerPreview.style.color = configAtual.header_texto || '#FFFFFF';
+            }
+        }
+        
+        async function salvarConfiguracoes() {
+            try {
+                Utils.mostrarLoading(true);
+                
+                for (const [chave, valor] of Object.entries(configAtual)) {
+                    await API.salvarConfigVisual(chave, valor);
+                }
+                
+                // Recarregar tema para aplicar em todo o site
+                const result = await API.getConfigVisual();
+                if (result.success && result.dados) {
+                    Utils.aplicarTema(result.dados);
+                }
+                
+                mostrarMensagem('Configurações salvas com sucesso!', 'success');
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                console.error('Erro ao salvar:', error);
+                mostrarMensagem('Erro ao salvar configurações', 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+        
+        function mostrarMensagem(mensagem, tipo) {
+            const msgDiv = document.getElementById('statusMessage');
+            msgDiv.textContent = mensagem;
+            msgDiv.className = `status-message status-${tipo}`;
+            msgDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
