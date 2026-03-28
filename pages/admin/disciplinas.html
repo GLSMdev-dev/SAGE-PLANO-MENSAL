@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Disciplinas | SAGE Planos</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>SAGE Planos</h1>
+                <p>Gerenciamento de Disciplinas</p>
+            </div>
+            <div class="user-info">
+                <span class="user-name" id="userName">Carregando...</span>
+                <button class="btn-logout" onclick="Auth.logout()">Sair</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Disciplinas</h2>
+            <button class="btn btn-primary" onclick="abrirModalCadastro()">+ Nova Disciplina</button>
+        </div>
+        
+        <div class="card">
+            <div class="table-container">
+                <table id="tabelaDisciplinas">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Área do Conhecimento</th>
+                            <th>Aulas/Semana</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaDisciplinas">
+                        <tr>
+                            <td colspan="6" style="text-align: center;">Carregando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Cadastro/Edição -->
+    <div id="modalDisciplina" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Nova Disciplina</h3>
+                <span class="modal-close" onclick="fecharModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="formDisciplina">
+                    <input type="hidden" id="disciplinaId">
+                    <div class="form-group">
+                        <label for="nome">Nome da Disciplina *</label>
+                        <input type="text" id="nome" required placeholder="Ex: Matemática">
+                    </div>
+                    <div class="form-group">
+                        <label for="area_conhecimento">Área do Conhecimento *</label>
+                        <select id="area_conhecimento" required>
+                            <option value="">Selecione...</option>
+                            <option value="Matemática">Matemática</option>
+                            <option value="Linguagens">Linguagens</option>
+                            <option value="Ciências da Natureza">Ciências da Natureza</option>
+                            <option value="Ciências Humanas">Ciências Humanas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="aulas_semana">Aulas por Semana *</label>
+                        <input type="number" id="aulas_semana" required min="1" max="10" value="2">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="ativo" checked> Disciplina ativa
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="salvarDisciplina()">Salvar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script>
+        let disciplinas = [];
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!Auth.verificarAcesso()) return;
+            
+            const usuario = Auth.getUsuarioLogado();
+            if (usuario.perfil !== 'admin') {
+                Auth.redirecionarPorPerfil();
+                return;
+            }
+            
+            document.getElementById('userName').textContent = usuario.nome;
+            await carregarDisciplinas();
+        });
+        
+        async function carregarDisciplinas() {
+            try {
+                Utils.mostrarLoading(true);
+                const result = await API.listarDisciplinas();
+                disciplinas = result.dados || [];
+                renderizarTabela();
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                Utils.mostrarMensagem('Erro ao carregar disciplinas: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+        
+        function renderizarTabela() {
+            const tbody = document.getElementById('listaDisciplinas');
+            if (!disciplinas.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhuma disciplina cadastrada</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = disciplinas.map(disciplina => `
+                <tr>
+                    <td>${disciplina.id}</td>
+                    <td>${Utils.escapeHtml(disciplina.nome)}</td>
+                    <td>${disciplina.area_conhecimento || '-'}</td>
+                    <td>${disciplina.aulas_semana || '-'}</td>
+                    <td>${disciplina.ativo === 'TRUE' || disciplina.ativo === true ? '✅ Ativa' : '❌ Inativa'}</td>
+                    <td>
+                        <button class="btn btn-primary" style="margin-right: 5px;" onclick="editarDisciplina(${disciplina.id})">Editar</button>
+                        <button class="btn btn-danger" onclick="excluirDisciplina(${disciplina.id})">Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function abrirModalCadastro() {
+            document.getElementById('modalTitle').textContent = 'Nova Disciplina';
+            document.getElementById('formDisciplina').reset();
+            document.getElementById('disciplinaId').value = '';
+            document.getElementById('aulas_semana').value = '2';
+            document.getElementById('ativo').checked = true;
+            document.getElementById('modalDisciplina').classList.add('active');
+        }
+        
+        function editarDisciplina(id) {
+            const disciplina = disciplinas.find(d => d.id == id);
+            if (!disciplina) return;
+            
+            document.getElementById('modalTitle').textContent = 'Editar Disciplina';
+            document.getElementById('disciplinaId').value = disciplina.id;
+            document.getElementById('nome').value = disciplina.nome;
+            document.getElementById('area_conhecimento').value = disciplina.area_conhecimento || '';
+            document.getElementById('aulas_semana').value = disciplina.aulas_semana || '2';
+            document.getElementById('ativo').checked = disciplina.ativo === 'TRUE' || disciplina.ativo === true;
+            
+            document.getElementById('modalDisciplina').classList.add('active');
+        }
+        
+        async function salvarDisciplina() {
+            const id = document.getElementById('disciplinaId').value;
+            const nome = document.getElementById('nome').value;
+            const area_conhecimento = document.getElementById('area_conhecimento').value;
+            const aulas_semana = document.getElementById('aulas_semana').value;
+            const ativo = document.getElementById('ativo').checked;
+            
+            if (!nome || !area_conhecimento || !aulas_semana) {
+                Utils.mostrarMensagem('Preencha todos os campos obrigatórios', 'error');
+                return;
+            }
+            
+            const dados = {
+                nome,
+                area_conhecimento,
+                aulas_semana: parseInt(aulas_semana),
+                ativo: ativo ? 'TRUE' : 'FALSE'
+            };
+            
+            try {
+                Utils.mostrarLoading(true);
+                
+                if (id) {
+                    await API.atualizarDisciplina(id, dados);
+                    Utils.mostrarMensagem('Disciplina atualizada com sucesso!', 'success');
+                } else {
+                    await API.criarDisciplina(dados);
+                    Utils.mostrarMensagem('Disciplina criada com sucesso!', 'success');
+                }
+                
+                fecharModal();
+                await carregarDisciplinas();
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                Utils.mostrarMensagem('Erro ao salvar: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+        
+        async function excluirDisciplina(id) {
+            Utils.confirmarAcao('Tem certeza que deseja excluir esta disciplina?', async (confirmado) => {
+                if (confirmado) {
+                    try {
+                        Utils.mostrarLoading(true);
+                        await API.deletarDisciplina(id);
+                        Utils.mostrarMensagem('Disciplina excluída com sucesso!', 'success');
+                        await carregarDisciplinas();
+                        Utils.mostrarLoading(false);
+                    } catch (error) {
+                        Utils.mostrarMensagem('Erro ao excluir: ' + error.message, 'error');
+                        Utils.mostrarLoading(false);
+                    }
+                }
+            });
+        }
+        
+        function fecharModal() {
+            document.getElementById('modalDisciplina').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
