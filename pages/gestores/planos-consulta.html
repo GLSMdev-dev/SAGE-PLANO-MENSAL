@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor - Consulta de Planos | SAGE Planos</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        .filtros {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-rascunho { background: #e0e0e0; color: #666; }
+        .status-enviado { background: #2196F3; color: white; }
+        .status-aprovado { background: #4CAF50; color: white; }
+        .status-revisar { background: #ff9800; color: white; }
+        
+        .plano-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .plano-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .feedback-area {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .feedback-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>SAGE Planos</h1>
+                <p>Consulta de Planos de Aula</p>
+            </div>
+            <div class="user-info">
+                <span class="user-name" id="userName">Carregando...</span>
+                <button class="btn-logout" onclick="Auth.logout()">Sair</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>Planos de Aula</h2>
+        
+        <div class="filtros">
+            <div class="form-group">
+                <label>Professor</label>
+                <select id="filtroProfessor">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Turma</label>
+                <select id="filtroTurma">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Disciplina</label>
+                <select id="filtroDisciplina">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="filtroStatus">
+                    <option value="">Todos</option>
+                    <option value="rascunho">Rascunho</option>
+                    <option value="enviado">Enviado</option>
+                    <option value="aprovado">Aprovado</option>
+                    <option value="revisar">Revisar</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Mês</label>
+                <select id="filtroMes">
+                    <option value="">Todos</option>
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3">Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="planosLista"></div>
+    </div>
+    
+    <!-- Modal de Visualização -->
+    <div id="modalPlano" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Visualizar Plano de Aula</h3>
+                <span class="modal-close" onclick="fecharModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="planoConteudo"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="fecharModal()">Fechar</button>
+                <button class="btn btn-primary" onclick="imprimirPlano()">Imprimir</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script>
+        let planos = [];
+        let professores = [];
+        let turmas = [];
+        let disciplinas = [];
+        let planoAtual = null;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!Auth.verificarAcesso()) return;
+            
+            const usuario = Auth.getUsuarioLogado();
+            if (usuario.perfil !== 'gestor' && usuario.perfil !== 'admin') {
+                Auth.redirecionarPorPerfil();
+                return;
+            }
+            
+            document.getElementById('userName').textContent = usuario.nome;
+            
+            await carregarDados();
+            
+            // Adicionar listeners de filtro
+            document.getElementById('filtroProfessor').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtroTurma').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtroDisciplina').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtroStatus').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtroMes').addEventListener('change', aplicarFiltros);
+        });
+        
+        async function carregarDados() {
+            try {
+                Utils.mostrarLoading(true);
+                
+                const [planosRes, profRes, turmasRes, discRes] = await Promise.all([
+                    API.listarPlanos(),
+                    API.listarUsuarios(),
+                    API.listarTurmas(),
+                    API.listarDisciplinas()
+                ]);
+                
+                planos = planosRes.dados || [];
+                professores = (profRes.dados || []).filter(u => u.perfil === 'professor');
+                turmas = turmasRes.dados || [];
+                disciplinas = discRes.dados || [];
+                
+                preencherFiltros();
+                aplicarFiltros();
+                
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                Utils.mostrarMensagem('Erro ao carregar dados: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+        
+        function preencherFiltros() {
+            const selectProf = document.getElementById('filtroProfessor');
+            professores.forEach(p => {
+                selectProf.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            });
+            
+            const selectTurma = document.getElementById('filtroTurma');
+            turmas.forEach(t => {
+                selectTurma.innerHTML += `<option value="${t.id}">${t.nome}</option>`;
+            });
+            
+            const selectDisc = document.getElementById('filtroDisciplina');
+            disciplinas.forEach(d => {
+                selectDisc.innerHTML += `<option value="${d.id}">${d.nome}</option>`;
+            });
+        }
+        
+        function aplicarFiltros() {
+            const professorId = document.getElementById('filtroProfessor').value;
+            const turmaId = document.getElementById('filtroTurma').value;
+            const disciplinaId = document.getElementById('filtroDisciplina').value;
+            const status = document.getElementById('filtroStatus').value;
+            const mes = document.getElementById('filtroMes').value;
+            
+            let filtrados = [...planos];
+            
+            if (professorId) filtrados = filtrados.filter(p => p.professor_id == professorId);
+            if (turmaId) filtrados = filtrados.filter(p => p.turma_id == turmaId);
+            if (disciplinaId) filtrados = filtrados.filter(p => p.disciplina_id == disciplinaId);
+            if (status) filtrados = filtrados.filter(p => p.status === status);
+            if (mes) filtrados = filtrados.filter(p => p.mes_referencia == mes);
+            
+            renderizarPlanos(filtrados);
+        }
+        
+        function renderizarPlanos(planosFiltrados) {
+            const container = document.getElementById('planosLista');
+            
+            if (!planosFiltrados.length) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px;">Nenhum plano encontrado</div>';
+                return;
+            }
+            
+            container.innerHTML = planosFiltrados.map(plano => {
+                const professor = professores.find(p => p.id == plano.professor_id);
+                const turma = turmas.find(t => t.id == plano.turma_id);
+                const disciplina = disciplinas.find(d => d.id == plano.disciplina_id);
+                
+                return `
+                    <div class="plano-card">
+                        <div class="plano-header">
+                            <div>
+                                <strong>${disciplina ? disciplina.nome : 'N/A'}</strong> - ${turma ? turma.nome : 'N/A'}<br>
+                                <small>${professor ? professor.nome : 'N/A'} - ${plano.mes_referencia}/${plano.ano_referencia}</small>
+                            </div>
+                            <span class="status-badge status-${plano.status}">
+                                ${getStatusNome(plano.status)}
+                            </span>
+                        </div>
+                        <div class="feedback-area">
+                            <strong>Feedback do Gestor:</strong>
+                            <textarea class="feedback-input" id="feedback_${plano.id}" rows="2" 
+                                ${plano.status === 'aprovado' ? 'disabled' : ''}
+                                placeholder="Digite seu feedback aqui...">${plano.feedback_gestor || ''}</textarea>
+                            ${plano.status !== 'aprovado' ? `
+                                <div style="margin-top: 10px;">
+                                    <button class="btn btn-success" onclick="aprovarPlano(${plano.id})">✓ Aprovar</button>
+                                    <button class="btn btn-warning" onclick="revisarPlano(${plano.id})">↺ Solicitar Revisão</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-secondary" onclick="visualizarPlano(${plano.id})">Visualizar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function getStatusNome(status) {
+            const nomes = {
+                'rascunho': 'Rascunho',
+                'enviado': 'Enviado',
+                'aprovado': 'Aprovado',
+                'revisar': 'Revisar'
+            };
+            return nomes[status] || status;
+        }
+        
+        async function aprovarPlano(id) {
+            const feedback = document.getElementById(`feedback_${id}`).value;
+            await atualizarStatusPlano(id, 'aprovado', feedback);
+        }
+        
+        async function revisarPlano(id) {
+            const feedback = document.getElementById(`feedback_${id}`).value;
+            if (!feedback) {
+                Utils.mostrarMensagem('Por favor, forneça um feedback para solicitar revisão', 'error');
+                return;
+            }
+            await atualizarStatusPlano(id, 'revisar', feedback);
+        }
+        
+        async function atualizarStatusPlano(id, status, feedback) {
+            try {
+                Utils.mostrarLoading(true);
+                await API.atualizarPlano(id, { status, feedback_gestor: feedback });
+                Utils.mostrarMensagem(`Plano ${status === 'aprovado' ? 'aprovado' : 'enviado para revisão'} com sucesso!`, 'success');
+                await carregarDados();
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                Utils.mostrarMensagem('Erro ao atualizar: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+        
+        function visualizarPlano(id) {
+            planoAtual = planos.find(p => p.id == id);
+            if (!planoAtual) return;
+            
+            const professor = professores.find(p => p.id == planoAtual.professor_id);
+            const turma = turmas.find(t => t.id == planoAtual.turma_id);
+            const disciplina = disciplinas.find(d => d.id == planoAtual.disciplina_id);
+            
+            let html = `
+                <div style="font-family: Arial, sans-serif;">
+                    <h2>Plano de Aula</h2>
+                    <p><strong>Professor:</strong> ${professor ? professor.nome : 'N/A'}</p>
+                    <p><strong>Turma:</strong> ${turma ? turma.nome : 'N/A'}</p>
+                    <p><strong>Disciplina:</strong> ${disciplina ? disciplina.nome : 'N/A'}</p>
+                    <p><strong>Período:</strong> ${planoAtual.mes_referencia}/${planoAtual.ano_referencia}</p>
+                    <p><strong>Status:</strong> ${getStatusNome(planoAtual.status)}</p>
+                    ${planoAtual.feedback_gestor ? `<p><strong>Feedback do Gestor:</strong> ${planoAtual.feedback_gestor}</p>` : ''}
+                    <hr>
+            `;
+            
+            for (let i = 1; i <= 4; i++) {
+                html += `
+                    <div style="margin-bottom: 20px;">
+                        <h3>Semana ${i}</h3>
+                        <p><strong>Conteúdo:</strong> ${planoAtual[`semana_${i}_conteudo`] || '-'}</p>
+                        <p><strong>Objetivos:</strong> ${planoAtual[`semana_${i}_objetivos`] || '-'}</p>
+                        <p><strong>Metodologia:</strong> ${planoAtual[`semana_${i}_metodologia`] || '-'}</p>
+                        <p><strong>Avaliação:</strong> ${planoAtual[`semana_${i}_avaliacao`] || '-'}</p>
+                    </div>
+                    ${i < 4 ? '<hr>' : ''}
+                `;
+            }
+            
+            html += `</div>`;
+            document.getElementById('planoConteudo').innerHTML = html;
+            document.getElementById('modalPlano').classList.add('active');
+        }
+        
+        function imprimirPlano() {
+            const conteudo = document.getElementById('planoConteudo').innerHTML;
+            const janela = window.open('', '_blank');
+            janela.document.write(`
+                <html>
+                <head>
+                    <title>Plano de Aula - SAGE Planos</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h2 { color: #4CAF50; }
+                        hr { margin: 20px 0; }
+                    </style>
+                </head>
+                <body>${conteudo}</body>
+                </html>
+            `);
+            janela.document.close();
+            janela.print();
+        }
+        
+        function fecharModal() {
+            document.getElementById('modalPlano').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
