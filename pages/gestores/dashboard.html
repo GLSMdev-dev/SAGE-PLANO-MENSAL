@@ -138,7 +138,22 @@
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/utils.js"></script>
     <script>
+        // Carregar tema visual
+        async function carregarTema() {
+            try {
+                const configs = await API.getConfigVisual();
+                if (configs.success && configs.dados) {
+                    Utils.aplicarTema(configs.dados);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar tema:', error);
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', async function() {
+            // Carregar tema
+            await carregarTema();
+            
             if (!Auth.verificarAcesso()) return;
             
             const usuario = Auth.getUsuarioLogado();
