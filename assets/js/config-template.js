@@ -1,6 +1,6 @@
 // config-template.js
 // Modelo de configuração - será preenchido pelo GitHub Actions
-// Apenas informações públicas - API_KEY fica no backend
+// Apenas informações públicas - API_KEY fica no backend (segurança)
 
 window.APP_CONFIG = {
     API_URL: '{{API_URL}}',
