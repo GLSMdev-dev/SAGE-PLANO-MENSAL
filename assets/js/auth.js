@@ -94,6 +94,9 @@ const Auth = (() => {
             case 'professor':
                 window.location.href = `${basePath}professores/dashboard.html`;
                 break;
+            case 'dev':
+                window.location.href = `${basePath}dev/config-visual.html`;
+                break;
             default:
                 window.location.href = '/SAGE-PLANO-MENSAL/';
         }
