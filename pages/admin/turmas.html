@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Turmas | SAGE Planos</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>SAGE Planos</h1>
+                <p>Gerenciamento de Turmas</p>
+            </div>
+            <div class="user-info">
+                <span class="user-name" id="userName">Carregando...</span>
+                <button class="btn-logout" onclick="Auth.logout()">Sair</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Turmas</h2>
+            <button class="btn btn-primary" onclick="abrirModalCadastro()">+ Nova Turma</button>
+        </div>
+        
+        <div class="card">
+            <div class="table-container">
+                <table id="tabelaTurmas">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Turno</th>
+                            <th>Ano Letivo</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaTurmas">
+                        <tr>
+                            <td colspan="6" style="text-align: center;">Carregando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Cadastro/Edição -->
+    <div id="modalTurma" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Nova Turma</h3>
+                <span class="modal-close" onclick="fecharModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="formTurma">
+                    <input type="hidden" id="turmaId">
+                    <div class="form-group">
+                        <label for="nome">Nome da Turma *</label>
+                        <input type="text" id="nome" required placeholder="Ex: 1ª Série A">
+                    </div>
+                    <div class="form-group">
+                        <label for="turno">Turno *</label>
+                        <select id="turno" required>
+                            <option value="">Selecione...</option>
+                            <option value="Manhã">Manhã</option>
+                            <option value="Tarde">Tarde</option>
+                            <option value="Noite">Noite</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ano_letivo">Ano Letivo *</label>
+                        <input type="number" id="ano_letivo" required value="2024" min="2020" max="2030">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="ativo" checked> Turma ativa
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="salvarTurma()">Salvar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script>
+        let turmas = [];
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!Auth.verificarAcesso()) return;
+            
+            const usuario = Auth.getUsuarioLogado();
+            if (usuario.perfil !== 'admin') {
+                Auth.redirecionarPorPerfil();
+                return;
+            }
+            
+            document.getElementById('userName').textContent = usuario.nome;
+            await carregarTurmas();
+        });
+        
+        async function carregarTurmas() {
+            try {
+                Utils.mostrarLoading(true);
+                const result = await API.listarTurmas();
+                turmas = result.dados || [];
+                renderizarTabela();
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                Utils.mostrarMensagem('Erro ao carregar turmas: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+        
+        function renderizarTabela() {
+            const tbody = document.getElementById('listaTurmas');
+            if (!turmas.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhuma turma cadastrada</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = turmas.map(turma => `
+                <tr>
+                    <td>${turma.id}</td>
+                    <td>${Utils.escapeHtml(turma.nome)}</td>
+                    <td>${turma.turno || '-'}</td>
+                    <td>${turma.ano_letivo || '-'}</td>
+                    <td>${turma.ativo === 'TRUE' || turma.ativo === true ? '✅ Ativa' : '❌ Inativa'}</td>
+                    <td>
+                        <button class="btn btn-primary" style="margin-right: 5px;" onclick="editarTurma(${turma.id})">Editar</button>
+                        <button class="btn btn-danger" onclick="excluirTurma(${turma.id})">Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function abrirModalCadastro() {
+            document.getElementById('modalTitle').textContent = 'Nova Turma';
+            document.getElementById('formTurma').reset();
+            document.getElementById('turmaId').value = '';
+            document.getElementById('ano_letivo').value = '2024';
+            document.getElementById('ativo').checked = true;
+            document.getElementById('modalTurma').classList.add('active');
+        }
+        
+        function editarTurma(id) {
+            const turma = turmas.find(t => t.id == id);
+            if (!turma) return;
+            
+            document.getElementById('modalTitle').textContent = 'Editar Turma';
+            document.getElementById('turmaId').value = turma.id;
+            document.getElementById('nome').value = turma.nome;
+            document.getElementById('turno').value = turma.turno || '';
+            document.getElementById('ano_letivo').value = turma.ano_letivo || '2024';
+            document.getElementById('ativo').checked = turma.ativo === 'TRUE' || turma.ativo === true;
+            
+            document.getElementById('modalTurma').classList.add('active');
+        }
+        
+        async function salvarTurma() {
+            const id = document.getElementById('turmaId').value;
+            const nome = document.getElementById('nome').value;
+            const turno = document.getElementById('turno').value;
+            const ano_letivo = document.getElementById('ano_letivo').value;
+            const ativo = document.getElementById('ativo').checked;
+            
+            if (!nome || !turno || !ano_letivo) {
+                Utils.mostrarMensagem('Preencha todos os campos obrigatórios', 'error');
+                return;
+            }
+            
+            const dados = {
+                nome,
+                turno,
+                ano_letivo,
+                ativo: ativo ? 'TRUE' : 'FALSE'
+            };
+            
+            try {
+                Utils.mostrarLoading(true);
+                
+                if (id) {
+                    await API.atualizarTurma(id, dados);
+                    Utils.mostrarMensagem('Turma atualizada com sucesso!', 'success');
+                } else {
+                    await API.criarTurma(dados);
+                    Utils.mostrarMensagem('Turma criada com sucesso!', 'success');
+                }
+                
+                fecharModal();
+                await carregarTurmas();
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                Utils.mostrarMensagem('Erro ao salvar: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+        
+        async function excluirTurma(id) {
+            Utils.confirmarAcao('Tem certeza que deseja excluir esta turma?', async (confirmado) => {
+                if (confirmado) {
+                    try {
+                        Utils.mostrarLoading(true);
+                        await API.deletarTurma(id);
+                        Utils.mostrarMensagem('Turma excluída com sucesso!', 'success');
+                        await carregarTurmas();
+                        Utils.mostrarLoading(false);
+                    } catch (error) {
+                        Utils.mostrarMensagem('Erro ao excluir: ' + error.message, 'error');
+                        Utils.mostrarLoading(false);
+                    }
+                }
+            });
+        }
+        
+        function fecharModal() {
+            document.getElementById('modalTurma').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
