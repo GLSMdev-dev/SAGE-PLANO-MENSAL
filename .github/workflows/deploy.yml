@@ -1,0 +1,42 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create config.js from template
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          API_KEY: ${{ secrets.API_KEY }}
+        run: |
+          cat assets/js/config-template.js | \
+          sed "s|{{API_URL}}|${API_URL}|g" | \
+          sed "s|{{SPREADSHEET_ID}}|${SPREADSHEET_ID}|g" | \
+          sed "s|{{API_KEY}}|${API_KEY}|g" \
+          > assets/js/config.js
+          echo "config.js gerado com sucesso!"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
