@@ -176,3 +176,7 @@ const Utils = (() => {
         formatarData,
         formatarDataHora,
         escapeHtml,
+        confirmarAcao,
+        aplicarTema
+    };
+})();
