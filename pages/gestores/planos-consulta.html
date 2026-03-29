@@ -2,19 +2,11 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Gestor - Consulta de Planos | SAGE Planos</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
-        .filtros {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-        }
+        .filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; }
         .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .status-rascunho { background: #e0e0e0; color: #666; }
         .status-enviado { background: #2196F3; color: white; }
@@ -23,23 +15,32 @@
         .plano-card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .plano-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 10px; }
         .feedback-area { margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px; }
-        .feedback-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; resize: vertical; }
+        .feedback-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; resize: vertical; font-size: 16px; }
         .conteudo-mensal { background: #e8f5e9; padding: 10px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; }
-        .btn-success { background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
-        .btn-warning { background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-success, .btn-warning, .btn-secondary { padding: 10px 16px; border-radius: 5px; cursor: pointer; font-size: 14px; border: none; min-height: 44px; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #ff9800; color: white; }
+        .btn-secondary { background: #666; color: white; }
+        .aula-card { background: white; border-radius: 5px; padding: 10px; margin-bottom: 10px; border: 1px solid #e0e0e0; }
+        .aula-title { font-weight: bold; color: #2196F3; margin-bottom: 8px; }
+        
+        @media (max-width: 768px) {
+            .filtros { grid-template-columns: 1fr; gap: 10px; }
+            .plano-header { flex-direction: column; align-items: flex-start; }
+            .btn-success, .btn-warning { width: 100%; margin-bottom: 5px; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="container">
-            <div class="logo"><h1>SAGE Planos</h1><p>Consulta de Planos de Aula</p></div>
+            <div class="logo"><h1>SAGE Planos</h1><p>Consulta de Planos</p></div>
             <div class="user-info"><span id="userName">Carregando...</span><button class="btn-logout" onclick="Auth.logout()">Sair</button></div>
         </div>
     </div>
     
     <div class="container">
         <h2>Planos de Aula</h2>
-        
         <div class="filtros">
             <select id="filtroProfessor"><option value="">Todos professores</option></select>
             <select id="filtroDisciplina"><option value="">Todas disciplinas</option></select>
@@ -47,24 +48,17 @@
             <select id="filtroStatus"><option value="">Todos status</option><option value="rascunho">Rascunho</option><option value="enviado">Enviado</option><option value="aprovado">Aprovado</option><option value="revisar">Revisar</option></select>
             <select id="filtroMes"><option value="">Todos meses</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select>
         </div>
-        
         <div id="planosLista"></div>
     </div>
     
-    <div id="modalPlano" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header"><h3>Visualizar Plano</h3><span class="modal-close" onclick="fecharModal()">&times;</span></div>
-            <div class="modal-body" id="planoConteudo"></div>
-            <div class="modal-footer"><button class="btn btn-secondary" onclick="fecharModal()">Fechar</button><button class="btn btn-primary" onclick="imprimirPlano()">Imprimir</button></div>
-        </div>
-    </div>
+    <div id="modalPlano" class="modal"><div class="modal-content" style="max-width: 900px; max-height: 80vh; overflow-y: auto;"><div class="modal-header"><h3>Visualizar Plano</h3><span class="modal-close" onclick="fecharModal()">&times;</span></div><div class="modal-body" id="planoConteudo"></div><div class="modal-footer"><button class="btn-secondary" onclick="fecharModal()">Fechar</button><button class="btn-success" onclick="imprimirPlano()">Imprimir</button></div></div></div>
     
     <script src="../../assets/js/config.js"></script>
     <script src="../../assets/js/api.js"></script>
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/utils.js"></script>
     <script>
-        let planos = [], professores = [], disciplinas = [], turmas = [];
+        let planos = [], professores = [], disciplinas = [];
         
         document.addEventListener('DOMContentLoaded', async function() {
             if (!Auth.verificarAcesso()) return;
@@ -72,7 +66,6 @@
             if (usuario.perfil !== 'gestor' && usuario.perfil !== 'admin') { Auth.redirecionarPorPerfil(); return; }
             document.getElementById('userName').textContent = usuario.nome;
             await carregarDados();
-            
             document.getElementById('filtroProfessor').addEventListener('change', aplicarFiltros);
             document.getElementById('filtroDisciplina').addEventListener('change', aplicarFiltros);
             document.getElementById('filtroSerie').addEventListener('change', aplicarFiltros);
@@ -83,20 +76,12 @@
         async function carregarDados() {
             try {
                 Utils.mostrarLoading(true);
-                const [planosRes, usuariosRes, discRes, turmasRes] = await Promise.all([
-                    API.listarPlanos(), API.listarUsuarios(), API.listarDisciplinas(), API.listarTurmas()
-                ]);
+                const [planosRes, usuariosRes, discRes] = await Promise.all([API.listarPlanos(), API.listarUsuarios(), API.listarDisciplinas()]);
                 planos = planosRes.dados || [];
                 professores = (usuariosRes.dados || []).filter(u => u.perfil === 'professor');
                 disciplinas = discRes.dados || [];
-                turmas = turmasRes.dados || [];
-                
-                const selectProf = document.getElementById('filtroProfessor');
-                professores.forEach(p => { selectProf.innerHTML += `<option value="${p.id}">${p.nome}</option>`; });
-                
-                const selectDisc = document.getElementById('filtroDisciplina');
-                disciplinas.forEach(d => { selectDisc.innerHTML += `<option value="${d.id}">${d.nome}</option>`; });
-                
+                document.getElementById('filtroProfessor').innerHTML = '<option value="">Todos professores</option>' + professores.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+                document.getElementById('filtroDisciplina').innerHTML = '<option value="">Todas disciplinas</option>' + disciplinas.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
                 aplicarFiltros();
                 Utils.mostrarLoading(false);
             } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
@@ -108,7 +93,6 @@
             const serie = document.getElementById('filtroSerie').value;
             const status = document.getElementById('filtroStatus').value;
             const mes = document.getElementById('filtroMes').value;
-            
             let filtrados = [...planos];
             if (professorId) filtrados = filtrados.filter(p => p.professor_id == professorId);
             if (disciplinaId) filtrados = filtrados.filter(p => p.disciplina_id == disciplinaId);
@@ -124,46 +108,19 @@
             container.innerHTML = planosFiltrados.map(p => {
                 const professor = professores.find(prof => prof.id == p.professor_id);
                 const disciplina = disciplinas.find(d => d.id == p.disciplina_id);
-                return `
-                    <div class="plano-card">
-                        <div class="plano-header">
-                            <div><strong>${disciplina ? disciplina.nome : '-'}</strong> | ${p.serie || '-'}<br><small>${professor ? professor.nome : '-'} - ${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small></div>
-                            <span class="status-badge status-${p.status}">${getStatusNome(p.status)}</span>
-                        </div>
-                        ${p.conteudo_mensal ? `<div class="conteudo-mensal"><strong>📖 Conteúdo do mês:</strong><br>${Utils.escapeHtml(p.conteudo_mensal.substring(0, 150))}${p.conteudo_mensal.length > 150 ? '...' : ''}</div>` : ''}
-                        <div class="feedback-area">
-                            <strong>Feedback do Gestor:</strong>
-                            <textarea class="feedback-input" id="feedback_${p.id}" rows="2" ${p.status === 'aprovado' ? 'disabled' : ''} placeholder="Digite seu feedback aqui...">${p.feedback_gestor || ''}</textarea>
-                            ${p.status !== 'aprovado' ? `<div style="margin-top: 10px;"><button class="btn-success" onclick="aprovarPlano(${p.id})">✓ Aprovar</button> <button class="btn-warning" onclick="revisarPlano(${p.id})">↺ Solicitar Revisão</button></div>` : ''}
-                        </div>
-                        <div style="margin-top: 10px;"><button class="btn btn-secondary" onclick="visualizarPlano(${p.id})">Visualizar</button></div>
-                    </div>
-                `;
+                return `<div class="plano-card"><div class="plano-header"><div><strong>${disciplina ? disciplina.nome : '-'}</strong> | ${p.serie || '-'}<br><small>${professor ? professor.nome : '-'} - ${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small></div><span class="status-badge status-${p.status}">${getStatusNome(p.status)}</span></div>${p.conteudo_mensal ? `<div class="conteudo-mensal"><strong>📖 Conteúdo:</strong><br>${Utils.escapeHtml(p.conteudo_mensal.substring(0, 150))}${p.conteudo_mensal.length > 150 ? '...' : ''}</div>` : ''}<div class="feedback-area"><strong>Feedback:</strong><textarea class="feedback-input" id="feedback_${p.id}" rows="2" ${p.status === 'aprovado' ? 'disabled' : ''}>${p.feedback_gestor || ''}</textarea>${p.status !== 'aprovado' ? `<div style="margin-top:10px;"><button class="btn-success" onclick="aprovarPlano(${p.id})">✓ Aprovar</button> <button class="btn-warning" onclick="revisarPlano(${p.id})">↺ Solicitar Revisão</button></div>` : ''}</div><div style="margin-top:10px;"><button class="btn-secondary" onclick="visualizarPlano(${p.id})">Visualizar</button></div></div>`;
             }).join('');
         }
         
         function getMesNome(mes) { const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; return meses[mes-1] || mes; }
         function getStatusNome(s) { const nomes = { rascunho: 'Rascunho', enviado: 'Enviado', aprovado: 'Aprovado', revisar: 'Revisar' }; return nomes[s] || s; }
         
-        async function aprovarPlano(id) {
-            const feedback = document.getElementById(`feedback_${id}`).value;
-            await atualizarStatusPlano(id, 'aprovado', feedback);
-        }
-        
-        async function revisarPlano(id) {
-            const feedback = document.getElementById(`feedback_${id}`).value;
-            if (!feedback) { Utils.mostrarMensagem('Forneça um feedback para solicitar revisão', 'error'); return; }
-            await atualizarStatusPlano(id, 'revisar', feedback);
-        }
+        async function aprovarPlano(id) { const feedback = document.getElementById(`feedback_${id}`).value; await atualizarStatusPlano(id, 'aprovado', feedback); }
+        async function revisarPlano(id) { const feedback = document.getElementById(`feedback_${id}`).value; if (!feedback) { Utils.mostrarMensagem('Forneça um feedback', 'error'); return; } await atualizarStatusPlano(id, 'revisar', feedback); }
         
         async function atualizarStatusPlano(id, status, feedback) {
-            try {
-                Utils.mostrarLoading(true);
-                await API.atualizarPlano(id, { status, feedback_gestor: feedback });
-                Utils.mostrarMensagem(`Plano ${status === 'aprovado' ? 'aprovado' : 'enviado para revisão'}!`, 'success');
-                await carregarDados();
-                Utils.mostrarLoading(false);
-            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+            try { Utils.mostrarLoading(true); await API.atualizarPlano(id, { status, feedback_gestor: feedback }); Utils.mostrarMensagem(`Plano ${status === 'aprovado' ? 'aprovado' : 'enviado para revisão'}!`, 'success'); await carregarDados(); Utils.mostrarLoading(false); }
+            catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
         }
         
         function visualizarPlano(id) {
@@ -171,13 +128,22 @@
             if (!plano) return;
             const professor = professores.find(prof => prof.id == plano.professor_id);
             const disciplina = disciplinas.find(d => d.id == plano.disciplina_id);
-            let html = `<h2>Plano de Aula</h2><p><strong>Professor:</strong> ${professor ? professor.nome : '-'}</p><p><strong>Disciplina:</strong> ${disciplina ? disciplina.nome : '-'}</p><p><strong>Série:</strong> ${plano.serie || '-'}</p><p><strong>Período:</strong> ${getMesNome(plano.mes_referencia)}/${plano.ano_referencia}</p><p><strong>Status:</strong> ${getStatusNome(plano.status)}</p>${plano.feedback_gestor ? `<p><strong>Feedback:</strong> ${plano.feedback_gestor}</p>` : ''}<hr>${plano.conteudo_mensal ? `<div style="background:#e8f5e9;padding:10px;margin-bottom:15px"><strong>📖 Conteúdo Programático do Mês:</strong><br>${Utils.escapeHtml(plano.conteudo_mensal)}</div>` : ''}`;
-            for(let i=1;i<=4;i++) html += `<div style="background:#f9f9f9;padding:15px;margin-bottom:15px;border-left:3px solid #4CAF50"><div style="font-weight:bold;margin-bottom:10px;color:#4CAF50">Semana ${i}</div><p><strong>Sub-conteúdo:</strong><br>${Utils.escapeHtml(plano[`semana_${i}_conteudo`] || '-')}</p><p><strong>Metodologia:</strong><br>${Utils.escapeHtml(plano[`semana_${i}_metodologia`] || '-')}</p><p><strong>Recursos:</strong><br>${Utils.escapeHtml(plano[`semana_${i}_recursos`] || '-')}</p><p><strong>Avaliação:</strong><br>${Utils.escapeHtml(plano[`semana_${i}_avaliacao`] || '-')}</p></div>`;
+            let html = `<h2>Plano de Aula</h2><p><strong>Professor:</strong> ${professor ? professor.nome : '-'}</p><p><strong>Disciplina:</strong> ${disciplina ? disciplina.nome : '-'}</p><p><strong>Série:</strong> ${plano.serie || '-'}</p><p><strong>Período:</strong> ${getMesNome(plano.mes_referencia)}/${plano.ano_referencia}</p><p><strong>Status:</strong> ${getStatusNome(plano.status)}</p><p><strong>Carga:</strong> ${plano.aulas_semana || '-'} aulas/semana | Total: ${plano.total_aulas_mes || 0} aulas</p>${plano.feedback_gestor ? `<p><strong>Feedback:</strong> ${plano.feedback_gestor}</p>` : ''}<hr>${plano.conteudo_mensal ? `<div style="background:#e8f5e9;padding:10px;margin-bottom:15px"><strong>📖 Conteúdo:</strong><br>${Utils.escapeHtml(plano.conteudo_mensal)}</div>` : ''}${plano.referencias ? `<div style="background:#fff3cd;padding:10px;margin-bottom:15px"><strong>📚 Referências:</strong><br>${Utils.escapeHtml(plano.referencias)}</div>` : ''}<h3>📝 Aulas</h3>`;
+            const totalAulas = parseInt(plano.total_aulas_mes) || 0;
+            for (let aula = 1; aula <= totalAulas; aula++) {
+                const subconteudo = plano[`aula_${aula}_subconteudo`];
+                const metodologia = plano[`aula_${aula}_metodologia`];
+                const avaliacao = plano[`aula_${aula}_avaliacao`];
+                const recursos = plano[`aula_${aula}_recursos`];
+                if (subconteudo || metodologia || avaliacao || recursos) {
+                    html += `<div class="aula-card"><div class="aula-title">Aula ${aula}</div>${subconteudo ? `<p><strong>Sub-conteúdo:</strong><br>${Utils.escapeHtml(subconteudo)}</p>` : ''}${metodologia ? `<p><strong>Metodologia:</strong><br>${Utils.escapeHtml(metodologia)}</p>` : ''}${avaliacao ? `<p><strong>Avaliação:</strong><br>${Utils.escapeHtml(avaliacao)}</p>` : ''}${recursos ? `<p><strong>Recursos:</strong><br>${Utils.escapeHtml(recursos)}</p>` : ''}</div>`;
+                }
+            }
             document.getElementById('planoConteudo').innerHTML = html;
             document.getElementById('modalPlano').classList.add('active');
         }
         
-        function imprimirPlano() { const c = document.getElementById('planoConteudo').innerHTML; const w = window.open('', '_blank'); w.document.write(`<html><head><title>Plano de Aula</title><style>body{font-family:Arial;padding:20px}</style></head><body>${c}</body></html>`); w.document.close(); w.print(); }
+        function imprimirPlano() { const c = document.getElementById('planoConteudo').innerHTML; const w = window.open('', '_blank'); w.document.write(`<html><head><title>Plano de Aula</title><style>body{font-family:Arial;padding:20px}.aula-card{background:#f9f9f9;padding:10px;margin-bottom:10px}</style></head><body>${c}</body></html>`); w.document.close(); w.print(); }
         function fecharModal() { document.getElementById('modalPlano').classList.remove('active'); }
     </script>
 </body>
