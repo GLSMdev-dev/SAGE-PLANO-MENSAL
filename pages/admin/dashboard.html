@@ -12,7 +12,6 @@
             gap: 20px;
             margin-top: 20px;
         }
-        
         .menu-card {
             background: white;
             border-radius: 8px;
@@ -21,36 +20,19 @@
             cursor: pointer;
             transition: transform 0.3s, box-shadow 0.3s;
         }
-        
         .menu-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
-        
-        .menu-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-        
-        .menu-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #4CAF50;
-            margin-bottom: 10px;
-        }
-        
-        .menu-desc {
-            font-size: 14px;
-            color: #666;
-        }
-        
+        .menu-icon { font-size: 48px; margin-bottom: 15px; }
+        .menu-title { font-size: 18px; font-weight: 600; color: #4CAF50; margin-bottom: 10px; }
+        .menu-desc { font-size: 14px; color: #666; }
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 30px;
         }
-        
         .stat-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -58,84 +40,33 @@
             border-radius: 8px;
             text-align: center;
         }
-        
-        .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            margin-top: 5px;
-            opacity: 0.9;
-        }
+        .stat-number { font-size: 32px; font-weight: bold; }
+        .stat-label { font-size: 14px; margin-top: 5px; opacity: 0.9; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="container">
-            <div class="logo">
-                <h1>SAGE Planos</h1>
-                <p>Painel do Administrador</p>
-            </div>
-            <div class="user-info">
-                <span class="user-name" id="userName">Carregando...</span>
-                <button class="btn-logout" onclick="Auth.logout()">Sair</button>
-            </div>
+            <div class="logo"><h1>SAGE Planos</h1><p>Painel do Administrador</p></div>
+            <div class="user-info"><span id="userName">Carregando...</span><button class="btn-logout" onclick="Auth.logout()">Sair</button></div>
         </div>
     </div>
     
     <div class="container">
-        <div class="stats" id="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="totalUsuarios">-</div>
-                <div class="stat-label">Usuários</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalTurmas">-</div>
-                <div class="stat-label">Turmas</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalDisciplinas">-</div>
-                <div class="stat-label">Disciplinas</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalPlanos">-</div>
-                <div class="stat-label">Planos de Aula</div>
-            </div>
+        <div class="stats">
+            <div class="stat-card"><div class="stat-number" id="totalUsuarios">-</div><div class="stat-label">Usuários</div></div>
+            <div class="stat-card"><div class="stat-number" id="totalTurmas">-</div><div class="stat-label">Turmas</div></div>
+            <div class="stat-card"><div class="stat-number" id="totalDisciplinas">-</div><div class="stat-label">Disciplinas</div></div>
+            <div class="stat-card"><div class="stat-number" id="totalPlanos">-</div><div class="stat-label">Planos</div></div>
         </div>
         
         <h2>Módulos de Gerenciamento</h2>
         <div class="dashboard-grid">
-            <div class="menu-card" onclick="window.location.href='usuarios.html'">
-                <div class="menu-icon">👥</div>
-                <div class="menu-title">Usuários</div>
-                <div class="menu-desc">Gerenciar professores, gestores e administradores</div>
-            </div>
-            
-            <div class="menu-card" onclick="window.location.href='turmas.html'">
-                <div class="menu-icon">🏫</div>
-                <div class="menu-title">Turmas</div>
-                <div class="menu-desc">Cadastrar e gerenciar turmas</div>
-            </div>
-            
-            <div class="menu-card" onclick="window.location.href='disciplinas.html'">
-                <div class="menu-icon">📚</div>
-                <div class="menu-title">Disciplinas</div>
-                <div class="menu-desc">Gerenciar disciplinas e cargas horárias</div>
-            </div>
-            
-            <div class="menu-card" onclick="window.location.href='../gestores/professores-lotacao.html'">
-                <div class="menu-icon">👨‍🏫</div>
-                <div class="menu-title">Lotação</div>
-                <div class="menu-desc">Distribuir professores por turmas e disciplinas</div>
-            </div>
-            
-            <div class="menu-card" onclick="window.location.href='../gestores/planos-consulta.html'">
-                <div class="menu-icon">📋</div>
-                <div class="menu-title">Planos de Aula</div>
-                <div class="menu-desc">Visualizar e conferir planos enviados</div>
-            </div>
+            <div class="menu-card" onclick="window.location.href='usuarios.html'"><div class="menu-icon">👥</div><div class="menu-title">Usuários</div><div class="menu-desc">Gerenciar professores, gestores e administradores</div></div>
+            <div class="menu-card" onclick="window.location.href='turmas.html'"><div class="menu-icon">🏫</div><div class="menu-title">Turmas</div><div class="menu-desc">Cadastrar e gerenciar turmas</div></div>
+            <div class="menu-card" onclick="window.location.href='disciplinas.html'"><div class="menu-icon">📚</div><div class="menu-title">Disciplinas</div><div class="menu-desc">Gerenciar disciplinas e cargas horárias</div></div>
+            <div class="menu-card" onclick="window.location.href='../gestores/professores-lotacao.html'"><div class="menu-icon">👨‍🏫</div><div class="menu-title">Lotação</div><div class="menu-desc">Distribuir professores por turmas e disciplinas</div></div>
+            <div class="menu-card" onclick="window.location.href='../gestores/planos-consulta.html'"><div class="menu-icon">📋</div><div class="menu-title">Planos de Aula</div><div class="menu-desc">Visualizar e conferir planos enviados</div></div>
         </div>
     </div>
     
@@ -144,52 +75,29 @@
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/utils.js"></script>
     <script>
-        // Carregar tema visual
         async function carregarTema() {
-            try {
-                const configs = await API.getConfigVisual();
-                if (configs.success && configs.dados) {
-                    Utils.aplicarTema(configs.dados);
-                }
-            } catch (error) {
-                console.error('Erro ao carregar tema:', error);
-            }
+            try { const configs = await API.getConfigVisual(); if (configs.success && configs.dados) Utils.aplicarTema(configs.dados); }
+            catch (error) { console.error('Erro ao carregar tema:', error); }
         }
         
         document.addEventListener('DOMContentLoaded', async function() {
-            // Carregar tema
             await carregarTema();
-            
-            // Verificar acesso
             if (!Auth.verificarAcesso()) return;
-            
             const usuario = Auth.getUsuarioLogado();
-            if (usuario.perfil !== 'admin') {
-                Auth.redirecionarPorPerfil();
-                return;
-            }
-            
+            if (usuario.perfil !== 'admin') { Auth.redirecionarPorPerfil(); return; }
             document.getElementById('userName').textContent = usuario.nome;
-            
-            // Carregar estatísticas
             try {
                 Utils.mostrarLoading(true);
-                
                 const usuarios = await API.listarUsuarios();
                 const turmas = await API.listarTurmas();
                 const disciplinas = await API.listarDisciplinas();
                 const planos = await API.listarPlanos();
-                
                 document.getElementById('totalUsuarios').textContent = usuarios.total || 0;
                 document.getElementById('totalTurmas').textContent = turmas.total || 0;
                 document.getElementById('totalDisciplinas').textContent = disciplinas.total || 0;
                 document.getElementById('totalPlanos').textContent = planos.total || 0;
-                
                 Utils.mostrarLoading(false);
-            } catch (error) {
-                Utils.mostrarMensagem('Erro ao carregar estatísticas: ' + error.message, 'error');
-                Utils.mostrarLoading(false);
-            }
+            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
         });
     </script>
 </body>
