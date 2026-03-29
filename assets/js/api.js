@@ -6,9 +6,11 @@ const API = (() => {
     async function request(entity, action, dados = null, id = null) {
         const config = getConfig();
         if (!config || !config.API_URL) throw new Error('Configuração não carregada');
+        
         let url = `${config.API_URL}?entity=${entity}&action=${action}`;
         if (id) url += `&id=${id}`;
         if (dados) url += `&dados=${encodeURIComponent(JSON.stringify(dados))}`;
+        
         const response = await fetch(url);
         const result = await response.json();
         if (!result.success) throw new Error(result.erro || result.error || 'Erro na requisição');
