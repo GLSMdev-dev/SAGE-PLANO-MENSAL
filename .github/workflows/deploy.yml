@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -10,37 +10,24 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Create config.js
-        env:
-          API_URL: ${{ secrets.API_URL }}
-          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
         run: |
-          echo "🔧 Criando config.js..."
           mkdir -p assets/js
-          cat > assets/js/config.js << 'EOF'
-          window.APP_CONFIG = {
-              API_URL: '${{ secrets.API_URL }}',
-              SPREADSHEET_ID: '${{ secrets.SPREADSHEET_ID }}',
-              APP_NAME: 'SAGE Planos',
-              APP_VERSION: '2.0.0'
-          };
-          EOF
-          echo "✅ config.js criado!"
-          cat assets/js/config.js
+          echo "window.APP_CONFIG = {" > assets/js/config.js
+          echo "    API_URL: '${{ secrets.API_URL }}'," >> assets/js/config.js
+          echo "    SPREADSHEET_ID: '${{ secrets.SPREADSHEET_ID }}'," >> assets/js/config.js
+          echo "    APP_NAME: 'SAGE Planos'," >> assets/js/config.js
+          echo "    APP_VERSION: '2.0.0'" >> assets/js/config.js
+          echo "};" >> assets/js/config.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -51,5 +38,4 @@ jobs:
           path: '.'
 
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
