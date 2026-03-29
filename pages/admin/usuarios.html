@@ -5,6 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Usuários | SAGE Planos</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .info-badge {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            margin-top: 10px;
+            border-left: 3px solid #2196F3;
+        }
+        .status-ativo { color: #4CAF50; font-weight: bold; }
+        .status-inativo { color: #f44336; font-weight: bold; }
+    </style>
 </head>
 <body>
     <div class="header">
@@ -30,26 +86,14 @@
             <div class="table-container">
                 <table id="tabelaUsuarios">
                     <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nome</th>
-                            <th>Email</th>
-                            <th>Perfil</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
+                        <tr><th>ID</th><th>Nome</th><th>Email</th><th>Perfil</th><th>Status</th><th>Ações</th></tr>
                     </thead>
-                    <tbody id="listaUsuarios">
-                        <tr>
-                            <td colspan="6" style="text-align: center;">Carregando...</td>
-                        </tr>
-                    </tbody>
+                    <tbody id="listaUsuarios"><tr><td colspan="6">Carregando...</td></tr></tbody>
                 </table>
             </div>
         </div>
     </div>
     
-    <!-- Modal de Cadastro/Edição -->
     <div id="modalUsuario" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -60,43 +104,39 @@
                 <form id="formUsuario">
                     <input type="hidden" id="usuarioId">
                     <div class="form-group">
-                        <label for="nome">Nome completo *</label>
+                        <label>Nome completo *</label>
                         <input type="text" id="nome" required>
                     </div>
                     <div class="form-group">
-                        <label for="email">E-mail *</label>
+                        <label>E-mail *</label>
                         <input type="email" id="email" required>
                     </div>
                     <div class="form-group">
-                        <label for="perfil">Perfil *</label>
+                        <label>Perfil *</label>
                         <select id="perfil" required>
                             <option value="">Selecione...</option>
                             <option value="admin">Administrador</option>
                             <option value="gestor">Gestor</option>
                             <option value="professor">Professor</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="disciplinaGroup" style="display: none;">
-                        <label for="disciplina_id">Disciplina</label>
-                        <select id="disciplina_id">
-                            <option value="">Selecione...</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="turmaGroup" style="display: none;">
-                        <label for="turma_id">Turma</label>
-                        <select id="turma_id">
-                            <option value="">Selecione...</option>
+                            <option value="dev">Desenvolvedor (DEV)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="senha">Senha *</label>
+                        <label>Senha</label>
                         <input type="password" id="senha">
-                        <small style="color: #666;">Deixe em branco para manter a senha atual (na edição)</small>
+                        <small>Deixe em branco para manter a senha atual</small>
                     </div>
                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="ativo" checked> Usuário ativo
+                        <label class="toggle-label">
+                            <span>Usuário ativo:</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="ativo" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
                         </label>
+                    </div>
+                    <div class="info-badge" id="lotacaoInfo" style="display: none;">
+                        <strong>ℹ️ Informação:</strong> Este é um professor. As lotações (disciplinas e turmas) devem ser gerenciadas na seção <strong>Lotação de Professores</strong> do menu do Gestor.
                     </div>
                 </form>
             </div>
@@ -116,59 +156,14 @@
         
         document.addEventListener('DOMContentLoaded', async function() {
             if (!Auth.verificarAcesso()) return;
-            
             const usuario = Auth.getUsuarioLogado();
-            if (usuario.perfil !== 'admin') {
-                Auth.redirecionarPorPerfil();
-                return;
-            }
-            
+            if (usuario.perfil !== 'admin') { Auth.redirecionarPorPerfil(); return; }
             document.getElementById('userName').textContent = usuario.nome;
-            
-            // Carregar listas para os selects
-            await carregarDisciplinas();
-            await carregarTurmas();
-            
-            // Carregar usuários
             await carregarUsuarios();
-            
-            // Evento para mostrar/ocultar campos conforme perfil
             document.getElementById('perfil').addEventListener('change', function() {
-                const isProfessor = this.value === 'professor';
-                document.getElementById('disciplinaGroup').style.display = isProfessor ? 'block' : 'none';
-                document.getElementById('turmaGroup').style.display = isProfessor ? 'block' : 'none';
+                document.getElementById('lotacaoInfo').style.display = this.value === 'professor' ? 'block' : 'none';
             });
         });
-        
-        async function carregarDisciplinas() {
-            try {
-                const result = await API.listarDisciplinas();
-                const select = document.getElementById('disciplina_id');
-                select.innerHTML = '<option value="">Selecione...</option>';
-                if (result.dados) {
-                    result.dados.forEach(disciplina => {
-                        select.innerHTML += `<option value="${disciplina.id}">${disciplina.nome}</option>`;
-                    });
-                }
-            } catch (error) {
-                console.error('Erro ao carregar disciplinas:', error);
-            }
-        }
-        
-        async function carregarTurmas() {
-            try {
-                const result = await API.listarTurmas();
-                const select = document.getElementById('turma_id');
-                select.innerHTML = '<option value="">Selecione...</option>';
-                if (result.dados) {
-                    result.dados.forEach(turma => {
-                        select.innerHTML += `<option value="${turma.id}">${turma.nome}</option>`;
-                    });
-                }
-            } catch (error) {
-                console.error('Erro ao carregar turmas:', error);
-            }
-        }
         
         async function carregarUsuarios() {
             try {
@@ -178,40 +173,34 @@
                 renderizarTabela();
                 Utils.mostrarLoading(false);
             } catch (error) {
-                Utils.mostrarMensagem('Erro ao carregar usuários: ' + error.message, 'error');
+                Utils.mostrarMensagem('Erro: ' + error.message, 'error');
                 Utils.mostrarLoading(false);
             }
         }
         
         function renderizarTabela() {
             const tbody = document.getElementById('listaUsuarios');
-            if (!usuarios.length) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhum usuário cadastrado</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = usuarios.map(usuario => `
+            if (!usuarios.length) { tbody.innerHTML = '<tr><td colspan="6">Nenhum usuário</td></tr>'; return; }
+            tbody.innerHTML = usuarios.map(u => `
                 <tr>
-                    <td>${usuario.id}</td>
-                    <td>${Utils.escapeHtml(usuario.nome)}</td>
-                    <td>${Utils.escapeHtml(usuario.email)}</td>
-                    <td>${getPerfilNome(usuario.perfil)}</td>
-                    <td>${usuario.ativo === 'TRUE' || usuario.ativo === true ? '✅ Ativo' : '❌ Inativo'}</td>
+                    <td>${u.id}</td>
+                    <td>${Utils.escapeHtml(u.nome)}</td>
+                    <td>${Utils.escapeHtml(u.email)}</td>
+                    <td>${getPerfilNome(u.perfil)}</td>
+                    <td class="${u.ativo === 'TRUE' || u.ativo === true ? 'status-ativo' : 'status-inativo'}">
+                        ${u.ativo === 'TRUE' || u.ativo === true ? '✅ Ativo' : '❌ Inativo'}
+                    </td>
                     <td>
-                        <button class="btn btn-primary" style="margin-right: 5px;" onclick="editarUsuario(${usuario.id})">Editar</button>
-                        <button class="btn btn-danger" onclick="excluirUsuario(${usuario.id})">Excluir</button>
+                        <button class="btn btn-primary" onclick="editarUsuario(${u.id})">Editar</button>
+                        <button class="btn btn-danger" onclick="excluirUsuario(${u.id})">Excluir</button>
                     </td>
                 </tr>
             `).join('');
         }
         
-        function getPerfilNome(perfil) {
-            const perfis = {
-                'admin': 'Administrador',
-                'gestor': 'Gestor',
-                'professor': 'Professor'
-            };
-            return perfis[perfil] || perfil;
+        function getPerfilNome(p) {
+            const perfis = { admin: 'Administrador', gestor: 'Gestor', professor: 'Professor', dev: 'Desenvolvedor' };
+            return perfis[p] || p;
         }
         
         function abrirModalCadastro() {
@@ -221,34 +210,22 @@
             document.getElementById('senha').required = true;
             document.getElementById('ativo').checked = true;
             document.getElementById('perfil').value = '';
-            document.getElementById('disciplinaGroup').style.display = 'none';
-            document.getElementById('turmaGroup').style.display = 'none';
+            document.getElementById('lotacaoInfo').style.display = 'none';
             document.getElementById('modalUsuario').classList.add('active');
         }
         
         function editarUsuario(id) {
-            const usuario = usuarios.find(u => u.id == id);
-            if (!usuario) return;
-            
+            const u = usuarios.find(u => u.id == id);
+            if (!u) return;
             document.getElementById('modalTitle').textContent = 'Editar Usuário';
-            document.getElementById('usuarioId').value = usuario.id;
-            document.getElementById('nome').value = usuario.nome;
-            document.getElementById('email').value = usuario.email;
-            document.getElementById('perfil').value = usuario.perfil;
-            document.getElementById('ativo').checked = usuario.ativo === 'TRUE' || usuario.ativo === true;
+            document.getElementById('usuarioId').value = u.id;
+            document.getElementById('nome').value = u.nome;
+            document.getElementById('email').value = u.email;
+            document.getElementById('perfil').value = u.perfil;
+            document.getElementById('ativo').checked = u.ativo === 'TRUE' || u.ativo === true;
             document.getElementById('senha').required = false;
             document.getElementById('senha').value = '';
-            
-            if (usuario.perfil === 'professor') {
-                document.getElementById('disciplina_id').value = usuario.disciplina_id || '';
-                document.getElementById('turma_id').value = usuario.turma_id || '';
-                document.getElementById('disciplinaGroup').style.display = 'block';
-                document.getElementById('turmaGroup').style.display = 'block';
-            } else {
-                document.getElementById('disciplinaGroup').style.display = 'none';
-                document.getElementById('turmaGroup').style.display = 'none';
-            }
-            
+            document.getElementById('lotacaoInfo').style.display = u.perfil === 'professor' ? 'block' : 'none';
             document.getElementById('modalUsuario').classList.add('active');
         }
         
@@ -259,75 +236,26 @@
             const perfil = document.getElementById('perfil').value;
             const senha = document.getElementById('senha').value;
             const ativo = document.getElementById('ativo').checked;
-            const disciplina_id = document.getElementById('disciplina_id').value;
-            const turma_id = document.getElementById('turma_id').value;
-            
-            if (!nome || !email || !perfil) {
-                Utils.mostrarMensagem('Preencha todos os campos obrigatórios', 'error');
-                return;
-            }
-            
-            const dados = {
-                nome,
-                email,
-                perfil,
-                ativo: ativo ? 'TRUE' : 'FALSE'
-            };
-            
-            if (perfil === 'professor') {
-                dados.disciplina_id = disciplina_id;
-                dados.turma_id = turma_id;
-            }
-            
+            if (!nome || !email || !perfil) { Utils.mostrarMensagem('Preencha os campos obrigatórios', 'error'); return; }
+            const dados = { nome, email, perfil, ativo: ativo ? 'TRUE' : 'FALSE' };
             try {
                 Utils.mostrarLoading(true);
-                
-                if (id) {
-                    // Atualizar
-                    if (senha) dados.senha = senha;
-                    await API.atualizarUsuario(id, dados);
-                    Utils.mostrarMensagem('Usuário atualizado com sucesso!', 'success');
-                } else {
-                    // Criar
-                    if (!senha) {
-                        Utils.mostrarMensagem('Senha é obrigatória para novo usuário', 'error');
-                        Utils.mostrarLoading(false);
-                        return;
-                    }
-                    dados.senha = senha;
-                    await API.criarUsuario(dados);
-                    Utils.mostrarMensagem('Usuário criado com sucesso!', 'success');
-                }
-                
-                fecharModal();
-                await carregarUsuarios();
-                Utils.mostrarLoading(false);
-            } catch (error) {
-                Utils.mostrarMensagem('Erro ao salvar: ' + error.message, 'error');
-                Utils.mostrarLoading(false);
-            }
+                if (id) { if (senha) dados.senha = senha; await API.atualizarUsuario(id, dados); Utils.mostrarMensagem('Atualizado!', 'success'); }
+                else { if (!senha) { Utils.mostrarMensagem('Senha obrigatória', 'error'); Utils.mostrarLoading(false); return; } dados.senha = senha; await API.criarUsuario(dados); Utils.mostrarMensagem('Criado!', 'success'); }
+                fecharModal(); await carregarUsuarios(); Utils.mostrarLoading(false);
+            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
         }
         
         async function excluirUsuario(id) {
-            Utils.confirmarAcao('Tem certeza que deseja excluir este usuário?', async (confirmado) => {
+            Utils.confirmarAcao('Tem certeza?', async (confirmado) => {
                 if (confirmado) {
-                    try {
-                        Utils.mostrarLoading(true);
-                        await API.deletarUsuario(id);
-                        Utils.mostrarMensagem('Usuário excluído com sucesso!', 'success');
-                        await carregarUsuarios();
-                        Utils.mostrarLoading(false);
-                    } catch (error) {
-                        Utils.mostrarMensagem('Erro ao excluir: ' + error.message, 'error');
-                        Utils.mostrarLoading(false);
-                    }
+                    try { Utils.mostrarLoading(true); await API.deletarUsuario(id); Utils.mostrarMensagem('Excluído!', 'success'); await carregarUsuarios(); Utils.mostrarLoading(false); }
+                    catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
                 }
             });
         }
         
-        function fecharModal() {
-            document.getElementById('modalUsuario').classList.remove('active');
-        }
+        function fecharModal() { document.getElementById('modalUsuario').classList.remove('active'); }
     </script>
 </body>
 </html>
