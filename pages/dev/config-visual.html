@@ -2,21 +2,15 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>DEV - Configuração Visual | SAGE Planos</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
-        .header { background: #4CAF50; color: white; padding: 15px 0; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        .header .container { display: flex; justify-content: space-between; align-items: center; }
-        .btn-logout { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
         .config-container { display: grid; grid-template-columns: 280px 1fr; gap: 20px; margin-top: 20px; }
-        .config-sidebar { background: white; border-radius: 8px; padding: 20px; height: fit-content; position: sticky; top: 20px; }
+        .config-sidebar { background: white; border-radius: 8px; padding: 20px; position: sticky; top: 20px; }
         .config-sidebar h3 { margin-bottom: 15px; color: #4CAF50; }
         .config-sidebar ul { list-style: none; padding: 0; }
-        .config-sidebar li { padding: 12px; margin: 5px 0; cursor: pointer; border-radius: 5px; transition: background 0.3s; }
+        .config-sidebar li { padding: 12px; margin: 5px 0; cursor: pointer; border-radius: 5px; }
         .config-sidebar li:hover { background: #f5f5f5; }
         .config-sidebar li.active { background: #4CAF50; color: white; }
         .config-content { background: white; border-radius: 8px; padding: 20px; }
@@ -25,58 +19,87 @@
         .config-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
         .config-group label { display: block; font-weight: 500; margin-bottom: 8px; }
         .config-group input[type="color"] { width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
-        .config-group input[type="range"] { width: 200px; }
-        .config-group select { width: 100%; max-width: 300px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
-        .preview-box { background: var(--bg-color, #f5f5f5); padding: 20px; border-radius: 8px; margin-top: 20px; }
-        .preview-card { background: white; padding: 20px; margin-top: 15px; }
-        .preview-button { background: var(--primary-color, #4CAF50); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
-        .preview-button-secondary { background: var(--secondary-color, #2196F3); }
-        .btn-save { background: #4CAF50; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 20px; }
-        .status-message { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 5px; color: white; display: none; z-index: 1000; }
+        .config-group input[type="range"] { width: 100%; max-width: 300px; }
+        .config-group select { width: 100%; max-width: 300px; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        .preview-box { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .preview-card { background: white; padding: 20px; margin-top: 15px; border-radius: 8px; }
+        .preview-button { background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; margin-right: 10px; margin-bottom: 10px; min-height: 44px; }
+        .btn-save { background: #4CAF50; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; width: 100%; font-size: 16px; min-height: 48px; }
+        .status-message { position: fixed; bottom: 20px; right: 20px; left: 20px; padding: 12px 20px; border-radius: 5px; color: white; display: none; z-index: 1000; text-align: center; }
         .status-success { background: #4CAF50; }
         .status-error { background: #f44336; }
-        .loading-small { display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #4CAF50; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Menu Hamburguer para Mobile */
+        .menu-hamburger {
+            display: none;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 20px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .config-container { grid-template-columns: 1fr; }
+            .config-sidebar { 
+                position: static; 
+                display: none;
+                margin-bottom: 15px;
+            }
+            .config-sidebar.open { display: block; }
+            .menu-hamburger { display: block; }
+            .config-sidebar ul { display: flex; flex-wrap: wrap; gap: 8px; }
+            .config-sidebar li { display: inline-block; padding: 10px 15px; font-size: 14px; }
+            .preview-button { width: 100%; margin-right: 0; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="container">
-            <div class="logo"><h1>SAGE Planos</h1><p>Configuração Visual - Modo DEV</p></div>
+            <div class="logo"><h1>SAGE Planos</h1><p>Configuração Visual</p></div>
             <div class="user-info"><span id="userName">Carregando...</span><button class="btn-logout" onclick="Auth.logout()">Sair</button></div>
         </div>
     </div>
     
     <div class="container">
         <div class="config-container">
-            <div class="config-sidebar">
-                <h3>Configurações</h3>
-                <ul><li class="active" data-section="cores">🎨 Cores</li><li data-section="fontes">📝 Fontes</li><li data-section="botoes">🔘 Botões</li><li data-section="cards">🃏 Cards</li><li data-section="espacamentos">📏 Espaçamentos</li></ul>
+            <div>
+                <button class="menu-hamburger" onclick="toggleMenu()">☰ Menu de Configurações</button>
+                <div class="config-sidebar" id="configSidebar">
+                    <h3>Configurações</h3>
+                    <ul><li class="active" data-section="cores">🎨 Cores</li><li data-section="fontes">📝 Fontes</li><li data-section="botoes">🔘 Botões</li><li data-section="cards">🃏 Cards</li><li data-section="espacamentos">📏 Espaçamentos</li></ul>
+                </div>
             </div>
             <div class="config-content">
-                <div id="cores" class="config-section active"><h2>Cores do Sistema</h2>
-                    <div class="config-group"><label>Cor Primária</label><input type="color" id="cor_primaria" data-key="cor_primaria"><span id="cor_primaria_val"></span></div>
-                    <div class="config-group"><label>Cor Secundária</label><input type="color" id="cor_secundaria" data-key="cor_secundaria"><span id="cor_secundaria_val"></span></div>
-                    <div class="config-group"><label>Cor de Fundo</label><input type="color" id="cor_fundo" data-key="cor_fundo"><span id="cor_fundo_val"></span></div>
-                    <div class="config-group"><label>Cor do Texto</label><input type="color" id="cor_texto" data-key="cor_texto"><span id="cor_texto_val"></span></div>
-                    <div class="config-group"><label>Cor do Cabeçalho</label><input type="color" id="header_bg" data-key="header_bg"><span id="header_bg_val"></span></div>
+                <div id="cores" class="config-section active"><h2>Cores</h2>
+                    <div class="config-group"><label>Cor Primária</label><input type="color" id="cor_primaria"><span id="cor_primaria_val"></span></div>
+                    <div class="config-group"><label>Cor Secundária</label><input type="color" id="cor_secundaria"><span id="cor_secundaria_val"></span></div>
+                    <div class="config-group"><label>Cor de Fundo</label><input type="color" id="cor_fundo"><span id="cor_fundo_val"></span></div>
+                    <div class="config-group"><label>Cor do Texto</label><input type="color" id="cor_texto"><span id="cor_texto_val"></span></div>
+                    <div class="config-group"><label>Cor do Cabeçalho</label><input type="color" id="header_bg"><span id="header_bg_val"></span></div>
                 </div>
                 <div id="fontes" class="config-section"><h2>Fontes</h2>
-                    <div class="config-group"><label>Fonte Principal</label><select id="fonte_principal" data-key="fonte_principal"><option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option><option value="'Roboto', sans-serif">Roboto</option><option value="'Open Sans', sans-serif">Open Sans</option><option value="Arial, sans-serif">Arial</option></select></div>
-                    <div class="config-group"><label>Tamanho Base (px)</label><input type="range" id="tamanho_fonte_base" data-key="tamanho_fonte_base" min="12" max="20" step="1"><span id="tamanho_fonte_base_val">16px</span></div>
+                    <div class="config-group"><label>Fonte Principal</label><select id="fonte_principal"><option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option><option value="'Roboto', sans-serif">Roboto</option><option value="'Open Sans', sans-serif">Open Sans</option><option value="Arial, sans-serif">Arial</option></select></div>
+                    <div class="config-group"><label>Tamanho Base (px)</label><input type="range" id="tamanho_fonte_base" min="12" max="20" step="1"><span id="tamanho_fonte_base_val">16px</span></div>
                 </div>
                 <div id="botoes" class="config-section"><h2>Botões</h2>
-                    <div class="config-group"><label>Arredondamento (px)</label><input type="range" id="borda_arredondada" data-key="borda_arredondada" min="0" max="30" step="2"><span id="borda_arredondada_val">8px</span></div>
-                    <div class="config-group"><label>Padding (px)</label><input type="range" id="botao_padding" data-key="botao_padding" min="6" max="20" step="1"><span id="botao_padding_val">12px</span></div>
+                    <div class="config-group"><label>Arredondamento (px)</label><input type="range" id="borda_arredondada" min="0" max="30" step="2"><span id="borda_arredondada_val">8px</span></div>
+                    <div class="config-group"><label>Padding (px)</label><input type="range" id="botao_padding" min="6" max="20" step="1"><span id="botao_padding_val">12px</span></div>
                 </div>
                 <div id="cards" class="config-section"><h2>Cards</h2>
-                    <div class="config-group"><label>Sombra</label><select id="card_sombra" data-key="card_sombra"><option value="none">Sem sombra</option><option value="0 2px 4px rgba(0,0,0,0.1)">Leve</option><option value="0 4px 8px rgba(0,0,0,0.15)">Média</option><option value="0 8px 16px rgba(0,0,0,0.2)">Forte</option></select></div>
-                    <div class="config-group"><label>Arredondamento (px)</label><input type="range" id="card_radius" data-key="card_radius" min="0" max="30" step="2"><span id="card_radius_val">8px</span></div>
+                    <div class="config-group"><label>Sombra</label><select id="card_sombra"><option value="none">Sem sombra</option><option value="0 2px 4px rgba(0,0,0,0.1)">Leve</option><option value="0 4px 8px rgba(0,0,0,0.15)">Média</option><option value="0 8px 16px rgba(0,0,0,0.2)">Forte</option></select></div>
+                    <div class="config-group"><label>Arredondamento (px)</label><input type="range" id="card_radius" min="0" max="30" step="2"><span id="card_radius_val">8px</span></div>
                 </div>
                 <div id="espacamentos" class="config-section"><h2>Espaçamentos</h2>
-                    <div class="config-group"><label>Espaçamento Padrão (px)</label><input type="range" id="espacamento_padrao" data-key="espacamento_padrao" min="10" max="40" step="2"><span id="espacamento_padrao_val">20px</span></div>
+                    <div class="config-group"><label>Espaçamento Padrão (px)</label><input type="range" id="espacamento_padrao" min="10" max="40" step="2"><span id="espacamento_padrao_val">20px</span></div>
                 </div>
-                <div class="preview-box" id="previewBox"><h3>Pré-visualização</h3><button class="preview-button">Botão Primário</button><button class="preview-button preview-button-secondary">Botão Secundário</button><div class="preview-card"><h4>Card de Exemplo</h4><p>Exemplo de card com as configurações atuais.</p></div></div>
+                <div class="preview-box"><h3>Pré-visualização</h3><button class="preview-button">Primário</button><button class="preview-button preview-button-secondary">Secundário</button><div class="preview-card"><h4>Card</h4><p>Exemplo com configurações atuais.</p></div></div>
                 <button class="btn-save" onclick="salvarConfiguracoes()">💾 Salvar Configurações</button>
             </div>
         </div>
@@ -89,7 +112,11 @@
     <script src="../../assets/js/utils.js"></script>
     <script>
         let configAtual = {};
-        let loading = false;
+        
+        function toggleMenu() {
+            const sidebar = document.getElementById('configSidebar');
+            sidebar.classList.toggle('open');
+        }
         
         document.addEventListener('DOMContentLoaded', async function() {
             if (!Auth.verificarAcesso()) return;
@@ -97,58 +124,15 @@
             if (usuario.perfil !== 'dev' && usuario.perfil !== 'admin') { Auth.redirecionarPorPerfil(); return; }
             document.getElementById('userName').textContent = usuario.nome;
             await carregarConfiguracoes();
-            setupEventListeners();
-            setupSidebarNavigation();
+            document.querySelectorAll('[data-key]').forEach(input => { input.addEventListener('change', function() { const key = this.dataset.key; let valor = this.value; configAtual[key] = valor; aplicarPreview(); }); });
+            document.querySelectorAll('.config-sidebar li').forEach(item => { item.addEventListener('click', function() { document.querySelectorAll('.config-sidebar li').forEach(i => i.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.config-section').forEach(s => s.classList.remove('active')); document.getElementById(this.dataset.section).classList.add('active'); if (window.innerWidth <= 768) { document.getElementById('configSidebar').classList.remove('open'); } }); });
         });
         
         async function carregarConfiguracoes() {
             try {
-                mostrarLoading(true);
                 const result = await API.getConfigVisual();
-                if (result.success && result.dados) {
-                    result.dados.forEach(item => {
-                        configAtual[item.chave] = item.valor;
-                        const el = document.querySelector(`[data-key="${item.chave}"]`);
-                        if (el) {
-                            if (el.type === 'color') { el.value = item.valor; const span = document.getElementById(`${item.chave}_val`); if(span) span.textContent = item.valor; }
-                            else if (el.type === 'range') { el.value = item.valor; const span = document.getElementById(`${item.chave}_val`); if(span) span.textContent = `${item.valor}px`; }
-                            else { el.value = item.valor; }
-                        }
-                    });
-                    aplicarPreview();
-                }
-                mostrarLoading(false);
-            } catch (error) { console.error('Erro:', error); mostrarLoading(false); Utils.mostrarMensagem('Erro ao carregar configurações', 'error'); }
-        }
-        
-        function mostrarLoading(show) {
-            loading = show;
-            const btn = document.querySelector('.btn-save');
-            if (btn) btn.disabled = show;
-        }
-        
-        function setupEventListeners() {
-            document.querySelectorAll('[data-key]').forEach(input => {
-                input.addEventListener('change', function() {
-                    const key = this.dataset.key;
-                    let valor = this.value;
-                    if (this.type === 'range') { const span = document.getElementById(`${key}_val`); if(span) span.textContent = `${valor}px`; }
-                    else if (this.type === 'color') { const span = document.getElementById(`${key}_val`); if(span) span.textContent = valor; }
-                    configAtual[key] = valor;
-                    aplicarPreview();
-                });
-            });
-        }
-        
-        function setupSidebarNavigation() {
-            document.querySelectorAll('.config-sidebar li').forEach(item => {
-                item.addEventListener('click', function() {
-                    document.querySelectorAll('.config-sidebar li').forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                    document.querySelectorAll('.config-section').forEach(s => s.classList.remove('active'));
-                    document.getElementById(this.dataset.section).classList.add('active');
-                });
-            });
+                if (result.success && result.dados) { result.dados.forEach(item => { configAtual[item.chave] = item.valor; const el = document.querySelector(`[data-key="${item.chave}"]`); if (el) { if (el.type === 'color') { el.value = item.valor; const span = document.getElementById(`${item.chave}_val`); if(span) span.textContent = item.valor; } else if (el.type === 'range') { el.value = item.valor; const span = document.getElementById(`${item.chave}_val`); if(span) span.textContent = `${item.valor}px`; } else { el.value = item.valor; } } }); aplicarPreview(); }
+            } catch (error) { console.error('Erro:', error); Utils.mostrarMensagem('Erro ao carregar', 'error'); }
         }
         
         function aplicarPreview() {
@@ -163,32 +147,17 @@
             if (configAtual.card_sombra) root.style.setProperty('--card-shadow', configAtual.card_sombra);
             if (configAtual.card_radius) root.style.setProperty('--card-radius', `${configAtual.card_radius}px`);
             if (configAtual.espacamento_padrao) root.style.setProperty('--spacing', `${configAtual.espacamento_padrao}px`);
-            
-            const previewBox = document.getElementById('previewBox');
-            if (previewBox) { previewBox.style.backgroundColor = configAtual.cor_fundo || '#f5f5f5'; previewBox.style.fontFamily = configAtual.fonte_principal || "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"; previewBox.style.fontSize = `${configAtual.tamanho_fonte_base || 16}px`; }
-            const previewCard = document.querySelector('.preview-card'); if(previewCard) { previewCard.style.borderRadius = `${configAtual.card_radius || 8}px`; previewCard.style.boxShadow = configAtual.card_sombra || '0 2px 4px rgba(0,0,0,0.1)'; }
-            const btns = document.querySelectorAll('.preview-button'); btns.forEach(btn => { btn.style.borderRadius = `${configAtual.borda_arredondada || 8}px`; btn.style.padding = `${configAtual.botao_padding || 12}px 24px`; });
-            const primaryBtn = document.querySelector('.preview-button:first-child'); if(primaryBtn) primaryBtn.style.backgroundColor = configAtual.cor_primaria || '#4CAF50';
-            const secondaryBtn = document.querySelector('.preview-button-secondary'); if(secondaryBtn) secondaryBtn.style.backgroundColor = configAtual.cor_secundaria || '#2196F3';
-            const header = document.querySelector('.header'); if(header && configAtual.header_bg) header.style.backgroundColor = configAtual.header_bg;
+            const header = document.querySelector('.header'); if (header && configAtual.header_bg) header.style.backgroundColor = configAtual.header_bg;
+            document.querySelectorAll('.preview-button:first-child').forEach(btn => btn.style.backgroundColor = configAtual.cor_primaria);
+            document.querySelectorAll('.preview-button-secondary').forEach(btn => btn.style.backgroundColor = configAtual.cor_secundaria);
         }
         
         async function salvarConfiguracoes() {
-            if (loading) return;
             try {
-                mostrarLoading(true);
-                for (const [chave, valor] of Object.entries(configAtual)) {
-                    await API.salvarConfigVisual(chave, valor);
-                }
-                const result = await API.getConfigVisual();
-                if (result.success && result.dados) Utils.aplicarTema(result.dados);
-                const msg = document.getElementById('statusMessage');
-                msg.textContent = 'Configurações salvas com sucesso!';
-                msg.className = 'status-message status-success';
-                msg.style.display = 'block';
-                setTimeout(() => msg.style.display = 'none', 3000);
-                mostrarLoading(false);
-            } catch (error) { mostrarLoading(false); const msg = document.getElementById('statusMessage'); msg.textContent = 'Erro ao salvar: ' + error.message; msg.className = 'status-message status-error'; msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
+                for (const [chave, valor] of Object.entries(configAtual)) await API.salvarConfigVisual(chave, valor);
+                const result = await API.getConfigVisual(); if (result.success && result.dados) Utils.aplicarTema(result.dados);
+                const msg = document.getElementById('statusMessage'); msg.textContent = '✅ Configurações salvas!'; msg.className = 'status-message status-success'; msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000);
+            } catch (error) { const msg = document.getElementById('statusMessage'); msg.textContent = '❌ Erro: ' + error.message; msg.className = 'status-message status-error'; msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
         }
     </script>
 </body>
