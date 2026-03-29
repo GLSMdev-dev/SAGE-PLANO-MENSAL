@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>SAGE Planos - Sistema de Gestão de Planos de Aula</title>
-    <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        /* Estilos específicos para a página de login */
         * {
             margin: 0;
             padding: 0;
@@ -198,28 +196,17 @@
             }
         }
         
-        // Aguardar carregamento da configuração
         document.addEventListener('DOMContentLoaded', function() {
-            // Carregar tema
             carregarTema();
             
-            // Verificação de segurança: garantir que a API_KEY não está exposta
             if (window.APP_CONFIG) {
                 if (window.APP_CONFIG.API_KEY) {
-                    console.warn('⚠️ ATENÇÃO: API_KEY exposta no frontend - isso é um problema de segurança!');
-                    console.warn('⚠️ Por favor, remova a API_KEY do arquivo config.js');
+                    console.warn('⚠️ ATENÇÃO: API_KEY exposta no frontend!');
                 } else {
-                    console.log('✅ Configuração carregada com segurança. Nenhuma credencial sensível exposta.');
+                    console.log('✅ Configuração carregada com segurança.');
                 }
-                
-                if (!window.APP_CONFIG.API_URL) {
-                    console.error('❌ API_URL não configurada. Verifique o arquivo config.js');
-                }
-            } else {
-                console.error('❌ Configuração não carregada. Verifique se o arquivo config.js existe.');
             }
             
-            // Verificar se já está logado
             const usuario = Auth.getUsuarioLogado();
             if (usuario) {
                 Auth.redirecionarPorPerfil();
@@ -253,7 +240,6 @@
                         loading.classList.remove('active');
                     }
                 } catch (error) {
-                    console.error('Erro durante login:', error);
                     errorMessage.textContent = 'Erro de conexão. Tente novamente.';
                     errorMessage.style.display = 'block';
                     btnLogin.disabled = false;
