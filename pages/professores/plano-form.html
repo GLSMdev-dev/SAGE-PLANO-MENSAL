@@ -6,10 +6,65 @@
     <title>Professor - Formulário de Plano | SAGE Planos</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
-        .semana-section { background: #f9f9f9; padding: 20px; margin-bottom: 20px; border-radius: 8px; border-left: 4px solid #4CAF50; }
-        .semana-title { font-size: 18px; font-weight: bold; color: #4CAF50; margin-bottom: 15px; }
-        .form-group textarea { min-height: 100px; resize: vertical; }
-        .btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .info-card {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4CAF50;
+        }
+        .semana-section {
+            background: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .semana-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .aulas-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .row-2cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
     </style>
 </head>
 <body>
@@ -23,14 +78,67 @@
     <div class="container">
         <form id="formPlano">
             <input type="hidden" id="planoId">
-            <div class="card">
-                <div class="form-group"><label>Disciplina *</label><select id="disciplina_id" required><option value="">Selecione...</option></select></div>
-                <div class="form-group"><label>Turma *</label><select id="turma_id" required><option value="">Selecione...</option></select></div>
-                <div class="form-group"><label>Mês *</label><select id="mes_referencia" required><option value="">Selecione...</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
-                <div class="form-group"><label>Ano *</label><input type="number" id="ano_referencia" required value="2026" min="2020" max="2030"></div>
+            
+            <div class="info-card" id="infoLotacao">
+                <strong>📌 Sua lotação atual será usada para este plano.</strong>
             </div>
+            
+            <div class="card">
+                <div class="row-2cols">
+                    <div class="form-group">
+                        <label>Disciplina *</label>
+                        <select id="disciplina_id" required onchange="carregarCargaHoraria()">
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Série *</label>
+                        <select id="serie" required onchange="carregarCargaHoraria()">
+                            <option value="">Selecione...</option>
+                            <option value="1ª Série">1ª Série</option>
+                            <option value="2ª Série">2ª Série</option>
+                            <option value="3ª Série">3ª Série</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row-2cols">
+                    <div class="form-group">
+                        <label>Mês *</label>
+                        <select id="mes_referencia" required>
+                            <option value="">Selecione...</option>
+                            <option value="1">Janeiro</option>
+                            <option value="2">Fevereiro</option>
+                            <option value="3">Março</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Maio</option>
+                            <option value="6">Junho</option>
+                            <option value="7">Julho</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ano *</label>
+                        <input type="number" id="ano_referencia" required value="2026" min="2020" max="2030">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>📖 Conteúdo Programático do Mês</label>
+                    <textarea id="conteudo_mensal" rows="3" placeholder="Descreva o conteúdo programático para todo o mês..."></textarea>
+                </div>
+            </div>
+            
             <div id="semanasContainer"></div>
-            <div class="btn-group"><button type="button" class="btn btn-secondary" onclick="window.location.href='planos.html'">Cancelar</button><button type="button" class="btn btn-primary" onclick="salvarPlano('rascunho')">Salvar Rascunho</button><button type="button" class="btn btn-success" onclick="salvarPlano('enviado')">Salvar e Enviar</button></div>
+            
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='planos.html'">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarPlano('rascunho')">💾 Salvar Rascunho</button>
+                <button type="button" class="btn btn-success" onclick="salvarPlano('enviado')">📤 Salvar e Enviar</button>
+            </div>
         </form>
     </div>
     
@@ -39,7 +147,9 @@
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/utils.js"></script>
     <script>
-        let usuario = null, planoId = null, lotacoes = [], disciplinas = [], turmas = [];
+        let usuario = null, planoId = null;
+        let lotacoes = [], disciplinas = [], turmas = [], cargas = [];
+        let cargaAtual = null;
         
         document.addEventListener('DOMContentLoaded', async function() {
             if (!Auth.verificarAcesso()) return;
@@ -57,89 +167,174 @@
         async function carregarDados() {
             try {
                 Utils.mostrarLoading(true);
-                const [lotacoesRes, discRes, turmasRes] = await Promise.all([API.listarLotacoes(), API.listarDisciplinas(), API.listarTurmas()]);
-                lotacoes = (lotacoesRes.dados || []).filter(l => l.professor_id == usuario.id && l.ativo === 'TRUE');
+                const [lotacoesRes, discRes, turmasRes, cargasRes] = await Promise.all([
+                    API.listarLotacoes(), API.listarDisciplinas(), API.listarTurmas(), API.getCargasHorarias()
+                ]);
+                
+                lotacoes = (lotacoesRes.dados || []).filter(l => l.professor_id == usuario.id && (l.ativo === 'TRUE' || l.ativo === true));
                 disciplinas = discRes.dados || [];
                 turmas = turmasRes.dados || [];
+                cargas = cargasRes.dados || [];
                 
                 const selectDisc = document.getElementById('disciplina_id');
                 const discIds = [...new Set(lotacoes.map(l => l.disciplina_id))];
-                discIds.forEach(discId => { const d = disciplinas.find(d => d.id == discId); if(d) selectDisc.innerHTML += `<option value="${d.id}">${d.nome}</option>`; });
+                discIds.forEach(discId => {
+                    const disc = disciplinas.find(d => d.id == discId);
+                    if (disc) selectDisc.innerHTML += `<option value="${disc.id}">${disc.nome}</option>`;
+                });
                 
                 if (planoId) await carregarPlano(planoId);
-                else criarFormularioSemanas();
                 
-                document.getElementById('disciplina_id').addEventListener('change', atualizarTurmasPorDisciplina);
                 Utils.mostrarLoading(false);
-            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+            } catch (error) {
+                Utils.mostrarMensagem('Erro: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
         }
         
-        function atualizarTurmasPorDisciplina() {
+        async function carregarCargaHoraria() {
             const discId = document.getElementById('disciplina_id').value;
-            const selectTurma = document.getElementById('turma_id');
-            selectTurma.innerHTML = '<option value="">Selecione...</option>';
-            const lotacoesFiltradas = lotacoes.filter(l => l.disciplina_id == discId);
-            const turmaIds = [...new Set(lotacoesFiltradas.map(l => l.turma_id))];
-            turmaIds.forEach(turmaId => { const t = turmas.find(t => t.id == turmaId); if(t) selectTurma.innerHTML += `<option value="${t.id}">${t.nome}</option>`; });
+            const serie = document.getElementById('serie').value;
+            
+            if (discId && serie) {
+                cargaAtual = cargas.find(c => c.disciplina_id == discId && c.serie == serie);
+                const aulas = cargaAtual ? cargaAtual.aulas_semana : 0;
+                document.getElementById('infoLotacao').innerHTML = `
+                    <strong>📌 Plano para:</strong> ${disciplinas.find(d => d.id == discId)?.nome} - ${serie}<br>
+                    <strong>📊 Carga horária:</strong> ${aulas} aulas por semana
+                `;
+                gerarFormularioSemanas(aulas);
+            } else {
+                document.getElementById('infoLotacao').innerHTML = '<strong>📌 Selecione disciplina e série para continuar.</strong>';
+                document.getElementById('semanasContainer').innerHTML = '';
+            }
         }
         
-        function criarFormularioSemanas(dados = null) {
+        function gerarFormularioSemanas(aulasPorSemana) {
             const container = document.getElementById('semanasContainer');
             container.innerHTML = '';
-            for(let i=1;i<=4;i++) {
-                const div = document.createElement('div'); div.className = 'semana-section';
-                div.innerHTML = `<div class="semana-title">Semana ${i}</div><div class="form-group"><label>Conteúdo Programático</label><textarea id="semana_${i}_conteudo">${dados ? (dados[`semana_${i}_conteudo`]||'') : ''}</textarea></div><div class="form-group"><label>Objetivos</label><textarea id="semana_${i}_objetivos">${dados ? (dados[`semana_${i}_objetivos`]||'') : ''}</textarea></div><div class="form-group"><label>Metodologia</label><textarea id="semana_${i}_metodologia">${dados ? (dados[`semana_${i}_metodologia`]||'') : ''}</textarea></div><div class="form-group"><label>Avaliação</label><textarea id="semana_${i}_avaliacao">${dados ? (dados[`semana_${i}_avaliacao`]||'') : ''}</textarea></div>`;
+            
+            for (let semana = 1; semana <= 4; semana++) {
+                const div = document.createElement('div');
+                div.className = 'semana-section';
+                div.innerHTML = `
+                    <div class="semana-title">
+                        Semana ${semana}
+                        <span class="aulas-badge">${aulasPorSemana} aula(s) nesta semana</span>
+                    </div>
+                    <div class="form-group">
+                        <label>📌 Sub-conteúdo da Semana</label>
+                        <textarea id="semana_${semana}_conteudo" rows="2" placeholder="Conteúdo específico desta semana..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>🎯 Metodologia / Estratégias</label>
+                        <textarea id="semana_${semana}_metodologia" rows="2" placeholder="Como será desenvolvida a aula? Quais atividades?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>📚 Recursos Didáticos</label>
+                        <textarea id="semana_${semana}_recursos" rows="2" placeholder="Materiais, tecnologias, equipamentos..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>📝 Avaliação</label>
+                        <textarea id="semana_${semana}_avaliacao" rows="2" placeholder="Como será avaliada a aprendizagem?"></textarea>
+                    </div>
+                `;
                 container.appendChild(div);
             }
         }
         
         async function carregarPlano(id) {
-            try { const result = await API.listarPlanos(); const plano = (result.dados || []).find(p => p.id == id);
-                if(plano && plano.professor_id == usuario.id) {
+            try {
+                const result = await API.listarPlanos();
+                const plano = (result.dados || []).find(p => p.id == id);
+                if (plano && plano.professor_id == usuario.id) {
                     document.getElementById('planoId').value = plano.id;
                     document.getElementById('disciplina_id').value = plano.disciplina_id;
-                    atualizarTurmasPorDisciplina();
-                    setTimeout(() => { document.getElementById('turma_id').value = plano.turma_id; }, 100);
+                    document.getElementById('serie').value = plano.serie || '';
                     document.getElementById('mes_referencia').value = plano.mes_referencia;
                     document.getElementById('ano_referencia').value = plano.ano_referencia;
-                    criarFormularioSemanas(plano);
-                    if(plano.status === 'enviado' || plano.status === 'aprovado') desabilitarFormulario();
-                } else { Utils.mostrarMensagem('Plano não encontrado', 'error'); window.location.href='planos.html'; }
-            } catch(e) { Utils.mostrarMensagem('Erro: '+e.message,'error'); }
+                    document.getElementById('conteudo_mensal').value = plano.conteudo_mensal || '';
+                    
+                    await carregarCargaHoraria();
+                    
+                    for (let i = 1; i <= 4; i++) {
+                        const conteudo = document.getElementById(`semana_${i}_conteudo`);
+                        const metodologia = document.getElementById(`semana_${i}_metodologia`);
+                        const recursos = document.getElementById(`semana_${i}_recursos`);
+                        const avaliacao = document.getElementById(`semana_${i}_avaliacao`);
+                        if (conteudo) conteudo.value = plano[`semana_${i}_conteudo`] || '';
+                        if (metodologia) metodologia.value = plano[`semana_${i}_metodologia`] || '';
+                        if (recursos) recursos.value = plano[`semana_${i}_recursos`] || '';
+                        if (avaliacao) avaliacao.value = plano[`semana_${i}_avaliacao`] || '';
+                    }
+                    
+                    if (plano.status === 'enviado' || plano.status === 'aprovado') desabilitarFormulario();
+                }
+            } catch (error) {
+                Utils.mostrarMensagem('Erro: ' + error.message, 'error');
+            }
         }
         
         function desabilitarFormulario() {
-            document.getElementById('disciplina_id').disabled = true;
-            document.getElementById('turma_id').disabled = true;
-            document.getElementById('mes_referencia').disabled = true;
-            document.getElementById('ano_referencia').disabled = true;
-            for(let i=1;i<=4;i++) { document.getElementById(`semana_${i}_conteudo`).disabled = true; document.getElementById(`semana_${i}_objetivos`).disabled = true; document.getElementById(`semana_${i}_metodologia`).disabled = true; document.getElementById(`semana_${i}_avaliacao`).disabled = true; }
-            document.querySelectorAll('.btn-group button').forEach(b => b.style.display = 'none');
+            document.querySelectorAll('#formPlano input, #formPlano select, #formPlano textarea').forEach(el => el.disabled = true);
+            document.querySelectorAll('.btn-group button').forEach(btn => btn.style.display = 'none');
+            Utils.mostrarMensagem('Este plano não pode mais ser editado.', 'warning');
         }
         
         function coletarDados() {
             const disciplina_id = document.getElementById('disciplina_id').value;
-            const turma_id = document.getElementById('turma_id').value;
+            const serie = document.getElementById('serie').value;
             const mes = document.getElementById('mes_referencia').value;
             const ano = document.getElementById('ano_referencia').value;
-            if(!disciplina_id || !turma_id || !mes || !ano) { Utils.mostrarMensagem('Preencha disciplina, turma, mês e ano', 'error'); return null; }
-            const dados = { professor_id: usuario.id, disciplina_id, turma_id, mes_referencia: parseInt(mes), ano_referencia: parseInt(ano) };
-            for(let i=1;i<=4;i++) { dados[`semana_${i}_conteudo`] = document.getElementById(`semana_${i}_conteudo`).value; dados[`semana_${i}_objetivos`] = document.getElementById(`semana_${i}_objetivos`).value; dados[`semana_${i}_metodologia`] = document.getElementById(`semana_${i}_metodologia`).value; dados[`semana_${i}_avaliacao`] = document.getElementById(`semana_${i}_avaliacao`).value; }
+            const conteudo_mensal = document.getElementById('conteudo_mensal').value;
+            
+            if (!disciplina_id || !serie || !mes || !ano) {
+                Utils.mostrarMensagem('Preencha disciplina, série, mês e ano', 'error');
+                return null;
+            }
+            
+            const turmaRelacionada = turmas.find(t => t.serie === serie);
+            
+            const dados = {
+                professor_id: usuario.id,
+                disciplina_id,
+                turma_id: turmaRelacionada?.id || '',
+                serie: serie,
+                mes_referencia: parseInt(mes),
+                ano_referencia: parseInt(ano),
+                conteudo_mensal: conteudo_mensal
+            };
+            
+            for (let i = 1; i <= 4; i++) {
+                dados[`semana_${i}_conteudo`] = document.getElementById(`semana_${i}_conteudo`)?.value || '';
+                dados[`semana_${i}_metodologia`] = document.getElementById(`semana_${i}_metodologia`)?.value || '';
+                dados[`semana_${i}_recursos`] = document.getElementById(`semana_${i}_recursos`)?.value || '';
+                dados[`semana_${i}_avaliacao`] = document.getElementById(`semana_${i}_avaliacao`)?.value || '';
+            }
+            
             return dados;
         }
         
         async function salvarPlano(status) {
             const id = document.getElementById('planoId').value;
             const dados = coletarDados();
-            if(!dados) return;
+            if (!dados) return;
             dados.status = status;
-            try { Utils.mostrarLoading(true);
-                if(id) await API.atualizarPlano(id, dados);
-                else await API.criarPlano(dados);
-                Utils.mostrarMensagem(status === 'enviado' ? 'Plano enviado!' : 'Salvo com sucesso!', 'success');
+            
+            try {
+                Utils.mostrarLoading(true);
+                if (id) {
+                    await API.atualizarPlano(id, dados);
+                } else {
+                    await API.criarPlano(dados);
+                }
+                Utils.mostrarMensagem(status === 'enviado' ? 'Plano enviado para o gestor!' : 'Rascunho salvo!', 'success');
                 setTimeout(() => { window.location.href = 'planos.html'; }, 1500);
                 Utils.mostrarLoading(false);
-            } catch(error) { Utils.mostrarMensagem('Erro: '+error.message,'error'); Utils.mostrarLoading(false); }
+            } catch (error) {
+                Utils.mostrarMensagem('Erro: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
         }
     </script>
 </body>
