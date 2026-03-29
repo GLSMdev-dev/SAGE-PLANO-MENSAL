@@ -130,4 +130,21 @@
         
         function visualizarPlano(id) { planoAtual = planos.find(p => p.id == id); if(!planoAtual) return;
             let html = `<h2>Plano de Aula</h2><p><strong>Período:</strong> ${getMesNome(planoAtual.mes_referencia)}/${planoAtual.ano_referencia}</p><p><strong>Status:</strong> ${getStatusNome(planoAtual.status)}</p>${planoAtual.feedback_gestor ? `<p><strong>Feedback:</strong> ${planoAtual.feedback_gestor}</p>` : ''}<hr>`;
-            for(let i=1;i<=4;i++) html += `<div class="semana-card"><div class="semana-title">Semana ${i}</div><p><strong>Conteúdo:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_conteudo`] || '-')}</p><p><strong>Objetivos:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_objetivos`] || '-')}</p><p><strong>Metodologia:</strong><br>${Utils.escapeHtml(planoAtual[
+            for(let i=1;i<=4;i++) html += `<div class="semana-card"><div class="semana-title">Semana ${i}</div><p><strong>Conteúdo:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_conteudo`] || '-')}</p><p><strong>Objetivos:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_objetivos`] || '-')}</p><p><strong>Metodologia:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_metodologia`] || '-')}</p><p><strong>Avaliação:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_avaliacao`] || '-')}</p></div>`;
+            document.getElementById('planoConteudo').innerHTML = html;
+            document.getElementById('btnEditar').style.display = (planoAtual.status === 'rascunho' || planoAtual.status === 'revisar') ? 'inline-block' : 'none';
+            document.getElementById('modalPlano').classList.add('active');
+        }
+        
+        function editarPlano() { if(planoAtual) window.location.href = `plano-form.html?id=${planoAtual.id}`; }
+        function editarPlanoById(id) { window.location.href = `plano-form.html?id=${id}`; }
+        
+        async function enviarPlano(id) { Utils.confirmarAcao('Enviar plano para o gestor?', async (c) => { if(c) { try { Utils.mostrarLoading(true); await API.atualizarPlano(id, { status: 'enviado' }); Utils.mostrarMensagem('Enviado!', 'success'); await carregarDados(); Utils.mostrarLoading(false); } catch(e) { Utils.mostrarMensagem('Erro: '+e.message,'error'); Utils.mostrarLoading(false); } } }); }
+        
+        async function excluirPlano(id) { Utils.confirmarAcao('Excluir plano?', async (c) => { if(c) { try { Utils.mostrarLoading(true); await API.deletarPlano(id); Utils.mostrarMensagem('Excluído!', 'success'); await carregarDados(); Utils.mostrarLoading(false); } catch(e) { Utils.mostrarMensagem('Erro: '+e.message,'error'); Utils.mostrarLoading(false); } } }); }
+        
+        function imprimirPlano() { const c = document.getElementById('planoConteudo').innerHTML; const w = window.open('', '_blank'); w.document.write(`<html><head><title>Plano de Aula</title><style>body{font-family:Arial;padding:20px} .semana-card{background:#f9f9f9;padding:15px;margin-bottom:15px;border-left:3px solid #4CAF50}</style></head><body>${c}</body></html>`); w.document.close(); w.print(); }
+        function fecharModal() { document.getElementById('modalPlano').classList.remove('active'); }
+    </script>
+</body>
+</html>
