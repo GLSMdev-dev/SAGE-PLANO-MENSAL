@@ -18,6 +18,7 @@
         .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
         .semana-card { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 5px; border-left: 3px solid #4CAF50; }
         .semana-title { font-weight: bold; margin-bottom: 10px; color: #4CAF50; }
+        .conteudo-mensal { background: #e8f5e9; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -29,14 +30,14 @@
     </div>
     
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
             <h2>Meus Planos de Aula</h2>
             <button class="btn btn-primary" onclick="window.location.href='plano-form.html'">+ Novo Plano</button>
         </div>
         
         <div class="filtros">
             <select id="filtroDisciplina"><option value="">Todas disciplinas</option></select>
-            <select id="filtroTurma"><option value="">Todas turmas</option></select>
+            <select id="filtroSerie"><option value="">Todas séries</option><option value="1ª Série">1ª Série</option><option value="2ª Série">2ª Série</option><option value="3ª Série">3ª Série</option></select>
             <select id="filtroStatus"><option value="">Todos status</option><option value="rascunho">Rascunho</option><option value="enviado">Enviado</option><option value="aprovado">Aprovado</option><option value="revisar">Revisar</option></select>
             <select id="filtroMes"><option value="">Todos meses</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select>
         </div>
@@ -57,7 +58,7 @@
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/utils.js"></script>
     <script>
-        let planos = [], disciplinas = [], turmas = [], lotacoes = [], usuario = null, planoAtual = null;
+        let planos = [], disciplinas = [], usuario = null, planoAtual = null, lotacoes = [];
         
         document.addEventListener('DOMContentLoaded', async function() {
             if (!Auth.verificarAcesso()) return;
@@ -66,7 +67,7 @@
             document.getElementById('userName').textContent = usuario.nome;
             await carregarDados();
             document.getElementById('filtroDisciplina').addEventListener('change', aplicarFiltros);
-            document.getElementById('filtroTurma').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtroSerie').addEventListener('change', aplicarFiltros);
             document.getElementById('filtroStatus').addEventListener('change', aplicarFiltros);
             document.getElementById('filtroMes').addEventListener('change', aplicarFiltros);
         });
@@ -74,21 +75,16 @@
         async function carregarDados() {
             try {
                 Utils.mostrarLoading(true);
-                const [planosRes, discRes, turmasRes, lotacoesRes] = await Promise.all([
-                    API.listarPlanos(), API.listarDisciplinas(), API.listarTurmas(), API.listarLotacoes()
+                const [planosRes, discRes, lotacoesRes] = await Promise.all([
+                    API.listarPlanos(), API.listarDisciplinas(), API.listarLotacoes()
                 ]);
                 planos = (planosRes.dados || []).filter(p => p.professor_id == usuario.id);
                 disciplinas = discRes.dados || [];
-                turmas = turmasRes.dados || [];
                 lotacoes = (lotacoesRes.dados || []).filter(l => l.professor_id == usuario.id);
                 
                 const selectDisc = document.getElementById('filtroDisciplina');
                 const discUnicas = [...new Set(lotacoes.map(l => l.disciplina_id))];
                 discUnicas.forEach(discId => { const disc = disciplinas.find(d => d.id == discId); if(disc) selectDisc.innerHTML += `<option value="${discId}">${disc.nome}</option>`; });
-                
-                const selectTurma = document.getElementById('filtroTurma');
-                const turmasUnicas = [...new Set(lotacoes.map(l => l.turma_id))];
-                turmasUnicas.forEach(turmaId => { const turma = turmas.find(t => t.id == turmaId); if(turma) selectTurma.innerHTML += `<option value="${turmaId}">${turma.nome}</option>`; });
                 
                 aplicarFiltros();
                 Utils.mostrarLoading(false);
@@ -97,13 +93,13 @@
         
         function aplicarFiltros() {
             const discId = document.getElementById('filtroDisciplina').value;
-            const turmaId = document.getElementById('filtroTurma').value;
+            const serie = document.getElementById('filtroSerie').value;
             const status = document.getElementById('filtroStatus').value;
             const mes = document.getElementById('filtroMes').value;
             
             let filtrados = [...planos];
             if (discId) filtrados = filtrados.filter(p => p.disciplina_id == discId);
-            if (turmaId) filtrados = filtrados.filter(p => p.turma_id == turmaId);
+            if (serie) filtrados = filtrados.filter(p => p.serie === serie);
             if (status) filtrados = filtrados.filter(p => p.status === status);
             if (mes) filtrados = filtrados.filter(p => p.mes_referencia == mes);
             renderizarPlanos(filtrados);
@@ -114,10 +110,10 @@
             if (!planosFiltrados.length) { container.innerHTML = '<div class="card">Nenhum plano encontrado</div>'; return; }
             container.innerHTML = planosFiltrados.map(p => {
                 const disc = disciplinas.find(d => d.id == p.disciplina_id);
-                const turma = turmas.find(t => t.id == p.turma_id);
                 return `
                     <div class="plano-card">
-                        <div class="plano-header"><div><strong>${disc ? disc.nome : '-'}</strong> | ${turma ? turma.nome : '-'}<br><small>${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small></div><span class="status-badge status-${p.status}">${getStatusNome(p.status)}</span></div>
+                        <div class="plano-header"><div><strong>${disc ? disc.nome : '-'}</strong> | ${p.serie || '-'}<br><small>${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small></div><span class="status-badge status-${p.status}">${getStatusNome(p.status)}</span></div>
+                        ${p.conteudo_mensal ? `<div class="conteudo-mensal"><strong>📖 Conteúdo do mês:</strong><br>${Utils.escapeHtml(p.conteudo_mensal)}</div>` : ''}
                         ${p.feedback_gestor ? `<div class="feedback-area"><strong>📝 Feedback:</strong><br>${Utils.escapeHtml(p.feedback_gestor)}</div>` : ''}
                         <div class="btn-group"><button class="btn btn-secondary" onclick="visualizarPlano(${p.id})">Visualizar</button>${p.status === 'rascunho' ? `<button class="btn btn-primary" onclick="editarPlanoById(${p.id})">Editar</button><button class="btn btn-success" onclick="enviarPlano(${p.id})">Enviar</button><button class="btn btn-danger" onclick="excluirPlano(${p.id})">Excluir</button>` : ''}${p.status === 'revisar' ? `<button class="btn btn-primary" onclick="editarPlanoById(${p.id})">Revisar</button>` : ''}</div>
                     </div>
@@ -129,8 +125,9 @@
         function getStatusNome(s) { const nomes = { rascunho: 'Rascunho', enviado: 'Enviado', aprovado: 'Aprovado', revisar: 'Revisar' }; return nomes[s] || s; }
         
         function visualizarPlano(id) { planoAtual = planos.find(p => p.id == id); if(!planoAtual) return;
-            let html = `<h2>Plano de Aula</h2><p><strong>Período:</strong> ${getMesNome(planoAtual.mes_referencia)}/${planoAtual.ano_referencia}</p><p><strong>Status:</strong> ${getStatusNome(planoAtual.status)}</p>${planoAtual.feedback_gestor ? `<p><strong>Feedback:</strong> ${planoAtual.feedback_gestor}</p>` : ''}<hr>`;
-            for(let i=1;i<=4;i++) html += `<div class="semana-card"><div class="semana-title">Semana ${i}</div><p><strong>Conteúdo:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_conteudo`] || '-')}</p><p><strong>Objetivos:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_objetivos`] || '-')}</p><p><strong>Metodologia:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_metodologia`] || '-')}</p><p><strong>Avaliação:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_avaliacao`] || '-')}</p></div>`;
+            const disc = disciplinas.find(d => d.id == planoAtual.disciplina_id);
+            let html = `<h2>Plano de Aula</h2><p><strong>Disciplina:</strong> ${disc ? disc.nome : '-'}</p><p><strong>Série:</strong> ${planoAtual.serie || '-'}</p><p><strong>Período:</strong> ${getMesNome(planoAtual.mes_referencia)}/${planoAtual.ano_referencia}</p><p><strong>Status:</strong> ${getStatusNome(planoAtual.status)}</p>${planoAtual.feedback_gestor ? `<p><strong>Feedback:</strong> ${planoAtual.feedback_gestor}</p>` : ''}<hr>${planoAtual.conteudo_mensal ? `<div class="conteudo-mensal"><strong>📖 Conteúdo Programático do Mês:</strong><br>${Utils.escapeHtml(planoAtual.conteudo_mensal)}</div>` : ''}`;
+            for(let i=1;i<=4;i++) html += `<div class="semana-card"><div class="semana-title">Semana ${i}</div><p><strong>Sub-conteúdo:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_conteudo`] || '-')}</p><p><strong>Metodologia:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_metodologia`] || '-')}</p><p><strong>Recursos:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_recursos`] || '-')}</p><p><strong>Avaliação:</strong><br>${Utils.escapeHtml(planoAtual[`semana_${i}_avaliacao`] || '-')}</p></div>`;
             document.getElementById('planoConteudo').innerHTML = html;
             document.getElementById('btnEditar').style.display = (planoAtual.status === 'rascunho' || planoAtual.status === 'revisar') ? 'inline-block' : 'none';
             document.getElementById('modalPlano').classList.add('active');
@@ -143,7 +140,7 @@
         
         async function excluirPlano(id) { Utils.confirmarAcao('Excluir plano?', async (c) => { if(c) { try { Utils.mostrarLoading(true); await API.deletarPlano(id); Utils.mostrarMensagem('Excluído!', 'success'); await carregarDados(); Utils.mostrarLoading(false); } catch(e) { Utils.mostrarMensagem('Erro: '+e.message,'error'); Utils.mostrarLoading(false); } } }); }
         
-        function imprimirPlano() { const c = document.getElementById('planoConteudo').innerHTML; const w = window.open('', '_blank'); w.document.write(`<html><head><title>Plano de Aula</title><style>body{font-family:Arial;padding:20px} .semana-card{background:#f9f9f9;padding:15px;margin-bottom:15px;border-left:3px solid #4CAF50}</style></head><body>${c}</body></html>`); w.document.close(); w.print(); }
+        function imprimirPlano() { const c = document.getElementById('planoConteudo').innerHTML; const w = window.open('', '_blank'); w.document.write(`<html><head><title>Plano de Aula</title><style>body{font-family:Arial;padding:20px}.conteudo-mensal{background:#e8f5e9;padding:10px;margin-bottom:15px}.semana-card{background:#f9f9f9;padding:15px;margin-bottom:15px;border-left:3px solid #4CAF50}</style></head><body>${c}</body></html>`); w.document.close(); w.print(); }
         function fecharModal() { document.getElementById('modalPlano').classList.remove('active'); }
     </script>
 </body>
