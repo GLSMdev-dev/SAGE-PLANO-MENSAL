@@ -6,18 +6,22 @@
     <title>SAGE - Consulta de Planos</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 10px; }
+        /* Filtros de Gestão */
+        .filter-section { background: #f4f4f4; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; border: 1px solid #ddd; }
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label { font-weight: bold; font-size: 14px; }
+        .filter-group select, .filter-group input { padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+
+        /* Modal e Interface */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 8px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; padding: 25px; position: relative; }
+        .modal-content { background: white; border-radius: 8px; width: 95%; max-width: 900px; max-height: 90vh; overflow-y: auto; padding: 25px; position: relative; }
         
-        /* Estilos básicos para visualização no modal */
-        .view-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; }
-        .view-table td { border: 1px solid #ddd; padding: 8px; }
-        .view-box { border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; background: #f9f9f9; }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body>
-    <header class="header">
+    <header class="header no-print">
         <div class="container">
             <div class="logo"><h1>SAGE <span>Planos</span></h1></div>
             <nav class="user-info">
@@ -27,10 +31,38 @@
         </div>
     </header>
 
-    <main class="container">
+    <main class="container no-print">
         <div class="header-actions" style="margin: 20px 0;">
-            <button onclick="location.href='dashboard.html'" class="btn-secondary">← Voltar</button>
+            <button onclick="location.href='dashboard.html'" class="btn-secondary">← Voltar ao Menu</button>
         </div>
+
+        <section class="filter-section">
+            <div class="filter-group">
+                <label>Professor:</label>
+                <select id="filterProfessor" onchange="aplicarFiltros()">
+                    <option value="">Todos os Professores</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Disciplina:</label>
+                <select id="filterDisciplina" onchange="aplicarFiltros()">
+                    <option value="">Todas as Disciplinas</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Série:</label>
+                <select id="filterSerie" onchange="aplicarFiltros()">
+                    <option value="">Todas as Séries</option>
+                    <option value="1ª Série">1ª Série</option>
+                    <option value="2ª Série">2ª Série</option>
+                    <option value="3ª Série">3ª Série</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Mês de Referência:</label>
+                <input type="month" id="filterMes" onchange="aplicarFiltros()">
+            </div>
+        </section>
         
         <div id="listaPlanos" class="planos-grid"></div>
     </main>
@@ -38,12 +70,9 @@
     <div id="modalPlano" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="fecharModal()" style="position:absolute; right:15px; top:10px; cursor:pointer; font-size:24px;">&times;</span>
-            
-            <h2 style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">Pré-visualização do Plano</h2>
             <div id="renderVisualizacao"></div>
-            
             <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button id="btnImprimirPDF" class="btn-primary">📥 Gerar PDF do Plano</button>
+                <button id="btnImprimirPDF" class="btn-primary">📥 Gerar PDF Oficial</button>
                 <button onclick="fecharModal()" class="btn-secondary">Fechar</button>
             </div>
         </div>
@@ -73,78 +102,101 @@
                     API.listarUsuarios(),
                     API.listarDisciplinas()
                 ]);
-                (resUsers.dados || []).forEach(u => mapaUsuarios[u.id] = u.nome);
-                (resDiscs.dados || []).forEach(d => mapaDisciplinas[d.id] = d.nome);
+                
+                const profSelect = document.getElementById('filterProfessor');
+                resUsers.dados.forEach(u => {
+                    mapaUsuarios[u.id] = u.nome;
+                    profSelect.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+                });
+
+                const discSelect = document.getElementById('filterDisciplina');
+                resDiscs.dados.forEach(d => {
+                    mapaDisciplinas[d.id] = d.nome;
+                    discSelect.innerHTML += `<option value="${d.id}">${d.nome}</option>`;
+                });
+
                 todosPlanos = resPlanos.dados || [];
                 renderizarPlanos(todosPlanos);
                 Utils.mostrarLoading(false);
             } catch (error) {
-                console.error("Erro ao carregar dados:", error);
+                console.error(error);
                 Utils.mostrarLoading(false);
             }
         }
 
+        function aplicarFiltros() {
+            const prof = document.getElementById('filterProfessor').value;
+            const disc = document.getElementById('filterDisciplina').value;
+            const serie = document.getElementById('filterSerie').value;
+            const mesInput = document.getElementById('filterMes').value; // Formato YYYY-MM
+
+            let filtrados = todosPlanos.filter(p => {
+                let matchProf = prof ? p.professor_id == prof : true;
+                let matchDisc = disc ? p.disciplina_id == disc : true;
+                let matchSerie = serie ? p.serie == serie : true;
+                
+                let matchMes = true;
+                if (mesInput) {
+                    const [ano, mes] = mesInput.split('-');
+                    matchMes = (p.ano_referencia == ano && p.mes_referencia == parseInt(mes));
+                }
+
+                return matchProf && matchDisc && matchSerie && matchMes;
+            });
+
+            renderizarPlanos(filtrados);
+        }
+
         function renderizarPlanos(planos) {
             const container = document.getElementById('listaPlanos');
+            if (planos.length === 0) {
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 20px;">Nenhum plano encontrado com estes filtros.</p>';
+                return;
+            }
             container.innerHTML = planos.map(p => `
                 <div class="plano-card">
-                    <h3>${mapaDisciplinas[p.disciplina_id] || 'Disciplina ID: '+p.disciplina_id}</h3>
-                    <p><strong>Professor:</strong> ${mapaUsuarios[p.professor_id] || 'Não identificado'}</p>
-                    <p><strong>Série/Turma:</strong> ${p.serie || '---'} | <strong>Mês/Ano:</strong> ${p.mes_referencia}/${p.ano_referencia}</p>
-                    <button onclick="abrirModalPlano('${p.id}')" class="btn-primary" style="width:100%; margin-top:10px;">Ver e Imprimir</button>
+                    <h3>${mapaDisciplinas[p.disciplina_id]}</h3>
+                    <p><strong>Prof:</strong> ${mapaUsuarios[p.professor_id]}</p>
+                    <p><strong>Ref:</strong> ${p.mes_referencia}/${p.ano_referencia} | ${p.serie}</p>
+                    <button onclick="abrirVisualizacao('${p.id}')" class="btn-primary" style="width:100%;">Visualizar</button>
                 </div>
             `).join('');
         }
 
-        function abrirModalPlano(id) {
+        function abrirVisualizacao(id) {
             const plano = todosPlanos.find(p => p.id == id);
-            if (!plano) return;
-
-            const nomeProf = mapaUsuarios[plano.professor_id] || 'NÃO IDENTIFICADO';
-            const nomeDisc = mapaDisciplinas[plano.disciplina_id] || 'NÃO IDENTIFICADA';
-            const serieTurma = plano.serie || '---';
-            const periodo = `${String(plano.mes_referencia).padStart(2, '0')}/${plano.ano_referencia}`;
-
-            const htmlResumo = `
-                <table class="view-table">
-                    <tr><td><strong>Professor:</strong> ${nomeProf}</td><td><strong>Disciplina:</strong> ${nomeDisc}</td></tr>
-                    <tr><td><strong>Série:</strong> ${serieTurma}</td><td><strong>Período:</strong> ${periodo}</td></tr>
-                </table>
-                <p><strong>Conteúdo Mensal:</strong></p>
-                <div class="view-box">${plano.conteudo_mensal || 'Vazio'}</div>
-                <p><em>* Clique em "Gerar PDF" para ver o documento completo com cabeçalho, rodapé e separação por semanas.</em></p>
+            const nomeProf = mapaUsuarios[plano.professor_id];
+            const nomeDisc = mapaDisciplinas[plano.disciplina_id];
+            
+            document.getElementById('renderVisualizacao').innerHTML = `
+                <p><strong>Plano de:</strong> ${nomeProf} | <strong>Disciplina:</strong> ${nomeDisc}</p>
+                <p><strong>Referência:</strong> ${plano.mes_referencia}/${plano.ano_referencia} - ${plano.serie}</p>
+                <hr>
+                <p>Clique abaixo para gerar o PDF formatado conforme o modelo oficial da escola.</p>
             `;
             
-            document.getElementById('renderVisualizacao').innerHTML = htmlResumo;
-            
-            document.getElementById('btnImprimirPDF').onclick = () => gerarPDF(plano, nomeProf, nomeDisc, serieTurma, periodo);
-            
+            document.getElementById('btnImprimirPDF').onclick = () => gerarPDFOficial(plano, nomeProf, nomeDisc);
             document.getElementById('modalPlano').classList.add('active');
         }
 
-        // FUNÇÃO ISOLADA APENAS PARA O PDF
-        function gerarPDF(p, nomeProf, nomeDisc, serieTurma, periodo) {
+        function gerarPDFOficial(p, nomeProf, nomeDisc) {
             let aulasHtml = '';
-            
-            // Lógica para agrupar as aulas por semana
-            // Se o campo aulas_semana não existir, divide por padrão a cada 4 aulas.
-            const aulasPorSemana = parseInt(p.aulas_semana) || 4; 
             let currentWeek = 0;
+            const aulasPorSemana = parseInt(p.aulas_semana) || 4;
 
             for (let i = 1; i <= 40; i++) {
                 const sub = p[`aula_${i}_subconteudo`];
                 if (sub) {
                     let weekNumber = Math.ceil(i / aulasPorSemana);
-                    
-                    // Se entramos em uma nova semana, cria a barra de título da semana
                     if (weekNumber > currentWeek) {
-                        aulasHtml += `<div class="week-title">SEMANA ${String(weekNumber).padStart(2, '0')}</div>`;
+                        aulasHtml += `<div style="background:#d1e7dd; padding:5px; border:1px solid #000; font-weight:bold; text-align:center; margin-top:10px;">SEMANA ${String(weekNumber).padStart(2, '0')}</div>`;
                         currentWeek = weekNumber;
                     }
 
+                    // A numeração 'i' garante a sequência global (Aula 01, 02, 03...) eliminando o conflito
                     aulasHtml += `
-                        <div class="aula-box">
-                            <span class="aula-title">AULA ${String(i).padStart(2, '0')}</span>
+                        <div style="border:1px solid #000; padding:8px; margin-bottom:5px; page-break-inside: avoid;">
+                            <span style="font-weight:bold; text-decoration:underline;">AULA ${String(i).padStart(2, '0')}</span><br>
                             <strong>Subconteúdo:</strong> ${sub}<br>
                             <strong>Metodologia:</strong> ${p[`aula_${i}_metodologia`] || '-'}<br>
                             <strong>Recursos:</strong> ${p[`aula_${i}_recursos`] || '-'}<br>
@@ -155,112 +207,50 @@
 
             const win = window.open('', '_blank');
             win.document.write(`
-                <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Plano de Aula - ${nomeProf}</title>
                     <style>
                         @page { margin: 1cm; }
-                        body { font-family: Arial, sans-serif; font-size: 11px; color: #000; line-height: 1.3; margin: 0; padding: 0; }
-                        
-                        /* Layout Baseado em Tabela para Repetir Header e Footer em cada página impressa */
-                        .print-container { width: 100%; border-collapse: collapse; }
-                        .print-header, .print-footer { border: none; padding: 0; }
-                        
-                        /* Estilos do Cabeçalho Fixo */
-                        .header-content { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 10px; }
-                        .logo { max-width: 65px; display: block; margin: 0 auto 10px; }
-                        .header-text { font-size: 12px; line-height: 1.5; color: #000; }
-                        
-                        /* Tabelas de Dados e Caixas */
-                        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-                        .info-table td { border: 1px solid #000; padding: 6px; }
-                        .label { font-weight: bold; background-color: #f2f2f2; width: 140px; }
-                        
-                        .section-title { background-color: #e0e0e0; font-weight: bold; padding: 5px; border: 1px solid #000; text-align: center; text-transform: uppercase; margin-top: 10px; }
-                        .content-box { border: 1px solid #000; border-top: none; padding: 10px; min-height: 40px; margin-bottom: 15px; }
-                        
-                        /* Estilos de Semanas e Aulas */
-                        .week-title { background-color: #d1e7dd; padding: 4px; border: 1px solid #000; font-weight: bold; text-align: center; margin-top: 10px; margin-bottom: 5px; border-radius: 3px; font-size: 12px; }
-                        .aula-box { border: 1px solid #000; padding: 10px; margin-bottom: 8px; page-break-inside: avoid; }
-                        .aula-title { font-weight: bold; text-decoration: underline; margin-bottom: 5px; display: block; }
-                        
-                        /* Estilos do Rodapé Fixo */
-                        .footer-content { margin-top: 20px; text-align: center; font-family: Arial, sans-serif; }
-                        .signatures { display: flex; justify-content: space-around; margin-top: 30px; margin-bottom: 20px; page-break-inside: avoid; }
-                        .sig-line { border-top: 1px solid #000; width: 250px; text-align: center; padding-top: 5px; font-weight: bold; font-size: 10px; }
-                        .contact-info { font-size: 9px; line-height: 1.4; color: #000; border-top: 1px solid #000; padding-top: 10px; margin-bottom: 10px; }
-                        .sage-tag { font-size: 8px; color: #777; }
+                        body { font-family: Arial, sans-serif; font-size: 11px; margin: 0; }
+                        table { width: 100%; border-collapse: collapse; }
+                        td { border: 1px solid #000; padding: 5px; }
+                        .header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
+                        .footer { font-size: 9px; text-align: center; border-top: 1px solid #000; padding-top: 10px; margin-top: 20px; }
                     </style>
                 </head>
-                <body onload="setTimeout(() => { window.print(); window.close(); }, 500);">
-                    
-                    <table class="print-container">
+                <body onload="window.print(); window.close();">
+                    <table>
                         <thead>
-                            <tr>
-                                <td class="print-header">
-                                    <div class="header-content">
-                                        <img src="../../assets/logo-escola.png" class="logo" onerror="this.style.display='none'">
-                                        <div class="header-text">
-                                            Coordenadoria Regional de Desenvolvimento da Educação – CREDE 16<br>
-                                            Escola de Ensino Médio em Tempo Integral Filgueiras Lima – INEP: 23142804
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
+                            <tr><td colspan="4" class="header">
+                                <strong>Coordenadoria Regional de Desenvolvimento da Educação – CREDE 16</strong><br>
+                                Escola de Ensino Médio em Tempo Integral Filgueiras Lima – INEP: 23142804
+                            </td></tr>
                         </thead>
-
                         <tbody>
                             <tr>
-                                <td>
-                                    <table class="info-table">
-                                        <tr>
-                                            <td class="label">PROFESSOR(A):</td>
-                                            <td>${nomeProf.toUpperCase()}</td>
-                                            <td class="label">DISCIPLINA:</td>
-                                            <td>${nomeDisc.toUpperCase()}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label">SÉRIE / TURMA:</td>
-                                            <td>${serieTurma.toUpperCase()}</td>
-                                            <td class="label">MÊS/ANO REF:</td>
-                                            <td>${periodo}</td>
-                                        </tr>
-                                    </table>
-
-                                    <div class="section-title">Conteúdo Programático Mensal</div>
-                                    <div class="content-box">${p.conteudo_mensal || ''}</div>
-
-                                    <div class="section-title">Referências / Recursos Didáticos</div>
-                                    <div class="content-box">${p.referencias || ''}</div>
-
-                                    <div class="section-title" style="margin-bottom: 5px;">Detalhamento das Aulas</div>
-                                    ${aulasHtml || '<div class="content-box">Nenhuma aula detalhada.</div>'}
-                                </td>
+                                <td style="font-weight:bold; background:#eee;">PROFESSOR(A):</td><td>${nomeProf.toUpperCase()}</td>
+                                <td style="font-weight:bold; background:#eee;">DISCIPLINA:</td><td>${nomeDisc.toUpperCase()}</td>
                             </tr>
-                        </tbody>
-
-                        <tfoot>
                             <tr>
-                                <td class="print-footer">
-                                    <div class="footer-content">
-                                        <div class="signatures">
-                                            <div class="sig-line">Assinatura do Professor(a)</div>
-                                            <div class="sig-line">Coordenação Pedagógica</div>
-                                        </div>
-                                        <div class="contact-info">
-                                            Rua Vereador Nelson de Sousa Alencar, sn – Veneza | Iguatu – Ceará | CEP: 63.504-356 - Fone: (88) 3581.9463<br>
-                                            E-mail: filgueiraslimacrede16@escola.ce.gov.br | Instagram: @filgueiraslimaiguatu
-                                        </div>
-                                        <div class="sage-tag">
-                                            SAGE - Sistema Alternativo de Gestão Escolar | Gerado em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
-                                        </div>
-                                    </div>
-                                </td>
+                                <td style="font-weight:bold; background:#eee;">SÉRIE/TURMA:</td><td>${p.serie.toUpperCase()}</td>
+                                <td style="font-weight:bold; background:#eee;">MÊS/ANO REF:</td><td>${String(p.mes_referencia).padStart(2, '0')}/${p.ano_referencia}</td>
                             </tr>
+                            <tr><td colspan="4" style="background:#e0e0e0; font-weight:bold; text-align:center;">CONTEÚDO PROGRAMÁTICO MENSAL</td></tr>
+                            <tr><td colspan="4">${p.conteudo_mensal || ''}</td></tr>
+                            <tr><td colspan="4" style="background:#e0e0e0; font-weight:bold; text-align:center;">DETALHAMENTO DAS AULAS</td></tr>
+                            <tr><td colspan="4">${aulasHtml}</td></tr>
+                        </tbody>
+                        <tfoot>
+                            <tr><td colspan="4" class="footer">
+                                <div style="display:flex; justify-content:space-around; margin-bottom:20px; padding-top:40px;">
+                                    <div style="border-top:1px solid #000; width:200px;">Assinatura do Professor(a)</div>
+                                    <div style="border-top:1px solid #000; width:200px;">Coordenação Pedagógica</div>
+                                </div>
+                                Rua Vereador Nelson de Sousa Alencar, sn – Veneza | Iguatu – Ceará | CEP: 63.504-356<br>
+                                E-mail: filgueiraslimacrede16@escola.ce.gov.br | SAGE - Sistema Alternativo de Gestão Escolar
+                            </td></tr>
                         </tfoot>
                     </table>
-
                 </body>
                 </html>
             `);
