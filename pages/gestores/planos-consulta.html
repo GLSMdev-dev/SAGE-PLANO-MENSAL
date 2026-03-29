@@ -3,41 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Gestor - Consulta de Planos | SAGE Planos</title>
+    <title>SAGE - Consulta de Planos</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
+        /* Estilos da Interface */
         .filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; }
         .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .status-rascunho { background: #e0e0e0; color: #666; }
         .status-enviado { background: #2196F3; color: white; }
         .status-aprovado { background: #4CAF50; color: white; }
         .status-revisar { background: #ff9800; color: white; }
         
         .plano-card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .plano-info h3 { margin-bottom: 5px; color: #4CAF50; }
-        .plano-actions { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .plano-actions { display: flex; gap: 10px; margin-top: 15px; }
         
         /* Modal */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 8px; width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; padding: 25px; position: relative; }
-        .close-modal { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: #666; }
+        .modal-content { background: white; border-radius: 8px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; padding: 30px; position: relative; }
+        .close-modal { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; }
         
         .aula-card { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-left: 4px solid #4CAF50; border-radius: 4px; }
-        .aula-title { font-weight: bold; color: #333; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .aula-title { font-weight: bold; color: #333; margin-bottom: 8px; border-bottom: 1px solid #ddd; }
 
-        @media print {
-            .no-print { display: none !important; }
-        }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body>
     <header class="header no-print">
         <div class="container">
-            <div class="logo">
-                <h1>SAGE Planos</h1>
-                <p>Gestor - Consulta de Planos</p>
-            </div>
+            <div class="logo"><h1>SAGE Planos</h1><p>Consulta de Planos</p></div>
             <nav class="user-info">
                 <span id="userName" class="user-name">Carregando...</span>
                 <button onclick="Auth.logout()" class="btn-logout">Sair</button>
@@ -66,18 +60,15 @@
             </div>
         </section>
 
-        <div id="listaPlanos" class="planos-grid">
-            </div>
+        <div id="listaPlanos" class="planos-grid"></div>
     </main>
 
     <div id="modalPlano" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="fecharModal()">&times;</span>
-            <div id="planoDetalhesHeader"></div>
-            <hr style="margin: 15px 0;">
-            <div id="planoConteudo"></div>
-            <div class="modal-actions no-print" style="margin-top: 20px; display: flex; gap: 10px;">
-                <button onclick="imprimirPlano()" class="btn-primary">Imprimir / PDF</button>
+            <div id="renderVisualizacao"></div>
+            <div class="modal-actions no-print" style="margin-top: 20px; border-top: 1px solid #eee; pt: 15px;">
+                <button id="btnImprimirAtual" class="btn-primary">Gerar PDF / Imprimir</button>
                 <button onclick="fecharModal()" class="btn-secondary">Fechar</button>
             </div>
         </div>
@@ -90,31 +81,24 @@
 
     <script>
         let todosPlanos = [];
+        let planoSelecionado = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (!Auth.verificarAcesso()) return;
-            const user = Auth.getUsuarioLogado();
-            document.getElementById('userName').textContent = user.nome;
+            document.getElementById('userName').textContent = Auth.getUsuarioLogado().nome;
             await carregarDados();
         });
 
         async function carregarDados() {
             try {
                 Utils.mostrarLoading(true);
-                const [resPlanos, resUsuarios] = await Promise.all([
-                    API.listarPlanos(),
-                    API.listarUsuarios()
-                ]);
-
+                const [resPlanos, resUsuarios] = await Promise.all([API.listarPlanos(), API.listarUsuarios()]);
                 todosPlanos = resPlanos.dados || [];
                 
-                // Preencher filtro de professores
-                const profs = (resUsuarios.dados || []).filter(u => u.perfil === 'professor');
                 const selectProf = document.getElementById('filtroProfessor');
-                profs.forEach(p => {
+                (resUsuarios.dados || []).filter(u => u.perfil === 'professor').forEach(p => {
                     const opt = document.createElement('option');
-                    opt.value = p.nome;
-                    opt.textContent = p.nome;
+                    opt.value = p.nome; opt.textContent = p.nome;
                     selectProf.appendChild(opt);
                 });
 
@@ -129,86 +113,110 @@
         function renderizarPlanos(planos) {
             const container = document.getElementById('listaPlanos');
             container.innerHTML = planos.length ? '' : '<p>Nenhum plano encontrado.</p>';
-
             planos.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'plano-card';
                 card.innerHTML = `
                     <div class="plano-info">
                         <span class="status-badge status-${p.status}">${p.status.toUpperCase()}</span>
-                        <h3>${p.disciplina_nome || 'Disciplina'} - ${p.turma_nome || 'Turma'}</h3>
-                        <p><strong>Professor:</strong> ${p.professor_nome}</p>
-                        <p><strong>Mês/Ano:</strong> ${p.mes}/${p.ano}</p>
+                        <h3>${p.disciplina_nome} - ${p.turma_nome}</h3>
+                        <p><strong>Professor:</strong> ${p.professor_nome} | <strong>Mês:</strong> ${p.mes}/${p.ano}</p>
                     </div>
                     <div class="plano-actions">
-                        <button onclick="verDetalhes('${p.id}')" class="btn-primary">Visualizar Detalhes</button>
+                        <button onclick="abrirVisualizacao('${p.id}')" class="btn-primary">Ver Plano Completo</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        function filtrarPlanos() {
-            const prof = document.getElementById('filtroProfessor').value;
-            const status = document.getElementById('filtroStatus').value;
+        function abrirVisualizacao(id) {
+            planoSelecionado = todosPlanos.find(p => p.id == id);
+            if (!planoSelecionado) return;
 
-            const filtrados = todosPlanos.filter(p => {
-                const matchProf = !prof || p.professor_nome === prof;
-                const matchStatus = !status || p.status === status;
-                return matchProf && matchStatus;
-            });
-
-            renderizarPlanos(filtrados);
-        }
-
-        function verDetalhes(id) {
-            const plano = todosPlanos.find(p => p.id == id);
-            if (!plano) return;
-
-            document.getElementById('planoDetalhesHeader').innerHTML = `
-                <h2>${plano.disciplina_nome} - ${plano.turma_nome}</h2>
-                <p><strong>Mês de Referência:</strong> ${plano.mes}/${plano.ano}</p>
-                <p><strong>Conteúdo Mensal:</strong><br>${plano.conteudo_mensal || 'Não informado'}</p>
-            `;
-
-            let htmlAulas = '';
-            for (let i = 1; i <= 20; i++) {
-                const sub = plano[`aula_${i}_subconteudo`];
-                if (sub && sub.trim() !== "") {
-                    htmlAulas += `
-                        <div class="aula-card">
-                            <div class="aula-title">Aula ${i}</div>
-                            <p><strong>Subconteúdo:</strong> ${sub}</p>
-                            <p><strong>Metodologia:</strong> ${plano[`aula_${i}_metodologia`] || '-'}</p>
-                        </div>
-                    `;
-                }
-            }
-
-            document.getElementById('planoConteudo').innerHTML = htmlAulas || '<p>Nenhuma aula detalhada.</p>';
+            const html = gerarHtmlPlano(planoSelecionado);
+            document.getElementById('renderVisualizacao').innerHTML = html;
+            document.getElementById('btnImprimirAtual').onclick = () => imprimirPDF(planoSelecionado);
             document.getElementById('modalPlano').classList.add('active');
         }
 
-        function imprimirPlano() {
-            const conteudo = document.getElementById('modalPlano').querySelector('.modal-content').innerHTML;
-            const win = window.open('', '_blank');
-            win.document.write('<html><head><title>SAGE - Impressão</title>');
-            win.document.write('<style>body{font-family:Arial;padding:20px}.no-print{display:none}.aula-card{border:1px solid #ddd;padding:10px;margin-bottom:10px;page-break-inside:avoid}.aula-title{font-weight:bold;border-bottom:1px solid #333}</style>');
-            win.document.write('</head><body>');
-            win.document.write(conteudo);
-            win.document.write('</body></html>');
-            win.document.close();
-            
-            // Pequeno delay para garantir carregamento antes de abrir o print do sistema
-            setTimeout(() => {
-                win.print();
-                win.close();
-            }, 500);
+        // Esta função gera o conteúdo tanto para a tela quanto para o PDF
+        function gerarHtmlPlano(p) {
+            let aulasHtml = '';
+            for (let i = 1; i <= 20; i++) {
+                const sub = p[`aula_${i}_subconteudo`];
+                if (sub && sub.trim() !== "") {
+                    aulasHtml += `
+                        <div class="aula-card">
+                            <div class="aula-title">AULA ${i}</div>
+                            <p><strong>Subconteúdo:</strong> ${sub}</p>
+                            <p><strong>Metodologia:</strong> ${p[`aula_${i}_metodologia`] || '-'}</p>
+                            <p><strong>Avaliação:</strong> ${p[`aula_${i}_avaliacao`] || '-'}</p>
+                        </div>`;
+                }
+            }
+
+            return `
+                <div class="plano-header-print" style="text-align: center; margin-bottom: 20px;">
+                    <img src="https://i.postimg.cc/mD7978S1/image-425637.png" style="max-width: 150px; margin-bottom: 10px;">
+                    <h2 style="margin:0;">EEMTI FILGUEIRAS LIMA</h2>
+                    <p style="margin:5px 0;">SAGE - Sistema de Apoio à Gestão Escolar</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; background: #f0f0f0; padding: 10px; margin-top: 15px; border: 1px solid #ccc;">
+                        <div><strong>PROFESSOR:</strong> ${p.professor_nome}</div>
+                        <div><strong>DISCIPLINA:</strong> ${p.disciplina_nome}</div>
+                        <div><strong>TURMA:</strong> ${p.turma_nome}</div>
+                        <div><strong>MÊS/ANO:</strong> ${p.mes}/${p.ano}</div>
+                    </div>
+                </div>
+                <div class="plano-body">
+                    <h4 style="border-bottom: 2px solid #4CAF50; padding-bottom: 5px;">CONTEÚDO PROGRAMÁTICO MENSAL</h4>
+                    <p style="padding: 10px; background: #fff; border: 1px solid #eee;">${p.conteudo_mensal || 'Não informado'}</p>
+                    <h4 style="margin-top: 20px; border-bottom: 2px solid #4CAF50; padding-bottom: 5px;">DETALHAMENTO DAS AULAS</h4>
+                    ${aulasHtml || '<p>Nenhuma aula detalhada neste plano.</p>'}
+                </div>
+                <div class="plano-footer-print" style="margin-top: 30px; text-align: center; border-top: 1px solid #ccc; padding-top: 10px; font-size: 10px;">
+                    <p>Documento gerado pelo sistema SAGE Planos em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}</p>
+                    <div style="margin-top: 40px; display: flex; justify-content: space-around;">
+                        <div style="border-top: 1px solid #000; width: 200px; padding-top: 5px;">Assinatura do Professor</div>
+                        <div style="border-top: 1px solid #000; width: 200px; padding-top: 5px;">Coordenação Pedagógica</div>
+                    </div>
+                </div>
+            `;
         }
 
-        function fecharModal() {
-            document.getElementById('modalPlano').classList.remove('active');
+        function imprimirPDF(p) {
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                <head>
+                    <title>Plano de Aula - ${p.professor_nome}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 40px; color: #333; line-height: 1.5; }
+                        .aula-card { border: 1px solid #ddd; padding: 12px; margin-bottom: 10px; page-break-inside: avoid; background: #fdfdfd; }
+                        .aula-title { font-weight: bold; color: #2e7d32; border-bottom: 1px solid #2e7d32; margin-bottom: 8px; font-size: 14px; }
+                        h2, h4 { color: #1b5e20; text-transform: uppercase; }
+                        @media print { 
+                            body { padding: 0; }
+                            .btn-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body onload="window.print(); window.close();">
+                    ${gerarHtmlPlano(p)}
+                </body>
+                </html>
+            `);
+            win.document.close();
         }
+
+        function filtrarPlanos() {
+            const prof = document.getElementById('filtroProfessor').value;
+            const status = document.getElementById('filtroStatus').value;
+            const filtrados = todosPlanos.filter(p => (!prof || p.professor_nome === prof) && (!status || p.status === status));
+            renderizarPlanos(filtrados);
+        }
+
+        function fecharModal() { document.getElementById('modalPlano').classList.remove('active'); }
     </script>
 </body>
 </html>
