@@ -9,35 +9,32 @@
         /* Estilos da Interface do Sistema */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 10px; }
         .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 4px; width: 100%; max-width: 900px; max-height: 98vh; overflow-y: auto; padding: 20px; position: relative; }
-        
-        /* CABEÇALHO MODELO OFICIAL (Fiel ao PDF) */
-        .header-print-official { text-align: center; font-family: "Arial", sans-serif; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 10px; position: relative; }
-        .header-print-official .gov-text { font-size: 14px; font-weight: bold; text-transform: uppercase; margin: 0; }
-        .header-print-official .sub-text { font-size: 11px; margin: 2px 0; font-weight: normal; }
-        .header-print-official .school-name { font-size: 12px; font-weight: bold; margin-top: 5px; text-transform: uppercase; }
-        .header-print-official .school-info { font-size: 9px; color: #333; margin-top: 2px; line-height: 1.3; }
-        
-        .logo-fl-top { position: absolute; left: 0; top: 0; max-width: 60px; height: auto; }
+        .modal-content { background: white; border-radius: 4px; width: 100%; max-width: 850px; max-height: 98vh; overflow-y: auto; padding: 20px; position: relative; }
 
-        /* TABELA DE INFORMAÇÕES (Compacta) */
+        /* CABEÇALHO SOLICITADO */
+        .header-print-official { text-align: center; font-family: Arial, sans-serif; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 10px; }
+        .logo-central { max-width: 65px; height: auto; display: block; margin: 0 auto 10px; }
+        .header-text-official { font-size: 12px; line-height: 1.5; font-weight: normal; color: #000; }
+
+        /* TABELA DE DADOS (CONFORME MODELO PDF) */
         .table-plan { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 11px; }
-        .table-plan td { border: 1px solid #000; padding: 5px 8px; vertical-align: middle; }
-        .label-cell { font-weight: bold; background-color: #f2f2f2; width: 120px; }
+        .table-plan td { border: 1px solid #000; padding: 6px 10px; }
+        .label-cell { font-weight: bold; background-color: #f2f2f2; width: 140px; }
 
         /* SEÇÕES DE CONTEÚDO */
-        .section-header { background: #e0e0e0; font-weight: bold; padding: 4px; border: 1px solid #000; font-size: 11px; text-align: center; text-transform: uppercase; }
-        .box-content { border: 1px solid #000; border-top: none; padding: 10px; font-size: 11px; margin-bottom: 15px; min-height: 40px; background: #fff; }
+        .section-header { background: #e0e0e0; font-weight: bold; padding: 5px; border: 1px solid #000; font-size: 11px; text-align: center; text-transform: uppercase; }
+        .box-content { border: 1px solid #000; border-top: none; padding: 10px; font-size: 11px; margin-bottom: 15px; min-height: 45px; background: #fff; }
 
         /* DETALHAMENTO AULAS */
-        .aula-grid { border: 1px solid #000; padding: 8px; margin-bottom: 8px; page-break-inside: avoid; font-size: 11px; }
+        .aula-grid { border: 1px solid #000; padding: 10px; margin-bottom: 8px; page-break-inside: avoid; font-size: 11px; }
         .aula-title { font-weight: bold; text-decoration: underline; margin-bottom: 5px; display: block; }
 
-        /* RODAPÉ MODELO OFICIAL */
-        .footer-official { margin-top: 40px; font-family: "Arial", sans-serif; page-break-inside: avoid; }
-        .sig-container { display: flex; justify-content: space-around; margin-top: 60px; }
+        /* RODAPÉ SOLICITADO */
+        .footer-official { margin-top: 30px; text-align: center; font-family: Arial, sans-serif; page-break-inside: avoid; }
+        .footer-contact-info { font-size: 9px; line-height: 1.4; color: #000; border-top: 1px solid #000; padding-top: 10px; margin-bottom: 20px; }
+        .sig-container { display: flex; justify-content: space-around; margin-top: 50px; margin-bottom: 30px; }
         .sig-box { border-top: 1px solid #000; width: 250px; text-align: center; padding-top: 5px; font-size: 10px; font-weight: bold; }
-        .gen-info { text-align: center; font-size: 8px; color: #666; margin-top: 30px; border-top: 1px dotted #ccc; padding-top: 5px; }
+        .system-tag { font-size: 8px; color: #777; margin-top: 10px; }
 
         @media print { 
             .no-print { display: none !important; }
@@ -61,7 +58,7 @@
 
     <main class="container no-print">
         <div class="header-actions" style="margin: 15px 0;">
-            <button onclick="location.href='dashboard.html'" class="btn-secondary">← Voltar ao Menu</button>
+            <button onclick="location.href='dashboard.html'" class="btn-secondary">← Voltar</button>
         </div>
         <div id="listaPlanos" class="planos-grid"></div>
     </main>
@@ -71,7 +68,7 @@
             <span class="close-modal no-print" onclick="fecharModal()">&times;</span>
             <div id="renderVisualizacao"></div>
             <div class="modal-actions no-print" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button id="btnImprimirPDF" class="btn-primary">📥 Gerar PDF do Plano</button>
+                <button id="btnImprimirPDF" class="btn-primary">📥 Gerar PDF</button>
                 <button onclick="fecharModal()" class="btn-secondary">Fechar</button>
             </div>
         </div>
@@ -118,8 +115,8 @@
                 <div class="plano-card">
                     <h3>${mapaDisciplinas[p.disciplina_id] || 'Disciplina '+p.disciplina_id}</h3>
                     <p><strong>Prof:</strong> ${mapaUsuarios[p.professor_id] || '---'}</p>
-                    <p><strong>Ref:</strong> ${p.mes_referencia}/${p.ano_referencia}</p>
-                    <button onclick="visualizarPlano('${p.id}')" class="btn-primary" style="width:100%; margin-top:10px;">Visualizar Detalhes</button>
+                    <p><strong>Mês/Ano:</strong> ${p.mes_referencia}/${p.ano_referencia}</p>
+                    <button onclick="visualizarPlano('${p.id}')" class="btn-primary" style="width:100%; margin-top:10px;">Visualizar Plano</button>
                 </div>
             `).join('');
         }
@@ -128,41 +125,35 @@
             const plano = todosPlanos.find(p => p.id == id);
             if (!plano) return;
 
-            const nomeProf = mapaUsuarios[plano.professor_id] || 'Não identificado';
-            const nomeDisc = mapaDisciplinas[plano.disciplina_id] || 'Não identificada';
-
             const htmlContent = `
                 <div class="header-print-official">
-                    <img src="../../assets/logo-escola.png" class="logo-fl-top" onerror="this.style.display='none'">
-                    <p class="gov-text">GOVERNO DO ESTADO DO CEARÁ</p>
-                    <p class="sub-text">SECRETARIA DA EDUCAÇÃO - CREDE 16</p>
-                    <p class="school-name">EEMTI FILGUEIRAS LIMA - INEP: 23142804</p>
-                    <p class="school-info">
-                        Rua Vereador Nelson de Sousa Alencar, s/n - Veneza | Iguatu - CE | CEP: 63.504-356<br>
-                        SAGE - Sistema Alternativo de Gestão Escolar
-                    </p>
+                    <img src="../../assets/logo-escola.png" class="logo-central" onerror="this.style.display='none'">
+                    <div class="header-text-official">
+                        Coordenadoria Regional de Desenvolvimento da Educação – CREDE 16<br>
+                        Escola de Ensino Médio em Tempo Integral Filgueiras Lima – INEP: 23142804
+                    </div>
                 </div>
 
                 <table class="table-plan">
                     <tr>
                         <td class="label-cell">PROFESSOR(A):</td>
-                        <td>${nomeProf.toUpperCase()}</td>
+                        <td>${(mapaUsuarios[plano.professor_id] || '').toUpperCase()}</td>
                         <td class="label-cell">DISCIPLINA:</td>
-                        <td>${nomeDisc.toUpperCase()}</td>
+                        <td>${(mapaDisciplinas[plano.disciplina_id] || '').toUpperCase()}</td>
                     </tr>
                     <tr>
                         <td class="label-cell">SÉRIE / TURMA:</td>
-                        <td>${plano.serie.toUpperCase()}</td>
+                        <td>${String(plano.serie).toUpperCase()}</td>
                         <td class="label-cell">MÊS/ANO REF:</td>
                         <td>${String(plano.mes_referencia).padStart(2, '0')}/${plano.ano_referencia}</td>
                     </tr>
                 </table>
 
                 <div class="section-header">Conteúdo Programático Mensal</div>
-                <div class="box-content">${plano.conteudo_mensal || 'Nenhum conteúdo informado.'}</div>
+                <div class="box-content">${plano.conteudo_mensal || ''}</div>
 
                 <div class="section-header">Referências / Recursos Didáticos</div>
-                <div class="box-content">${plano.referencias || 'Não informadas.'}</div>
+                <div class="box-content">${plano.referencias || ''}</div>
 
                 <div class="section-header" style="margin-bottom:10px;">Detalhamento das Aulas</div>
                 ${gerarHtmlAulas(plano)}
@@ -172,9 +163,12 @@
                         <div class="sig-box">Assinatura do Professor(a)</div>
                         <div class="sig-box">Coordenação Pedagógica</div>
                     </div>
-                    <div class="gen-info">
-                        Documento Gerado pelo SAGE em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}<br>
-                        © 2026 EEMTI Filgueiras Lima - Sistema Alternativo de Gestão Escolar
+                    <div class="footer-contact-info">
+                        Rua Vereador Nelson de Sousa Alencar, sn – Veneza | Iguatu – Ceará | CEP: 63.504-356 - Fone: (88) 3581.9463<br>
+                        E-mail: filgueiraslimacrede16@escola.ce.gov.br | Instagram: @filgueiraslimaiguatu
+                    </div>
+                    <div class="system-tag">
+                        SAGE - Sistema Alternativo de Gestão Escolar | Gerado em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}
                     </div>
                 </div>
             `;
