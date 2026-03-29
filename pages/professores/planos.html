@@ -16,11 +16,13 @@
         .feedback-area { background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #ffc107; }
         .filtros { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        .aulas-resumo { background: #f5f5f5; padding: 8px; border-radius: 5px; font-size: 12px; margin-top: 10px; }
         .btn-primary { background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
         .btn-secondary { background: #666; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
         .btn-danger { background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
         .btn-success { background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+        .aulas-info { background: #f5f5f5; padding: 8px; border-radius: 5px; font-size: 12px; margin-top: 10px; }
+        .aula-card { background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .aula-title { font-weight: bold; color: #4CAF50; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -32,28 +34,17 @@
     </div>
     
     <div class="container">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <h2>Meus Planos de Aula</h2>
-            <button class="btn-primary" onclick="window.location.href='plano-form.html'">+ Novo Plano</button>
-        </div>
-        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;"><h2>Meus Planos</h2><button class="btn-primary" onclick="window.location.href='plano-form.html'">+ Novo Plano</button></div>
         <div class="filtros">
             <select id="filtroDisciplina"><option value="">Todas disciplinas</option></select>
             <select id="filtroSerie"><option value="">Todas séries</option><option value="1ª Série">1ª Série</option><option value="2ª Série">2ª Série</option><option value="3ª Série">3ª Série</option></select>
             <select id="filtroStatus"><option value="">Todos status</option><option value="rascunho">Rascunho</option><option value="enviado">Enviado</option><option value="aprovado">Aprovado</option><option value="revisar">Revisar</option></select>
             <select id="filtroMes"><option value="">Todos meses</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select>
         </div>
-        
         <div id="planosLista"></div>
     </div>
     
-    <div id="modalPlano" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header"><h3>Visualizar Plano</h3><span class="modal-close" onclick="fecharModal()">&times;</span></div>
-            <div class="modal-body" id="planoConteudo"></div>
-            <div class="modal-footer"><button class="btn-secondary" onclick="fecharModal()">Fechar</button><button class="btn-primary" onclick="imprimirPlano()">Imprimir</button><button class="btn-success" id="btnEditar" style="display:none;" onclick="editarPlano()">Editar</button></div>
-        </div>
-    </div>
+    <div id="modalPlano" class="modal"><div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;"><div class="modal-header"><h3>Visualizar Plano</h3><span class="modal-close" onclick="fecharModal()">&times;</span></div><div class="modal-body" id="planoConteudo"></div><div class="modal-footer"><button class="btn-secondary" onclick="fecharModal()">Fechar</button><button class="btn-primary" onclick="imprimirPlano()">Imprimir</button><button class="btn-success" id="btnEditar" style="display:none;" onclick="editarPlano()">Editar</button></div></div></div>
     
     <script src="../../assets/js/config.js"></script>
     <script src="../../assets/js/api.js"></script>
@@ -77,17 +68,13 @@
         async function carregarDados() {
             try {
                 Utils.mostrarLoading(true);
-                const [planosRes, discRes, lotacoesRes] = await Promise.all([
-                    API.listarPlanos(), API.listarDisciplinas(), API.listarLotacoes()
-                ]);
+                const [planosRes, discRes, lotacoesRes] = await Promise.all([API.listarPlanos(), API.listarDisciplinas(), API.listarLotacoes()]);
                 planos = (planosRes.dados || []).filter(p => p.professor_id == usuario.id);
                 disciplinas = discRes.dados || [];
                 lotacoes = (lotacoesRes.dados || []).filter(l => l.professor_id == usuario.id);
-                
                 const selectDisc = document.getElementById('filtroDisciplina');
                 const discUnicas = [...new Set(lotacoes.map(l => l.disciplina_id))];
                 discUnicas.forEach(discId => { const disc = disciplinas.find(d => d.id == discId); if(disc) selectDisc.innerHTML += `<option value="${discId}">${disc.nome}</option>`; });
-                
                 aplicarFiltros();
                 Utils.mostrarLoading(false);
             } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
@@ -98,7 +85,6 @@
             const serie = document.getElementById('filtroSerie').value;
             const status = document.getElementById('filtroStatus').value;
             const mes = document.getElementById('filtroMes').value;
-            
             let filtrados = [...planos];
             if (discId) filtrados = filtrados.filter(p => p.disciplina_id == discId);
             if (serie) filtrados = filtrados.filter(p => p.serie === serie);
@@ -109,46 +95,23 @@
         
         function renderizarPlanos(planosFiltrados) {
             const container = document.getElementById('planosLista');
-            if (!planosFiltrados.length) { container.innerHTML = '<div class="card" style="text-align:center; padding:40px;">Nenhum plano encontrado</div>'; return; }
-            container.innerHTML = planosFiltrados.map(p => {
-                const disc = disciplinas.find(d => d.id == p.disciplina_id);
-                const totalAulas = p.total_aulas_mes || 0;
-                return `
-                    <div class="plano-card">
-                        <div class="plano-header">
-                            <div><strong>${disc ? disc.nome : '-'}</strong> | ${p.serie || '-'}<br><small>${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small></div>
-                            <span class="status-badge status-${p.status}">${getStatusNome(p.status)}</span>
-                        </div>
-                        ${p.conteudo_mensal ? `<div style="background:#e8f5e9; padding:10px; border-radius:5px; margin-bottom:10px;"><strong>📖 Conteúdo:</strong><br>${Utils.escapeHtml(p.conteudo_mensal.substring(0, 100))}${p.conteudo_mensal.length > 100 ? '...' : ''}</div>` : ''}
-                        ${totalAulas > 0 ? `<div class="aulas-resumo">📊 Total de aulas no mês: ${totalAulas}</div>` : ''}
-                        ${p.feedback_gestor ? `<div class="feedback-area"><strong>📝 Feedback:</strong><br>${Utils.escapeHtml(p.feedback_gestor)}</div>` : ''}
-                        <div class="btn-group">
-                            <button class="btn-secondary" onclick="visualizarPlano(${p.id})">Visualizar</button>
-                            ${p.status === 'rascunho' ? `<button class="btn-primary" onclick="editarPlanoById(${p.id})">Editar</button><button class="btn-success" onclick="enviarPlano(${p.id})">Enviar</button><button class="btn-danger" onclick="excluirPlano(${p.id})">Excluir</button>` : ''}
-                            ${p.status === 'revisar' ? `<button class="btn-primary" onclick="editarPlanoById(${p.id})">Revisar</button>` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            if (!planosFiltrados.length) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">Nenhum plano encontrado</div>'; return; }
+            container.innerHTML = planosFiltrados.map(p => { const disc = disciplinas.find(d => d.id == p.disciplina_id); return `<div class="plano-card"><div class="plano-header"><div><strong>${disc ? disc.nome : '-'}</strong> | ${p.serie || '-'}<br><small>${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small></div><span class="status-badge status-${p.status}">${getStatusNome(p.status)}</span></div>${p.conteudo_mensal ? `<div style="background:#e8f5e9;padding:10px;border-radius:5px;margin-bottom:10px;"><strong>📖 Conteúdo:</strong><br>${Utils.escapeHtml(p.conteudo_mensal.substring(0, 100))}${p.conteudo_mensal.length > 100 ? '...' : ''}</div>` : ''}${p.total_aulas_mes ? `<div class="aulas-info">📊 ${p.aulas_semana || '-'} aulas/semana | Total: ${p.total_aulas_mes} aulas</div>` : ''}${p.feedback_gestor ? `<div class="feedback-area"><strong>📝 Feedback:</strong><br>${Utils.escapeHtml(p.feedback_gestor)}</div>` : ''}<div class="btn-group"><button class="btn-secondary" onclick="visualizarPlano(${p.id})">Visualizar</button>${p.status === 'rascunho' ? `<button class="btn-primary" onclick="editarPlanoById(${p.id})">Editar</button><button class="btn-success" onclick="enviarPlano(${p.id})">Enviar</button><button class="btn-danger" onclick="excluirPlano(${p.id})">Excluir</button>` : ''}${p.status === 'revisar' ? `<button class="btn-primary" onclick="editarPlanoById(${p.id})">Revisar</button>` : ''}</div></div>`; }).join('');
         }
         
         function getMesNome(mes) { const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; return meses[mes-1] || mes; }
         function getStatusNome(s) { const nomes = { rascunho: 'Rascunho', enviado: 'Enviado', aprovado: 'Aprovado', revisar: 'Revisar' }; return nomes[s] || s; }
         
-        function visualizarPlano(id) { planoAtual = planos.find(p => p.id == id); if(!planoAtual) return;
-            const disc = disciplinas.find(d => d.id == planoAtual.disciplina_id);
-            let html = `<h2>Plano de Aula</h2><p><strong>Disciplina:</strong> ${disc ? disc.nome : '-'}</p><p><strong>Série:</strong> ${planoAtual.serie || '-'}</p><p><strong>Período:</strong> ${getMesNome(planoAtual.mes_referencia)}/${planoAtual.ano_referencia}</p><p><strong>Status:</strong> ${getStatusNome(planoAtual.status)}</p><p><strong>Total de Aulas:</strong> ${planoAtual.total_aulas_mes || 0}</p>${planoAtual.feedback_gestor ? `<p><strong>Feedback:</strong> ${planoAtual.feedback_gestor}</p>` : ''}<hr>${planoAtual.conteudo_mensal ? `<div style="background:#e8f5e9;padding:10px;margin-bottom:15px"><strong>📖 Conteúdo Programático do Mês:</strong><br>${Utils.escapeHtml(planoAtual.conteudo_mensal)}</div>` : ''}${planoAtual.referencias ? `<div style="background:#fff3cd;padding:10px;margin-bottom:15px"><strong>📚 Referências:</strong><br>${Utils.escapeHtml(planoAtual.referencias)}</div>` : ''}`;
-            document.getElementById('planoConteudo').innerHTML = html;
-            document.getElementById('btnEditar').style.display = (planoAtual.status === 'rascunho' || planoAtual.status === 'revisar') ? 'inline-block' : 'none';
-            document.getElementById('modalPlano').classList.add('active');
-        }
+        function visualizarPlano(id) { planoAtual = planos.find(p => p.id == id); if(!planoAtual) return; const disc = disciplinas.find(d => d.id == planoAtual.disciplina_id); let html = `<h2>Plano de Aula</h2><p><strong>Disciplina:</strong> ${disc ? disc.nome : '-'}</p><p><strong>Série:</strong> ${planoAtual.serie || '-'}</p><p><strong>Período:</strong> ${getMesNome(planoAtual.mes_referencia)}/${planoAtual.ano_referencia}</p><p><strong>Status:</strong> ${getStatusNome(planoAtual.status)}</p><p><strong>Carga:</strong> ${planoAtual.aulas_semana || '-'} aulas/semana | Total: ${planoAtual.total_aulas_mes || 0}</p>${planoAtual.feedback_gestor ? `<p><strong>Feedback:</strong> ${planoAtual.feedback_gestor}</p>` : ''}<hr>${planoAtual.conteudo_mensal ? `<div style="background:#e8f5e9;padding:10px;margin-bottom:15px"><strong>📖 Conteúdo:</strong><br>${Utils.escapeHtml(planoAtual.conteudo_mensal)}</div>` : ''}${planoAtual.referencias ? `<div style="background:#fff3cd;padding:10px;margin-bottom:15px"><strong>📚 Referências:</strong><br>${Utils.escapeHtml(planoAtual.referencias)}</div>` : ''}<h3>📝 Aulas</h3>`;
+            const totalAulas = parseInt(planoAtual.total_aulas_mes) || 0;
+            for (let aula = 1; aula <= totalAulas; aula++) { const sub = planoAtual[`aula_${aula}_subconteudo`]; const met = planoAtual[`aula_${aula}_metodologia`]; const ava = planoAtual[`aula_${aula}_avaliacao`]; const rec = planoAtual[`aula_${aula}_recursos`]; if(sub || met || ava || rec) html += `<div class="aula-card"><div class="aula-title">Aula ${aula}</div>${sub ? `<p><strong>Sub-conteúdo:</strong><br>${Utils.escapeHtml(sub)}</p>` : ''}${met ? `<p><strong>Metodologia:</strong><br>${Utils.escapeHtml(met)}</p>` : ''}${ava ? `<p><strong>Avaliação:</strong><br>${Utils.escapeHtml(ava)}</p>` : ''}${rec ? `<p><strong>Recursos:</strong><br>${Utils.escapeHtml(rec)}</p>` : ''}</div>`; }
+            document.getElementById('planoConteudo').innerHTML = html; document.getElementById('btnEditar').style.display = (planoAtual.status === 'rascunho' || planoAtual.status === 'revisar') ? 'inline-block' : 'none'; document.getElementById('modalPlano').classList.add('active'); }
         
         function editarPlano() { if(planoAtual) window.location.href = `plano-form.html?id=${planoAtual.id}`; }
         function editarPlanoById(id) { window.location.href = `plano-form.html?id=${id}`; }
-        
-        async function enviarPlano(id) { Utils.confirmarAcao('Enviar plano para o gestor?', async (c) => { if(c) { try { Utils.mostrarLoading(true); await API.atualizarPlano(id, { status: 'enviado' }); Utils.mostrarMensagem('Enviado!', 'success'); await carregarDados(); Utils.mostrarLoading(false); } catch(e) { Utils.mostrarMensagem('Erro: '+e.message,'error'); Utils.mostrarLoading(false); } } }); }
+        async function enviarPlano(id) { Utils.confirmarAcao('Enviar plano?', async (c) => { if(c) { try { Utils.mostrarLoading(true); await API.atualizarPlano(id, { status: 'enviado' }); Utils.mostrarMensagem('Enviado!', 'success'); await carregarDados(); Utils.mostrarLoading(false); } catch(e) { Utils.mostrarMensagem('Erro: '+e.message,'error'); Utils.mostrarLoading(false); } } }); }
         async function excluirPlano(id) { Utils.confirmarAcao('Excluir plano?', async (c) => { if(c) { try { Utils.mostrarLoading(true); await API.deletarPlano(id); Utils.mostrarMensagem('Excluído!', 'success'); await carregarDados(); Utils.mostrarLoading(false); } catch(e) { Utils.mostrarMensagem('Erro: '+e.message,'error'); Utils.mostrarLoading(false); } } }); }
-        function imprimirPlano() { const c = document.getElementById('planoConteudo').innerHTML; const w = window.open('', '_blank'); w.document.write(`<html><head><title>Plano de Aula</title><style>body{font-family:Arial;padding:20px}</style></head><body>${c}</body></html>`); w.document.close(); w.print(); }
+        function imprimirPlano() { const c = document.getElementById('planoConteudo').innerHTML; const w = window.open('', '_blank'); w.document.write(`<html><head><title>Plano de Aula</title><style>body{font-family:Arial;padding:20px}.aula-card{background:#f9f9f9;padding:10px;margin-bottom:10px}</style></head><body>${c}</body></html>`); w.document.close(); w.print(); }
         function fecharModal() { document.getElementById('modalPlano').classList.remove('active'); }
     </script>
 </body>
