@@ -6,22 +6,14 @@
     <title>SAGE - Consulta de Planos</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
-        /* Ajustes do Modal de Visualização */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
         .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 8px; width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 25px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        
-        /* Ajuste da imagem no Modal (Para não ficar gigantesca) */
-        .logo-visualizacao { max-width: 120px; height: auto; display: block; margin: 0 auto 15px; }
-        
-        /* Estilos da Tabela de Informações no Modal */
-        .info-table-view { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+        .modal-content { background: white; border-radius: 8px; width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 25px; position: relative; }
+        .logo-visualizacao { max-width: 100px; height: auto; display: block; margin: 0 auto 10px; }
+        .info-table-view { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
         .info-table-view td { border: 1px solid #ddd; padding: 10px; background: #f9f9f9; }
-        
-        /* Cards de Aula no Modal */
-        .aula-item-view { border: 1px solid #eee; padding: 15px; margin-bottom: 10px; border-left: 4px solid #4CAF50; border-radius: 4px; }
+        .aula-item-view { border: 1px solid #eee; padding: 12px; margin-bottom: 10px; border-left: 4px solid #4CAF50; border-radius: 4px; font-size: 14px; }
         .aula-n-view { font-weight: bold; color: #2e7d32; margin-bottom: 5px; display: block; }
-
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
@@ -40,25 +32,20 @@
         <div class="header-actions no-print" style="margin: 20px 0;">
             <button onclick="location.href='dashboard.html'" class="btn-secondary">← Voltar</button>
         </div>
-
         <div id="listaPlanos" class="planos-grid"></div>
     </main>
 
     <div id="modalPlano" class="modal">
         <div class="modal-content">
             <span class="close-modal no-print" onclick="fecharModal()" style="position:absolute; right:20px; cursor:pointer; font-size:24px;">&times;</span>
-            
-            <div id="headerModal" style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
+            <div id="headerModal" style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
                 <img src="../../assets/logo-escola.png" class="logo-visualizacao" onerror="this.style.display='none'">
-                <h2 style="margin:0; font-size: 1.4em;">EEMTI FILGUEIRAS LIMA</h2>
-                <p style="margin:5px 0; color: #666;">Plano de Aula Mensal</p>
+                <h2 style="margin:0; font-size: 1.2em;">EEMTI FILGUEIRAS LIMA</h2>
+                <p style="margin:5px 0; color: #666; font-size: 0.9em;">Plano de Aula Mensal</p>
             </div>
-
-            <div id="renderVisualizacao">
-                </div>
-
-            <div class="modal-actions no-print" style="margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button id="btnImprimirPDF" class="btn-primary" style="padding: 10px 20px;">📥 Imprimir / Salvar PDF</button>
+            <div id="renderVisualizacao"></div>
+            <div class="modal-actions no-print" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="btnImprimirPDF" class="btn-primary">📥 Gerar PDF</button>
                 <button onclick="fecharModal()" class="btn-secondary">Fechar</button>
             </div>
         </div>
@@ -86,7 +73,7 @@
                 renderizarPlanos(todosPlanos);
                 Utils.mostrarLoading(false);
             } catch (error) {
-                Utils.mostrarMensagem('Erro: ' + error.message, 'error');
+                console.error("Erro na API:", error);
                 Utils.mostrarLoading(false);
             }
         }
@@ -95,8 +82,8 @@
             const container = document.getElementById('listaPlanos');
             container.innerHTML = planos.map(p => `
                 <div class="plano-card">
-                    <h3>${p.disciplina_nome} - ${p.turma_nome}</h3>
-                    <p>Prof: ${p.professor_nome} | Mês: ${p.mes}/${p.ano}</p>
+                    <h3>Série: ${p.serie || '---'}</h3>
+                    <p>ID Professor: ${p.professor_id} | Mês: ${p.mes_referencia}/${p.ano_referencia}</p>
                     <button onclick="visualizarPlano('${p.id}')" class="btn-primary">Ver Detalhes</button>
                 </div>
             `).join('');
@@ -106,38 +93,36 @@
             const plano = todosPlanos.find(p => p.id == id);
             if (!plano) return;
 
-            // Preenche os dados no modal (Sem "undefined") 
             const htmlInfo = `
                 <table class="info-table-view">
                     <tr>
-                        <td width="50%"><strong>PROFESSOR:</strong> ${plano.professor_nome || '---'}</td>
-                        <td width="50%"><strong>DISCIPLINA:</strong> ${plano.disciplina_nome || '---'}</td>
+                        <td width="50%"><strong>ID PROFESSOR:</strong> ${plano.professor_id || '---'}</td>
+                        <td width="50%"><strong>ID DISCIPLINA:</strong> ${plano.disciplina_id || '---'}</td>
                     </tr>
                     <tr>
-                        <td><strong>SÉRIE/TURMA:</strong> ${plano.turma_nome || '---'}</td>
-                        <td><strong>MÊS/ANO:</strong> ${plano.mes || '---'}/${plano.ano || '---'}</td>
+                        <td><strong>SÉRIE/TURMA:</strong> ${plano.serie || '---'}</td>
+                        <td><strong>MÊS/ANO:</strong> ${plano.mes_referencia || '--'}/${plano.ano_referencia || '--'}</td>
                     </tr>
                 </table>
-                <div style="margin-bottom: 20px;">
+                <div style="margin-bottom: 15px;">
                     <strong>CONTEÚDO MENSAL:</strong>
-                    <div style="padding: 10px; border: 1px solid #eee; margin-top:5px; background: #fff;">${plano.conteudo_mensal || 'Não informado'}</div>
+                    <div style="padding: 10px; border: 1px solid #eee; background: #fff; font-size: 13px;">${plano.conteudo_mensal || '---'}</div>
                 </div>
-                <div id="detalhamentoAulasView">
-                    ${gerarHtmlAulas(plano)}
+                <div style="margin-bottom: 15px;">
+                    <strong>REFERÊNCIAS:</strong>
+                    <div style="padding: 10px; border: 1px solid #eee; background: #fff; font-size: 13px;">${plano.referencias || '---'}</div>
                 </div>
+                <div id="detalhamentoAulasView">${gerarHtmlAulas(plano)}</div>
             `;
 
             document.getElementById('renderVisualizacao').innerHTML = htmlInfo;
-            
-            // Configura o botão de impressão para o plano selecionado [cite: 31, 32]
             document.getElementById('btnImprimirPDF').onclick = () => dispararImpressao(plano);
-            
             document.getElementById('modalPlano').classList.add('active');
         }
 
         function gerarHtmlAulas(p) {
             let html = '';
-            for (let i = 1; i <= 20; i++) {
+            for (let i = 1; i <= 40; i++) { // Notei que seu log vai até aula_40
                 const sub = p[`aula_${i}_subconteudo`];
                 if (sub) {
                     html += `
@@ -150,7 +135,7 @@
                         </div>`;
                 }
             }
-            return html || '<p>Nenhuma aula detalhada.</p>';
+            return html || '<p>Nenhuma aula detalhada encontrada.</p>';
         }
 
         function dispararImpressao(p) {
@@ -158,31 +143,31 @@
             win.document.write(`
                 <html>
                 <head>
-                    <title>Plano de Aula - ${p.professor_nome}</title>
+                    <title>Plano de Aula - Série ${p.serie}</title>
                     <style>
-                        body { font-family: Arial; padding: 40px; }
-                        .header-pdf { text-align: center; border-bottom: 2px solid #000; margin-bottom: 20px; }
-                        .logo-pdf { max-width: 100px; margin-bottom: 10px; }
-                        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                        .info-table td { border: 1px solid #000; padding: 8px; font-size: 13px; }
-                        .box { border: 1px solid #000; padding: 10px; margin-bottom: 20px; }
-                        .aula-card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; page-break-inside: avoid; }
-                        .assinaturas { margin-top: 60px; display: flex; justify-content: space-around; }
-                        .assinaturas div { border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; font-size: 12px; }
+                        body { font-family: Arial; padding: 30px; font-size: 12px; }
+                        .header-pdf { text-align: center; border-bottom: 2px solid #000; margin-bottom: 15px; }
+                        .logo-pdf { max-width: 80px; }
+                        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                        .info-table td { border: 1px solid #000; padding: 6px; }
+                        .box { border: 1px solid #000; padding: 8px; margin-bottom: 15px; background: #f9f9f9; }
+                        .aula-card { border: 1px solid #999; padding: 8px; margin-bottom: 8px; page-break-inside: avoid; }
+                        .assinaturas { margin-top: 50px; display: flex; justify-content: space-around; }
+                        .assinaturas div { border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; }
                     </style>
                 </head>
-                <body onload="window.print();">
+                <body onload="window.print(); window.close();">
                     <div class="header-pdf">
                         <img src="../../assets/logo-escola.png" class="logo-pdf" onerror="this.style.display='none'">
                         <h2>EEMTI FILGUEIRAS LIMA</h2>
                         <p>SAGE - Sistema de Apoio à Gestão Escolar</p>
                     </div>
                     <table class="info-table">
-                        <tr><td><strong>PROFESSOR:</strong> ${p.professor_nome}</td><td><strong>DISCIPLINA:</strong> ${p.disciplina_nome}</td></tr>
-                        <tr><td><strong>TURMA:</strong> ${p.turma_nome}</td><td><strong>MÊS/ANO:</strong> ${p.mes}/${p.ano}</td></tr>
+                        <tr><td><strong>ID PROFESSOR:</strong> ${p.professor_id}</td><td><strong>ID DISCIPLINA:</strong> ${p.disciplina_id}</td></tr>
+                        <tr><td><strong>SÉRIE:</strong> ${p.serie}</td><td><strong>MÊS/ANO:</strong> ${p.mes_referencia}/${p.ano_referencia}</td></tr>
                     </table>
-                    <strong>CONTEÚDO PROGRAMÁTICO MENSAL:</strong>
-                    <div class="box">${p.conteudo_mensal || ''}</div>
+                    <strong>CONTEÚDO MENSAL:</strong> <div class="box">${p.conteudo_mensal || ''}</div>
+                    <strong>REFERÊNCIAS:</strong> <div class="box">${p.referencias || ''}</div>
                     ${gerarHtmlAulas(p)}
                     <div class="assinaturas">
                         <div>Assinatura do Professor</div>
