@@ -28,6 +28,7 @@ jobs:
           echo "    APP_NAME: 'SAGE Planos'," >> assets/js/config.js
           echo "    APP_VERSION: '2.0.0'" >> assets/js/config.js
           echo "};" >> assets/js/config.js
+          echo "✅ Arquivo config.js gerado com sucesso!"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
