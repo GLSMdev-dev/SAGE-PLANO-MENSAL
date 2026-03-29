@@ -46,6 +46,7 @@
         .form-lotacao.open { display: block; }
         .form-group-inline { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
         .form-group-inline .form-group { margin-bottom: 0; flex: 1; }
+        .aulas-info { font-size: 12px; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -112,23 +113,21 @@
                             <div class="form-lotacao" id="form-lotacao-${prof.id}">
                                 <h4>Nova Lotação</h4>
                                 <div class="form-group-inline">
-                                    <div class="form-group"><label>Disciplina</label><select id="disc-${prof.id}" class="select-disc"></select></div>
-                                    <div class="form-group"><label>Turma</label><select id="turma-${prof.id}" class="select-turma"></select></div>
-                                    <div class="form-group"><label>Carga</label><select id="carga-${prof.id}" class="select-carga"></select></div>
+                                    <div class="form-group"><label>Disciplina</label><select id="disc-${prof.id}" class="select-disc" onchange="atualizarCargaInfo(${prof.id})"></select></div>
+                                    <div class="form-group"><label>Turma</label><select id="turma-${prof.id}" class="select-turma" onchange="atualizarCargaInfo(${prof.id})"></select></div>
                                     <button class="btn btn-primary" onclick="salvarLotacao(${prof.id})">Salvar</button>
                                     <button class="btn btn-secondary" onclick="fecharFormLotacao(${prof.id})">Cancelar</button>
                                 </div>
+                                <div id="carga-info-${prof.id}" class="aulas-info"></div>
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
             
-            // Preencher selects após renderizar
             professores.forEach(prof => {
                 preencherSelectsDisciplinas(prof.id);
                 preencherSelectsTurmas(prof.id);
-                preencherSelectsCargas(prof.id);
             });
         }
         
@@ -157,48 +156,43 @@
         
         function preencherSelectsTurmas(profId) {
             const select = document.getElementById(`turma-${profId}`);
-            if (select) select.innerHTML = '<option value="">Selecione...</option>' + turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+            if (select) select.innerHTML = '<option value="">Selecione...</option>' + turmas.map(t => `<option value="${t.id}">${t.nome} (${t.serie})</option>`).join('');
         }
         
-        function preencherSelectsCargas(profId) {
-            const select = document.getElementById(`carga-${profId}`);
-            if (select) {
-                select.innerHTML = '<option value="">Selecione...</option>';
-                cargas.forEach(c => {
-                    const disc = disciplinas.find(d => d.id == c.disciplina_id);
-                    select.innerHTML += `<option value="${c.id}">${disc ? disc.nome : '-'} - ${c.serie} (${c.aulas_semana}aulas)</option>`;
-                });
+        async function atualizarCargaInfo(profId) {
+            const discId = document.getElementById(`disc-${profId}`).value;
+            const turmaId = document.getElementById(`turma-${profId}`).value;
+            const infoDiv = document.getElementById(`carga-info-${profId}`);
+            
+            if (discId && turmaId) {
+                const turma = turmas.find(t => t.id == turmaId);
+                const carga = cargas.find(c => c.disciplina_id == discId && c.serie == turma?.serie);
+                if (carga) {
+                    infoDiv.innerHTML = `📊 Carga horária: ${carga.aulas_semana} aulas/semana (${turma.serie})`;
+                } else {
+                    infoDiv.innerHTML = '⚠️ Nenhuma carga horária definida para esta disciplina/série.';
+                }
+            } else {
+                infoDiv.innerHTML = '';
             }
         }
         
-        function toggleProfessor(id) {
-            const content = document.getElementById(`prof-content-${id}`);
-            content.classList.toggle('open');
-        }
-        
-        function abrirFormLotacao(profId) {
-            const form = document.getElementById(`form-lotacao-${profId}`);
-            form.classList.add('open');
-        }
-        
-        function fecharFormLotacao(profId) {
-            const form = document.getElementById(`form-lotacao-${profId}`);
-            form.classList.remove('open');
-        }
+        function toggleProfessor(id) { document.getElementById(`prof-content-${id}`).classList.toggle('open'); }
+        function abrirFormLotacao(profId) { document.getElementById(`form-lotacao-${profId}`).classList.add('open'); }
+        function fecharFormLotacao(profId) { document.getElementById(`form-lotacao-${profId}`).classList.remove('open'); }
         
         async function salvarLotacao(profId) {
             const disciplina_id = document.getElementById(`disc-${profId}`).value;
             const turma_id = document.getElementById(`turma-${profId}`).value;
-            const carga_horaria_id = document.getElementById(`carga-${profId}`).value;
+            if (!disciplina_id || !turma_id) { Utils.mostrarMensagem('Selecione disciplina e turma', 'error'); return; }
             
-            if (!disciplina_id || !turma_id || !carga_horaria_id) {
-                Utils.mostrarMensagem('Preencha todos os campos', 'error');
-                return;
-            }
+            const turma = turmas.find(t => t.id == turma_id);
+            const carga = cargas.find(c => c.disciplina_id == disciplina_id && c.serie == turma?.serie);
+            if (!carga) { Utils.mostrarMensagem('Nenhuma carga horária definida para esta combinação', 'error'); return; }
             
             try {
                 Utils.mostrarLoading(true);
-                await API.criarLotacao({ professor_id: profId, disciplina_id, turma_id, carga_horaria_id, ano_letivo: 2026, ativo: 'TRUE' });
+                await API.criarLotacao({ professor_id: profId, disciplina_id, turma_id, carga_horaria_id: carga.id, ano_letivo: 2026, ativo: 'TRUE' });
                 Utils.mostrarMensagem('Lotação adicionada!', 'success');
                 fecharFormLotacao(profId);
                 await carregarDados();
@@ -207,11 +201,8 @@
         }
         
         async function removerLotacao(lotacaoId, profId) {
-            Utils.confirmarAcao('Remover esta lotação?', async (confirmado) => {
-                if (confirmado) {
-                    try { Utils.mostrarLoading(true); await API.deletarLotacao(lotacaoId); await carregarDados(); Utils.mostrarLoading(false); }
-                    catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
-                }
+            Utils.confirmarAcao('Remover esta lotação?', async (c) => {
+                if (c) { try { Utils.mostrarLoading(true); await API.deletarLotacao(lotacaoId); await carregarDados(); Utils.mostrarLoading(false); } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); } }
             });
         }
     </script>
