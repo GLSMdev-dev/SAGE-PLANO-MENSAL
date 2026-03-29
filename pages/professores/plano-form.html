@@ -2,50 +2,50 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Professor - Plano de Aula | SAGE Planos</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
-        * { box-sizing: border-box; }
         .form-card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .form-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px; }
         .form-group { flex: 1; min-width: 200px; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 5px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; font-size: 16px; }
         .form-group textarea { min-height: 80px; resize: vertical; }
         .form-group input[readonly] { background: #f5f5f5; cursor: not-allowed; }
-        
         .info-card { background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4CAF50; }
-        .info-card strong { color: #4CAF50; }
-        
+        .carga-info { background: #e3f2fd; padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 14px; }
         .aulas-container { margin-top: 20px; }
         .semana-group { background: #f9f9f9; border-radius: 8px; margin-bottom: 20px; overflow: hidden; border: 1px solid #e0e0e0; }
         .semana-header { background: #4CAF50; color: white; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .semana-header h3 { margin: 0; font-size: 16px; }
         .semana-content { padding: 15px; display: none; }
         .semana-content.open { display: block; }
-        
         .aula-card { background: white; border-radius: 8px; margin-bottom: 15px; padding: 15px; border: 1px solid #e0e0e0; }
-        .aula-title { font-weight: bold; margin-bottom: 10px; color: #4CAF50; display: flex; justify-content: space-between; align-items: center; }
-        .aula-title span { background: #e8f5e9; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-        
+        .aula-title { font-weight: bold; margin-bottom: 10px; color: #4CAF50; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
         .file-upload { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
-        .file-upload input[type="file"] { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        .file-upload input[type="file"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
         .file-list { margin-top: 8px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 10px; }
         .file-item { background: #e3f2fd; padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
         .file-item a { color: #2196F3; text-decoration: none; }
-        .btn-remove-file { color: #f44336; cursor: pointer; font-size: 14px; }
-        
-        .btn-add-semana { background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        .btn-remove-file { color: #f44336; cursor: pointer; font-size: 14px; padding: 5px; }
+        .btn-add-semana { background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 100%; font-size: 16px; }
         .btn-remove-semana { background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; margin-left: 10px; }
-        .btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-        .btn-primary { background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-        .btn-success { background: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-        .btn-secondary { background: #666; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+        .btn-primary, .btn-success, .btn-secondary { padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; border: none; min-height: 48px; }
+        .btn-primary { background: #4CAF50; color: white; }
+        .btn-success { background: #2196F3; color: white; }
+        .btn-secondary { background: #666; color: white; }
         
-        .badge { background: #4CAF50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px; }
-        .carga-info { background: #e3f2fd; padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 14px; }
-        .carga-info span { font-weight: bold; color: #2196F3; }
+        @media (max-width: 768px) {
+            .form-card { padding: 15px; }
+            .semana-header h3 { font-size: 14px; }
+            .aula-card { padding: 10px; }
+            .btn-group { flex-direction: column; }
+            .btn-group button { width: 100%; }
+            .file-upload { flex-direction: column; }
+            .file-upload input[type="file"] { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -60,82 +60,28 @@
         <form id="formPlano">
             <input type="hidden" id="planoId">
             
-            <!-- Informações Básicas -->
             <div class="form-card">
                 <h3>📋 Informações do Plano</h3>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Série *</label>
-                        <select id="serie" required onchange="carregarDisciplinasPorSerie()">
-                            <option value="">Selecione...</option>
-                            <option value="1ª Série">1ª Série</option>
-                            <option value="2ª Série">2ª Série</option>
-                            <option value="3ª Série">3ª Série</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Disciplina *</label>
-                        <select id="disciplina_id" required onchange="carregarCargaHoraria()">
-                            <option value="">Selecione primeiro a série...</option>
-                        </select>
-                    </div>
+                    <div class="form-group"><label>Série *</label><select id="serie" required onchange="carregarDisciplinasPorSerie()"><option value="">Selecione...</option><option value="1ª Série">1ª Série</option><option value="2ª Série">2ª Série</option><option value="3ª Série">3ª Série</option></select></div>
+                    <div class="form-group"><label>Disciplina *</label><select id="disciplina_id" required onchange="carregarCargaHoraria()"><option value="">Selecione a série primeiro...</option></select></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Mês *</label>
-                        <select id="mes_referencia" required>
-                            <option value="">Selecione...</option>
-                            <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
-                            <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
-                            <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
-                            <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Ano *</label>
-                        <input type="number" id="ano_referencia" required value="2026" min="2020" max="2030">
-                    </div>
+                    <div class="form-group"><label>Mês *</label><select id="mes_referencia" required><option value="">Selecione...</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+                    <div class="form-group"><label>Ano *</label><input type="number" id="ano_referencia" required value="2026" min="2020" max="2030"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Aulas por Semana</label>
-                        <input type="number" id="aulas_semana" readonly style="background:#f5f5f5">
-                    </div>
-                    <div class="form-group">
-                        <label>Total de Aulas no Mês (4 semanas)</label>
-                        <input type="number" id="total_aulas" readonly style="background:#f5f5f5">
-                    </div>
+                    <div class="form-group"><label>Aulas por Semana</label><input type="number" id="aulas_semana" readonly style="background:#f5f5f5"></div>
+                    <div class="form-group"><label>Total de Aulas no Mês</label><input type="number" id="total_aulas" readonly style="background:#f5f5f5"></div>
                 </div>
-                <div id="cargaInfo" class="carga-info" style="display: none;">
-                    📊 <span id="cargaTexto"></span>
-                </div>
+                <div id="cargaInfo" class="carga-info" style="display: none;">📊 <span id="cargaTexto"></span></div>
             </div>
             
-            <!-- Conteúdo Mensal e Referências -->
-            <div class="form-card">
-                <h3>📖 Conteúdo Programático</h3>
-                <div class="form-group">
-                    <label>Conteúdo do Mês</label>
-                    <textarea id="conteudo_mensal" rows="4" placeholder="Descreva o conteúdo programático para todo o mês..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>📚 Referências (Bibliográficas, Sites, Vídeos)</label>
-                    <textarea id="referencias" rows="3" placeholder="Ex: Livro: Matemática - 3ª série, capítulos 5 a 8&#10;Site: Khan Academy - Funções&#10;Vídeo: YouTube - link"></textarea>
-                </div>
-            </div>
+            <div class="form-card"><h3>📖 Conteúdo Programático</h3><div class="form-group"><label>Conteúdo do Mês</label><textarea id="conteudo_mensal" rows="4"></textarea></div><div class="form-group"><label>📚 Referências</label><textarea id="referencias" rows="3"></textarea></div></div>
             
-            <!-- Aulas -->
             <div id="aulasContainer" class="aulas-container"></div>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <button type="button" class="btn-add-semana" onclick="adicionarSemana()">+ Adicionar Semana</button>
-            </div>
-            
-            <div class="btn-group">
-                <button type="button" class="btn-secondary" onclick="window.location.href='planos.html'">Cancelar</button>
-                <button type="button" class="btn-primary" onclick="salvarPlano('rascunho')">💾 Salvar Rascunho</button>
-                <button type="button" class="btn-success" onclick="salvarPlano('enviado')">📤 Salvar e Enviar</button>
-            </div>
+            <div style="text-align: center; margin: 20px 0;"><button type="button" class="btn-add-semana" onclick="adicionarSemana()">+ Adicionar Semana</button></div>
+            <div class="btn-group"><button type="button" class="btn-secondary" onclick="window.location.href='planos.html'">Cancelar</button><button type="button" class="btn-primary" onclick="salvarPlano('rascunho')">💾 Salvar Rascunho</button><button type="button" class="btn-success" onclick="salvarPlano('enviado')">📤 Salvar e Enviar</button></div>
         </form>
     </div>
     
@@ -144,22 +90,16 @@
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/utils.js"></script>
     <script>
-        let usuario = null, planoId = null;
-        let lotacoes = [], disciplinas = [], turmas = [], cargas = [];
-        let aulasPorSemana = 0;
-        let semanas = 4;
-        let arquivosTemp = {};
+        let usuario = null, planoId = null, lotacoes = [], disciplinas = [], turmas = [], cargas = [], aulasPorSemana = 0, semanas = 4;
         
         document.addEventListener('DOMContentLoaded', async function() {
             if (!Auth.verificarAcesso()) return;
             usuario = Auth.getUsuarioLogado();
             if (usuario.perfil !== 'professor') { Auth.redirecionarPorPerfil(); return; }
             document.getElementById('userName').textContent = usuario.nome;
-            
             const urlParams = new URLSearchParams(window.location.search);
             planoId = urlParams.get('id');
-            if (planoId) document.getElementById('pageTitle').textContent = 'Editar Plano de Aula';
-            
+            if (planoId) document.getElementById('pageTitle').textContent = 'Editar Plano';
             await carregarDados();
             if (planoId) await carregarPlano(planoId);
             else inicializarSemanas();
@@ -168,9 +108,7 @@
         async function carregarDados() {
             try {
                 Utils.mostrarLoading(true);
-                const [lotacoesRes, discRes, turmasRes, cargasRes] = await Promise.all([
-                    API.listarLotacoes(), API.listarDisciplinas(), API.listarTurmas(), API.getCargasHorarias()
-                ]);
+                const [lotacoesRes, discRes, turmasRes, cargasRes] = await Promise.all([API.listarLotacoes(), API.listarDisciplinas(), API.listarTurmas(), API.getCargasHorarias()]);
                 lotacoes = (lotacoesRes.dados || []).filter(l => l.professor_id == usuario.id);
                 disciplinas = discRes.dados || [];
                 turmas = turmasRes.dados || [];
@@ -186,217 +124,70 @@
             document.getElementById('aulas_semana').value = '';
             document.getElementById('total_aulas').value = '';
             document.getElementById('cargaInfo').style.display = 'none';
-            
             if (!serie) return;
-            
-            const lotacoesFiltradas = lotacoes.filter(l => {
-                const turma = turmas.find(t => t.id == l.turma_id);
-                return turma && turma.serie === serie;
-            });
-            
+            const lotacoesFiltradas = lotacoes.filter(l => { const turma = turmas.find(t => t.id == l.turma_id); return turma && turma.serie === serie; });
             const discIds = [...new Set(lotacoesFiltradas.map(l => l.disciplina_id))];
-            discIds.forEach(discId => {
-                const disc = disciplinas.find(d => d.id == discId);
-                if (disc) discSelect.innerHTML += `<option value="${disc.id}">${disc.nome}</option>`;
-            });
+            discIds.forEach(discId => { const disc = disciplinas.find(d => d.id == discId); if(disc) discSelect.innerHTML += `<option value="${disc.id}">${disc.nome}</option>`; });
         }
         
         function carregarCargaHoraria() {
             const discId = document.getElementById('disciplina_id').value;
             const serie = document.getElementById('serie').value;
-            
             if (discId && serie) {
                 const carga = cargas.find(c => c.disciplina_id == discId && c.serie == serie);
-                if (carga) {
-                    aulasPorSemana = parseInt(carga.aulas_semana);
-                    document.getElementById('aulas_semana').value = aulasPorSemana;
-                    const totalAulas = aulasPorSemana * 4;
-                    document.getElementById('total_aulas').value = totalAulas;
-                    
-                    const discNome = disciplinas.find(d => d.id == discId)?.nome || '';
-                    document.getElementById('cargaTexto').innerHTML = `${discNome} - ${serie}: ${aulasPorSemana} aulas por semana | Total no mês: ${totalAulas} aulas`;
-                    document.getElementById('cargaInfo').style.display = 'block';
-                    
-                    // Reconstruir as aulas com a nova carga horária
-                    reconstruirAulas();
-                } else {
-                    Utils.mostrarMensagem('Nenhuma carga horária encontrada para esta disciplina/série', 'warning');
-                    document.getElementById('cargaInfo').style.display = 'none';
-                }
+                if (carga) { aulasPorSemana = parseInt(carga.aulas_semana); document.getElementById('aulas_semana').value = aulasPorSemana; const totalAulas = aulasPorSemana * 4; document.getElementById('total_aulas').value = totalAulas; const discNome = disciplinas.find(d => d.id == discId)?.nome || ''; document.getElementById('cargaTexto').innerHTML = `${discNome} - ${serie}: ${aulasPorSemana} aulas/semana | Total: ${totalAulas} aulas`; document.getElementById('cargaInfo').style.display = 'block'; reconstruirAulas(); }
+                else Utils.mostrarMensagem('Nenhuma carga horária encontrada', 'warning');
             }
         }
         
-        function inicializarSemanas() {
-            const container = document.getElementById('aulasContainer');
-            container.innerHTML = '';
-            for (let s = 1; s <= semanas; s++) {
-                adicionarSemanaUI(s);
-            }
-        }
-        
-        function reconstruirAulas() {
-            const container = document.getElementById('aulasContainer');
-            const semanasDivs = container.querySelectorAll('.semana-group');
-            semanas = semanasDivs.length;
-            semanasDivs.forEach((div, idx) => {
-                const semanaNum = idx + 1;
-                const content = div.querySelector('.semana-content');
-                if (content) {
-                    content.innerHTML = gerarAulasUI(semanaNum, aulasPorSemana || 4);
-                }
-            });
-        }
-        
-        function adicionarSemana() {
-            semanas++;
-            adicionarSemanaUI(semanas);
-        }
-        
-        function removerSemana(semanaNum) {
-            Utils.confirmarAcao('Remover esta semana e todas as suas aulas?', (confirmado) => {
-                if (confirmado) {
-                    const semanaDiv = document.getElementById(`semana_${semanaNum}`);
-                    if (semanaDiv) semanaDiv.remove();
-                    reorganizarSemanas();
-                }
-            });
-        }
+        function inicializarSemanas() { const container = document.getElementById('aulasContainer'); container.innerHTML = ''; for (let s = 1; s <= semanas; s++) adicionarSemanaUI(s); }
+        function reconstruirAulas() { const container = document.getElementById('aulasContainer'); const semanasDivs = container.querySelectorAll('.semana-group'); semanas = semanasDivs.length; semanasDivs.forEach((div, idx) => { const semanaNum = idx + 1; const content = div.querySelector('.semana-content'); if (content) content.innerHTML = gerarAulasUI(semanaNum, aulasPorSemana || 4); }); }
+        function adicionarSemana() { semanas++; adicionarSemanaUI(semanas); }
+        function removerSemana(semanaNum) { Utils.confirmarAcao('Remover semana?', (c) => { if(c) { document.getElementById(`semana_${semanaNum}`).remove(); reorganizarSemanas(); } }); }
         
         function reorganizarSemanas() {
             const container = document.getElementById('aulasContainer');
             const semanasDivs = container.querySelectorAll('.semana-group');
             semanas = semanasDivs.length;
-            semanasDivs.forEach((div, idx) => {
-                const newNum = idx + 1;
-                div.id = `semana_${newNum}`;
-                const header = div.querySelector('.semana-header h3');
-                if (header) header.innerHTML = `📅 Semana ${newNum} <button type="button" class="btn-remove-semana" onclick="removerSemana(${newNum})">🗑️</button>`;
-                const content = div.querySelector('.semana-content');
-                if (content) content.id = `semana-content-${newNum}`;
-                content.querySelectorAll('[data-aula]').forEach(el => {
-                    const oldAula = el.getAttribute('data-aula');
-                    const newAula = oldAula.replace(/semana_\d+/, `semana_${newNum}`);
-                    el.id = newAula;
-                    el.setAttribute('data-aula', newAula);
-                });
-            });
+            semanasDivs.forEach((div, idx) => { const newNum = idx + 1; div.id = `semana_${newNum}`; const header = div.querySelector('.semana-header h3'); if (header) header.innerHTML = `📅 Semana ${newNum} <button type="button" class="btn-remove-semana" onclick="removerSemana(${newNum})">🗑️</button>`; });
         }
         
         function adicionarSemanaUI(semanaNum) {
             const container = document.getElementById('aulasContainer');
             const aulas = aulasPorSemana || 4;
-            
-            const semanaDiv = document.createElement('div');
-            semanaDiv.className = 'semana-group';
-            semanaDiv.id = `semana_${semanaNum}`;
-            semanaDiv.innerHTML = `
-                <div class="semana-header" onclick="toggleSemana(${semanaNum})">
-                    <h3>📅 Semana ${semanaNum} <button type="button" class="btn-remove-semana" onclick="event.stopPropagation(); removerSemana(${semanaNum})">🗑️</button></h3>
-                    <span>▼</span>
-                </div>
-                <div class="semana-content" id="semana-content-${semanaNum}">
-                    ${gerarAulasUI(semanaNum, aulas)}
-                </div>
-            `;
+            const semanaDiv = document.createElement('div'); semanaDiv.className = 'semana-group'; semanaDiv.id = `semana_${semanaNum}`;
+            semanaDiv.innerHTML = `<div class="semana-header" onclick="toggleSemana(${semanaNum})"><h3>📅 Semana ${semanaNum} <button type="button" class="btn-remove-semana" onclick="event.stopPropagation(); removerSemana(${semanaNum})">🗑️</button></h3><span>▼</span></div><div class="semana-content" id="semana-content-${semanaNum}">${gerarAulasUI(semanaNum, aulas)}</div>`;
             container.appendChild(semanaDiv);
         }
         
         function gerarAulasUI(semanaNum, totalAulas) {
             let html = '';
             for (let aula = 1; aula <= totalAulas; aula++) {
-                html += `
-                    <div class="aula-card">
-                        <div class="aula-title">
-                            Aula ${aula} <span>${aula}ª aula da semana</span>
-                        </div>
-                        <div class="form-group">
-                            <label>🎯 Sub-conteúdo da Aula</label>
-                            <textarea id="semana_${semanaNum}_aula_${aula}_subconteudo" data-aula="semana_${semanaNum}_aula_${aula}_subconteudo" rows="2" placeholder="Conteúdo específico desta aula..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>📚 Recursos Didáticos</label>
-                            <div class="file-upload">
-                                <input type="file" id="recursos_file_${semanaNum}_${aula}" accept=".pdf,.doc,.docx,.jpg,.png,.txt" multiple>
-                                <button type="button" class="btn-secondary" onclick="uploadArquivo(${semanaNum}, ${aula}, 'recursos')" style="padding: 8px 12px;">📎 Anexar</button>
-                            </div>
-                            <div class="file-list" id="recursos_list_${semanaNum}_${aula}"></div>
-                            <textarea id="semana_${semanaNum}_aula_${aula}_recursos" data-aula="semana_${semanaNum}_aula_${aula}_recursos" rows="2" placeholder="Links ou descrição dos recursos..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>🎯 Metodologia</label>
-                            <textarea id="semana_${semanaNum}_aula_${aula}_metodologia" data-aula="semana_${semanaNum}_aula_${aula}_metodologia" rows="2" placeholder="Como será desenvolvida a aula?"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>📝 Avaliação</label>
-                            <div class="file-upload">
-                                <input type="file" id="avaliacao_file_${semanaNum}_${aula}" accept=".pdf,.doc,.docx,.jpg,.png,.txt" multiple>
-                                <button type="button" class="btn-secondary" onclick="uploadArquivo(${semanaNum}, ${aula}, 'avaliacao')" style="padding: 8px 12px;">📎 Anexar</button>
-                            </div>
-                            <div class="file-list" id="avaliacao_list_${semanaNum}_${aula}"></div>
-                            <textarea id="semana_${semanaNum}_aula_${aula}_avaliacao" data-aula="semana_${semanaNum}_aula_${aula}_avaliacao" rows="2" placeholder="Como será avaliada a aprendizagem?"></textarea>
-                        </div>
-                    </div>
-                `;
+                html += `<div class="aula-card"><div class="aula-title">Aula ${aula} <span>${aula}ª aula</span></div><div class="form-group"><label>🎯 Sub-conteúdo</label><textarea id="semana_${semanaNum}_aula_${aula}_subconteudo" rows="2"></textarea></div><div class="form-group"><label>📚 Recursos</label><div class="file-upload"><input type="file" id="recursos_file_${semanaNum}_${aula}" accept=".pdf,.doc,.docx,.jpg,.png"><button type="button" class="btn-secondary" onclick="uploadArquivo(${semanaNum}, ${aula}, 'recursos')">📎 Anexar</button></div><div class="file-list" id="recursos_list_${semanaNum}_${aula}"></div><textarea id="semana_${semanaNum}_aula_${aula}_recursos" rows="2"></textarea></div><div class="form-group"><label>🎯 Metodologia</label><textarea id="semana_${semanaNum}_aula_${aula}_metodologia" rows="2"></textarea></div><div class="form-group"><label>📝 Avaliação</label><div class="file-upload"><input type="file" id="avaliacao_file_${semanaNum}_${aula}" accept=".pdf,.doc,.docx,.jpg,.png"><button type="button" class="btn-secondary" onclick="uploadArquivo(${semanaNum}, ${aula}, 'avaliacao')">📎 Anexar</button></div><div class="file-list" id="avaliacao_list_${semanaNum}_${aula}"></div><textarea id="semana_${semanaNum}_aula_${aula}_avaliacao" rows="2"></textarea></div></div>`;
             }
             return html;
         }
         
-        function toggleSemana(semanaNum) {
-            const content = document.getElementById(`semana-content-${semanaNum}`);
-            if (content) content.classList.toggle('open');
-        }
+        function toggleSemana(semanaNum) { const content = document.getElementById(`semana-content-${semanaNum}`); if (content) content.classList.toggle('open'); }
         
         function uploadArquivo(semanaNum, aulaNum, tipo) {
             const fileInput = document.getElementById(`${tipo}_file_${semanaNum}_${aulaNum}`);
             const file = fileInput.files[0];
             if (!file) { Utils.mostrarMensagem('Selecione um arquivo', 'error'); return; }
-            
             const url = URL.createObjectURL(file);
             const listDiv = document.getElementById(`${tipo}_list_${semanaNum}_${aulaNum}`);
-            const fileDiv = document.createElement('div');
-            fileDiv.className = 'file-item';
-            fileDiv.innerHTML = `<a href="${url}" target="_blank">📎 ${file.name}</a> <span class="btn-remove-file" onclick="this.parentElement.remove()">❌</span>`;
+            const fileDiv = document.createElement('div'); fileDiv.className = 'file-item'; fileDiv.innerHTML = `<a href="${url}" target="_blank">📎 ${file.name}</a> <span class="btn-remove-file" onclick="this.parentElement.remove()">❌</span>`;
             listDiv.appendChild(fileDiv);
-            
-            if (!arquivosTemp[planoId || 'novo']) arquivosTemp[planoId || 'novo'] = [];
-            arquivosTemp[planoId || 'novo'].push({
-                semana: semanaNum, aula: aulaNum, tipo: tipo,
-                nome: file.name, url: url, tamanho: file.size
-            });
-            
             fileInput.value = '';
             Utils.mostrarMensagem('Arquivo anexado!', 'success');
         }
         
         async function carregarPlano(id) {
-            try {
-                const result = await API.listarPlanos();
-                const plano = (result.dados || []).find(p => p.id == id);
-                if (plano && plano.professor_id == usuario.id) {
-                    document.getElementById('planoId').value = plano.id;
-                    document.getElementById('serie').value = plano.serie;
-                    await carregarDisciplinasPorSerie();
-                    setTimeout(() => {
-                        document.getElementById('disciplina_id').value = plano.disciplina_id;
-                        carregarCargaHoraria();
-                    }, 100);
-                    document.getElementById('mes_referencia').value = plano.mes_referencia;
-                    document.getElementById('ano_referencia').value = plano.ano_referencia;
-                    document.getElementById('conteudo_mensal').value = plano.conteudo_mensal || '';
-                    document.getElementById('referencias').value = plano.referencias || '';
-                    semanas = parseInt(plano.semanas_planejadas) || 4;
-                    
-                    inicializarSemanas();
-                    
-                    if (plano.status === 'enviado' || plano.status === 'aprovado') desabilitarFormulario();
-                }
-            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); }
+            try { const result = await API.listarPlanos(); const plano = (result.dados || []).find(p => p.id == id); if (plano && plano.professor_id == usuario.id) { document.getElementById('planoId').value = plano.id; document.getElementById('serie').value = plano.serie; await carregarDisciplinasPorSerie(); setTimeout(() => { document.getElementById('disciplina_id').value = plano.disciplina_id; carregarCargaHoraria(); }, 100); document.getElementById('mes_referencia').value = plano.mes_referencia; document.getElementById('ano_referencia').value = plano.ano_referencia; document.getElementById('conteudo_mensal').value = plano.conteudo_mensal || ''; document.getElementById('referencias').value = plano.referencias || ''; semanas = parseInt(plano.semanas_planejadas) || 4; inicializarSemanas(); if (plano.status === 'enviado' || plano.status === 'aprovado') desabilitarFormulario(); } }
+            catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); }
         }
         
-        function desabilitarFormulario() {
-            document.querySelectorAll('#formPlano input, #formPlano select, #formPlano textarea, #formPlano button').forEach(el => el.disabled = true);
-            Utils.mostrarMensagem('Este plano não pode mais ser editado.', 'warning');
-        }
+        function desabilitarFormulario() { document.querySelectorAll('#formPlano input, #formPlano select, #formPlano textarea, #formPlano button').forEach(el => el.disabled = true); Utils.mostrarMensagem('Este plano não pode mais ser editado.', 'warning'); }
         
         function coletarDados() {
             const serie = document.getElementById('serie').value;
@@ -405,35 +196,10 @@
             const ano = document.getElementById('ano_referencia').value;
             const conteudo_mensal = document.getElementById('conteudo_mensal').value;
             const referencias = document.getElementById('referencias').value;
-            
-            if (!serie || !disciplina_id || !mes || !ano) {
-                Utils.mostrarMensagem('Preencha série, disciplina, mês e ano', 'error');
-                return null;
-            }
-            
-            const dados = {
-                professor_id: usuario.id,
-                disciplina_id: disciplina_id,
-                serie: serie,
-                mes_referencia: parseInt(mes),
-                ano_referencia: parseInt(ano),
-                conteudo_mensal: conteudo_mensal,
-                referencias: referencias,
-                aulas_semana: aulasPorSemana,
-                total_aulas_mes: aulasPorSemana * 4,
-                semanas_planejadas: semanas
-            };
-            
+            if (!serie || !disciplina_id || !mes || !ano) { Utils.mostrarMensagem('Preencha série, disciplina, mês e ano', 'error'); return null; }
+            const dados = { professor_id: usuario.id, disciplina_id, serie, mes_referencia: parseInt(mes), ano_referencia: parseInt(ano), conteudo_mensal, referencias, aulas_semana: aulasPorSemana, total_aulas_mes: aulasPorSemana * 4, semanas_planejadas: semanas };
             const aulasPorSemanaAtual = aulasPorSemana || 4;
-            for (let s = 1; s <= semanas; s++) {
-                for (let a = 1; a <= aulasPorSemanaAtual; a++) {
-                    dados[`aula_${((s-1)*aulasPorSemanaAtual + a)}_subconteudo`] = document.getElementById(`semana_${s}_aula_${a}_subconteudo`)?.value || '';
-                    dados[`aula_${((s-1)*aulasPorSemanaAtual + a)}_metodologia`] = document.getElementById(`semana_${s}_aula_${a}_metodologia`)?.value || '';
-                    dados[`aula_${((s-1)*aulasPorSemanaAtual + a)}_avaliacao`] = document.getElementById(`semana_${s}_aula_${a}_avaliacao`)?.value || '';
-                    dados[`aula_${((s-1)*aulasPorSemanaAtual + a)}_recursos`] = document.getElementById(`semana_${s}_aula_${a}_recursos`)?.value || '';
-                }
-            }
-            
+            for (let s = 1; s <= semanas; s++) for (let a = 1; a <= aulasPorSemanaAtual; a++) { const aulaNum = (s-1)*aulasPorSemanaAtual + a; dados[`aula_${aulaNum}_subconteudo`] = document.getElementById(`semana_${s}_aula_${a}_subconteudo`)?.value || ''; dados[`aula_${aulaNum}_metodologia`] = document.getElementById(`semana_${s}_aula_${a}_metodologia`)?.value || ''; dados[`aula_${aulaNum}_avaliacao`] = document.getElementById(`semana_${s}_aula_${a}_avaliacao`)?.value || ''; dados[`aula_${aulaNum}_recursos`] = document.getElementById(`semana_${s}_aula_${a}_recursos`)?.value || ''; }
             return dados;
         }
         
@@ -442,15 +208,8 @@
             const dados = coletarDados();
             if (!dados) return;
             dados.status = status;
-            
-            try {
-                Utils.mostrarLoading(true);
-                if (id) await API.atualizarPlano(id, dados);
-                else await API.criarPlano(dados);
-                Utils.mostrarMensagem(status === 'enviado' ? 'Plano enviado para o gestor!' : 'Rascunho salvo!', 'success');
-                setTimeout(() => { window.location.href = 'planos.html'; }, 1500);
-                Utils.mostrarLoading(false);
-            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+            try { Utils.mostrarLoading(true); if (id) await API.atualizarPlano(id, dados); else await API.criarPlano(dados); Utils.mostrarMensagem(status === 'enviado' ? 'Plano enviado!' : 'Rascunho salvo!', 'success'); setTimeout(() => { window.location.href = 'planos.html'; }, 1500); Utils.mostrarLoading(false); }
+            catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
         }
     </script>
 </body>
