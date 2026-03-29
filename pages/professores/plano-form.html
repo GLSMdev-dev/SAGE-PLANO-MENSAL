@@ -13,6 +13,7 @@
         .form-group label { display: block; font-weight: 500; margin-bottom: 5px; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; }
         .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-group input[readonly] { background: #f5f5f5; cursor: not-allowed; }
         
         .info-card { background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4CAF50; }
         .info-card strong { color: #4CAF50; }
@@ -43,8 +44,8 @@
         .btn-secondary { background: #666; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
         
         .badge { background: #4CAF50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px; }
-        .loading-small { display: inline-block; width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid #4CAF50; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .carga-info { background: #e3f2fd; padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 14px; }
+        .carga-info span { font-weight: bold; color: #2196F3; }
     </style>
 </head>
 <body>
@@ -97,17 +98,16 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Dias Letivos no Mês</label>
-                        <input type="number" id="dias_letivos" placeholder="Ex: 20" onchange="calcularTotalAulas()">
-                    </div>
-                    <div class="form-group">
                         <label>Aulas por Semana</label>
                         <input type="number" id="aulas_semana" readonly style="background:#f5f5f5">
                     </div>
                     <div class="form-group">
-                        <label>Total de Aulas no Mês</label>
+                        <label>Total de Aulas no Mês (4 semanas)</label>
                         <input type="number" id="total_aulas" readonly style="background:#f5f5f5">
                     </div>
+                </div>
+                <div id="cargaInfo" class="carga-info" style="display: none;">
+                    📊 <span id="cargaTexto"></span>
                 </div>
             </div>
             
@@ -183,6 +183,9 @@
             const serie = document.getElementById('serie').value;
             const discSelect = document.getElementById('disciplina_id');
             discSelect.innerHTML = '<option value="">Selecione...</option>';
+            document.getElementById('aulas_semana').value = '';
+            document.getElementById('total_aulas').value = '';
+            document.getElementById('cargaInfo').style.display = 'none';
             
             if (!serie) return;
             
@@ -204,19 +207,23 @@
             
             if (discId && serie) {
                 const carga = cargas.find(c => c.disciplina_id == discId && c.serie == serie);
-                aulasPorSemana = carga ? parseInt(carga.aulas_semana) : 0;
-                document.getElementById('aulas_semana').value = aulasPorSemana;
-                calcularTotalAulas();
-                reconstruirAulas();
+                if (carga) {
+                    aulasPorSemana = parseInt(carga.aulas_semana);
+                    document.getElementById('aulas_semana').value = aulasPorSemana;
+                    const totalAulas = aulasPorSemana * 4;
+                    document.getElementById('total_aulas').value = totalAulas;
+                    
+                    const discNome = disciplinas.find(d => d.id == discId)?.nome || '';
+                    document.getElementById('cargaTexto').innerHTML = `${discNome} - ${serie}: ${aulasPorSemana} aulas por semana | Total no mês: ${totalAulas} aulas`;
+                    document.getElementById('cargaInfo').style.display = 'block';
+                    
+                    // Reconstruir as aulas com a nova carga horária
+                    reconstruirAulas();
+                } else {
+                    Utils.mostrarMensagem('Nenhuma carga horária encontrada para esta disciplina/série', 'warning');
+                    document.getElementById('cargaInfo').style.display = 'none';
+                }
             }
-        }
-        
-        function calcularTotalAulas() {
-            const diasLetivos = parseInt(document.getElementById('dias_letivos').value) || 20;
-            const semanasNoMes = Math.ceil(diasLetivos / 5);
-            const totalAulas = semanasNoMes * aulasPorSemana;
-            document.getElementById('total_aulas').value = totalAulas;
-            return totalAulas;
         }
         
         function inicializarSemanas() {
@@ -266,7 +273,6 @@
                 if (header) header.innerHTML = `📅 Semana ${newNum} <button type="button" class="btn-remove-semana" onclick="removerSemana(${newNum})">🗑️</button>`;
                 const content = div.querySelector('.semana-content');
                 if (content) content.id = `semana-content-${newNum}`;
-                // Atualizar IDs dos inputs
                 content.querySelectorAll('[data-aula]').forEach(el => {
                     const oldAula = el.getAttribute('data-aula');
                     const newAula = oldAula.replace(/semana_\d+/, `semana_${newNum}`);
@@ -346,8 +352,6 @@
             if (!file) { Utils.mostrarMensagem('Selecione um arquivo', 'error'); return; }
             
             const url = URL.createObjectURL(file);
-            const fileId = Date.now() + '_' + file.name;
-            
             const listDiv = document.getElementById(`${tipo}_list_${semanaNum}_${aulaNum}`);
             const fileDiv = document.createElement('div');
             fileDiv.className = 'file-item';
@@ -378,13 +382,10 @@
                     }, 100);
                     document.getElementById('mes_referencia').value = plano.mes_referencia;
                     document.getElementById('ano_referencia').value = plano.ano_referencia;
-                    document.getElementById('dias_letivos').value = plano.dias_letivos || '';
                     document.getElementById('conteudo_mensal').value = plano.conteudo_mensal || '';
                     document.getElementById('referencias').value = plano.referencias || '';
-                    document.getElementById('total_aulas').value = plano.total_aulas_mes || '';
                     semanas = parseInt(plano.semanas_planejadas) || 4;
                     
-                    calcularTotalAulas();
                     inicializarSemanas();
                     
                     if (plano.status === 'enviado' || plano.status === 'aprovado') desabilitarFormulario();
@@ -402,7 +403,6 @@
             const disciplina_id = document.getElementById('disciplina_id').value;
             const mes = document.getElementById('mes_referencia').value;
             const ano = document.getElementById('ano_referencia').value;
-            const dias_letivos = document.getElementById('dias_letivos').value;
             const conteudo_mensal = document.getElementById('conteudo_mensal').value;
             const referencias = document.getElementById('referencias').value;
             
@@ -417,10 +417,10 @@
                 serie: serie,
                 mes_referencia: parseInt(mes),
                 ano_referencia: parseInt(ano),
-                dias_letivos: dias_letivos || '',
                 conteudo_mensal: conteudo_mensal,
                 referencias: referencias,
-                total_aulas_mes: document.getElementById('total_aulas').value,
+                aulas_semana: aulasPorSemana,
+                total_aulas_mes: aulasPorSemana * 4,
                 semanas_planejadas: semanas
             };
             
