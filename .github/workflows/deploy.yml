@@ -24,28 +24,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create config.js from template
+      - name: Create config.js
         env:
           API_URL: ${{ secrets.API_URL }}
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
         run: |
-          echo "🔧 Criando config.js a partir do template..."
-          
-          # Criar diretório se não existir
+          echo "🔧 Criando config.js..."
           mkdir -p assets/js
-          
-          # Gerar config.js (sem API_KEY - segurança)
-          cat > assets/js/config.js << EOF
+          cat > assets/js/config.js << 'EOF'
           window.APP_CONFIG = {
-              API_URL: '${API_URL}',
-              SPREADSHEET_ID: '${SPREADSHEET_ID}',
+              API_URL: '${{ secrets.API_URL }}',
+              SPREADSHEET_ID: '${{ secrets.SPREADSHEET_ID }}',
               APP_NAME: 'SAGE Planos',
-              APP_VERSION: '1.0.0'
+              APP_VERSION: '2.0.0'
           };
           EOF
-          
-          echo "✅ config.js gerado com sucesso!"
-          echo "Conteúdo do config.js:"
+          echo "✅ config.js criado!"
           cat assets/js/config.js
 
       - name: Setup Pages
