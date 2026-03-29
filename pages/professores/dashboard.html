@@ -6,140 +6,43 @@
     <title>Professor - SAGE Planos</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .menu-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        
-        .menu-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .menu-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-        
-        .menu-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #4CAF50;
-            margin-bottom: 10px;
-        }
-        
-        .menu-desc {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .info-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        
-        .planos-resumo {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .resumo-item {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            color: #333;
-        }
-        
-        .resumo-numero {
-            font-size: 28px;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-        
-        .resumo-label {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+        .menu-card { background: white; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: transform 0.3s; }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .menu-icon { font-size: 48px; margin-bottom: 15px; }
+        .menu-title { font-size: 18px; font-weight: 600; color: #4CAF50; margin-bottom: 10px; }
+        .menu-desc { font-size: 14px; color: #666; }
+        .info-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .lotacao-item { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; margin-top: 10px; }
+        .planos-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+        .resumo-item { background: white; padding: 15px; border-radius: 8px; text-align: center; color: #333; }
+        .resumo-numero { font-size: 28px; font-weight: bold; color: #4CAF50; }
+        .resumo-label { font-size: 12px; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="container">
-            <div class="logo">
-                <h1>SAGE Planos</h1>
-                <p>Painel do Professor</p>
-            </div>
-            <div class="user-info">
-                <span class="user-name" id="userName">Carregando...</span>
-                <span class="user-info-item" id="userDisciplina"></span>
-                <span class="user-info-item" id="userTurma"></span>
-                <button class="btn-logout" onclick="Auth.logout()">Sair</button>
-            </div>
+            <div class="logo"><h1>SAGE Planos</h1><p>Painel do Professor</p></div>
+            <div class="user-info"><span id="userName">Carregando...</span><button class="btn-logout" onclick="Auth.logout()">Sair</button></div>
         </div>
     </div>
     
     <div class="container">
-        <div class="info-card">
-            <h2>Bem-vindo, <span id="professorNome"></span>!</h2>
-            <p id="infoLotacao"></p>
-        </div>
+        <div class="info-card" id="infoCard"></div>
         
         <div class="planos-resumo">
-            <div class="resumo-item">
-                <div class="resumo-numero" id="totalPlanos">0</div>
-                <div class="resumo-label">Total de Planos</div>
-            </div>
-            <div class="resumo-item">
-                <div class="resumo-numero" id="planosRascunho">0</div>
-                <div class="resumo-label">Rascunhos</div>
-            </div>
-            <div class="resumo-item">
-                <div class="resumo-numero" id="planosEnviados">0</div>
-                <div class="resumo-label">Enviados</div>
-            </div>
-            <div class="resumo-item">
-                <div class="resumo-numero" id="planosAprovados">0</div>
-                <div class="resumo-label">Aprovados</div>
-            </div>
+            <div class="resumo-item"><div class="resumo-numero" id="totalPlanos">0</div><div class="resumo-label">Total de Planos</div></div>
+            <div class="resumo-item"><div class="resumo-numero" id="planosRascunho">0</div><div class="resumo-label">Rascunhos</div></div>
+            <div class="resumo-item"><div class="resumo-numero" id="planosEnviados">0</div><div class="resumo-label">Enviados</div></div>
+            <div class="resumo-item"><div class="resumo-numero" id="planosAprovados">0</div><div class="resumo-label">Aprovados</div></div>
         </div>
         
         <h2>Minhas Atividades</h2>
         <div class="dashboard-grid">
-            <div class="menu-card" onclick="window.location.href='planos.html'">
-                <div class="menu-icon">📝</div>
-                <div class="menu-title">Meus Planos de Aula</div>
-                <div class="menu-desc">Criar, editar e gerenciar meus planos de aula mensais</div>
-            </div>
-            
-            <div class="menu-card" onclick="window.location.href='planos.html?status=enviado'">
-                <div class="menu-icon">📤</div>
-                <div class="menu-title">Planos Enviados</div>
-                <div class="menu-desc">Acompanhar planos que já foram enviados para o gestor</div>
-            </div>
-            
-            <div class="menu-card" onclick="window.location.href='planos.html?status=revisar'">
-                <div class="menu-icon">🔄</div>
-                <div class="menu-title">Planos para Revisão</div>
-                <div class="menu-desc">Visualizar feedback e ajustar planos solicitados</div>
-            </div>
+            <div class="menu-card" onclick="window.location.href='planos.html'"><div class="menu-icon">📝</div><div class="menu-title">Meus Planos</div><div class="menu-desc">Criar e gerenciar planos de aula</div></div>
+            <div class="menu-card" onclick="window.location.href='planos.html?status=enviado'"><div class="menu-icon">📤</div><div class="menu-title">Planos Enviados</div><div class="menu-desc">Acompanhar planos enviados</div></div>
+            <div class="menu-card" onclick="window.location.href='planos.html?status=revisar'"><div class="menu-icon">🔄</div><div class="menu-title">Planos para Revisão</div><div class="menu-desc">Visualizar feedback e ajustar</div></div>
         </div>
     </div>
     
@@ -148,88 +51,51 @@
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/utils.js"></script>
     <script>
-        let disciplinas = [];
-        let turmas = [];
-        
-        // Carregar tema visual
-        async function carregarTema() {
-            try {
-                const configs = await API.getConfigVisual();
-                if (configs.success && configs.dados) {
-                    Utils.aplicarTema(configs.dados);
-                }
-            } catch (error) {
-                console.error('Erro ao carregar tema:', error);
-            }
-        }
+        let usuario = null;
+        let disciplinas = [], turmas = [], lotacoes = [];
         
         document.addEventListener('DOMContentLoaded', async function() {
-            // Carregar tema
-            await carregarTema();
-            
             if (!Auth.verificarAcesso()) return;
-            
-            const usuario = Auth.getUsuarioLogado();
-            if (usuario.perfil !== 'professor') {
-                Auth.redirecionarPorPerfil();
-                return;
-            }
-            
+            usuario = Auth.getUsuarioLogado();
+            if (usuario.perfil !== 'professor') { Auth.redirecionarPorPerfil(); return; }
             document.getElementById('userName').textContent = usuario.nome;
-            document.getElementById('professorNome').textContent = usuario.nome;
-            
-            await carregarDados(usuario);
-            await carregarEstatisticas(usuario);
+            await carregarDados();
+            await carregarEstatisticas();
         });
         
-        async function carregarDados(usuario) {
+        async function carregarDados() {
             try {
-                const [discRes, turmasRes] = await Promise.all([
-                    API.listarDisciplinas(),
-                    API.listarTurmas()
+                const [discRes, turmasRes, lotacoesRes] = await Promise.all([
+                    API.listarDisciplinas(), API.listarTurmas(), API.listarLotacoes()
                 ]);
-                
                 disciplinas = discRes.dados || [];
                 turmas = turmasRes.dados || [];
+                lotacoes = (lotacoesRes.dados || []).filter(l => l.professor_id == usuario.id);
                 
-                const disciplina = disciplinas.find(d => d.id == usuario.disciplina_id);
-                const turma = turmas.find(t => t.id == usuario.turma_id);
-                
-                if (disciplina && turma) {
-                    document.getElementById('userDisciplina').innerHTML = `📚 ${disciplina.nome}`;
-                    document.getElementById('userTurma').innerHTML = `🏫 ${turma.nome}`;
-                    document.getElementById('infoLotacao').innerHTML = `
-                        Você está lotado na disciplina <strong>${disciplina.nome}</strong> 
-                        para a turma <strong>${turma.nome}</strong>.
-                    `;
+                const infoCard = document.getElementById('infoCard');
+                if (lotacoes.length === 0) {
+                    infoCard.innerHTML = `<h3>Bem-vindo, ${usuario.nome}!</h3><p>⚠️ Você ainda não possui lotações. Entre em contato com o gestor.</p>`;
                 } else {
-                    document.getElementById('infoLotacao').innerHTML = `
-                        <span style="color: #ffeb3b;">⚠️ Você ainda não foi lotado em uma disciplina/turma. 
-                        Entre em contato com o gestor.</span>
-                    `;
+                    let lotacoesHtml = '<h3>Bem-vindo, ' + usuario.nome + '!</h3><p>Suas lotações:</p>';
+                    lotacoes.forEach(lot => {
+                        const disc = disciplinas.find(d => d.id == lot.disciplina_id);
+                        const turma = turmas.find(t => t.id == lot.turma_id);
+                        lotacoesHtml += `<div class="lotacao-item">📚 ${disc ? disc.nome : '-'} | 🏫 ${turma ? turma.nome : '-'}</div>`;
+                    });
+                    infoCard.innerHTML = lotacoesHtml;
                 }
-            } catch (error) {
-                console.error('Erro ao carregar dados:', error);
-            }
+            } catch (error) { console.error('Erro:', error); }
         }
         
-        async function carregarEstatisticas(usuario) {
+        async function carregarEstatisticas() {
             try {
                 const planosRes = await API.listarPlanos();
                 const meusPlanos = (planosRes.dados || []).filter(p => p.professor_id == usuario.id);
-                
-                const total = meusPlanos.length;
-                const rascunho = meusPlanos.filter(p => p.status === 'rascunho').length;
-                const enviados = meusPlanos.filter(p => p.status === 'enviado').length;
-                const aprovados = meusPlanos.filter(p => p.status === 'aprovado').length;
-                
-                document.getElementById('totalPlanos').textContent = total;
-                document.getElementById('planosRascunho').textContent = rascunho;
-                document.getElementById('planosEnviados').textContent = enviados;
-                document.getElementById('planosAprovados').textContent = aprovados;
-            } catch (error) {
-                console.error('Erro ao carregar estatísticas:', error);
-            }
+                document.getElementById('totalPlanos').textContent = meusPlanos.length;
+                document.getElementById('planosRascunho').textContent = meusPlanos.filter(p => p.status === 'rascunho').length;
+                document.getElementById('planosEnviados').textContent = meusPlanos.filter(p => p.status === 'enviado').length;
+                document.getElementById('planosAprovados').textContent = meusPlanos.filter(p => p.status === 'aprovado').length;
+            } catch (error) { console.error('Erro:', error); }
         }
     </script>
 </body>
