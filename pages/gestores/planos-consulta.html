@@ -143,49 +143,43 @@
             document.getElementById('modalPlano').classList.add('active');
         }
         
-        function imprimirPlano(id) {
+        function function imprimirPlano(id) {
     const plano = listaPlanos.find(p => p.id == id);
     if (!plano) return;
 
     const win = window.open('', '_blank');
-    win.document.write(`
-        <html>
-        <head>
-            <title>SAGE - Plano de Aula ${plano.mes}</title>
-            <style>
-                body { font-family: 'Arial', sans-serif; line-height: 1.4; color: #333; }
-                .header-inst { display: flex; align-items: center; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 20px; }
-                .logo-inst { width: 80px; height: auto; margin-right: 20px; }
-                .texto-inst h2 { margin: 0; color: #2e7d32; font-size: 18px; }
-                .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f5f5f5; padding: 15px; border-radius: 5px; }
-                .aula-box { border: 1px solid #ddd; margin-top: 15px; padding: 10px; page-break-inside: avoid; }
-                .aula-num { background: #4CAF50; color: white; padding: 3px 10px; font-weight: bold; border-radius: 3px; }
-                @media print { .no-print { display: none; } }
-            </style>
-        </head>
-        <body>
-            <div class="header-inst">
-                <div class="texto-inst">
-                    <h2>EEMTI FILGUEIRAS LIMA</h2>
-                    <p>SAGE - Sistema de Gestão de Planos de Aula | CREDE 16</p>
-                </div>
-            </div>
-            <div class="grid-info">
-                <div><strong>Professor:</strong> ${plano.professor_nome}</div>
-                <div><strong>Disciplina:</strong> ${plano.disciplina_nome}</div>
-                <div><strong>Turma:</strong> ${plano.turma_nome}</div>
-                <div><strong>Mês Referência:</strong> ${plano.mes}</div>
-            </div>
-            <h3>Conteúdo Programático:</h3>
-            <p>${plano.conteudo_mensal}</p>
-            ${gerarEstruturaAulas(plano)}
-            <script>window.onload = () => { window.print(); window.close(); }</script>
-        </body>
-        </html>
-    `);
+    // Usando uma estrutura mais segura para evitar que o JS entenda o fechamento da tag script como o fim do arquivo pai
+    win.document.write('<html><head><title>SAGE - Plano de Aula</title>');
+    win.document.write('<style>body { font-family: Arial; line-height: 1.4; padding: 20px; } .aula-box { border: 1px solid #ddd; margin-top: 10px; padding: 10px; page-break-inside: avoid; } .aula-num { background: #4CAF50; color: white; padding: 2px 8px; border-radius: 3px; font-weight: bold; }</style>');
+    win.document.write('</head><body>');
+    win.document.write('<h2>EEMTI FILGUEIRAS LIMA</h2>');
+    win.document.write('<p><strong>Professor:</strong> ' + plano.professor_nome + ' | <strong>Turma:</strong> ' + plano.turma_nome + '</p>');
+    win.document.write('<hr>');
+    win.document.write('<h3>Conteúdo Mensal:</h3><p>' + (plano.conteudo_mensal || '') + '</p>');
+    win.document.write(gerarEstruturaAulas(plano));
+    win.document.write('<script>window.onload = function() { window.print(); window.close(); };</' + 'script>');
+    win.document.write('</body></html>');
     win.document.close();
 }
 
+function gerarEstruturaAulas(plano) {
+    let html = '';
+    for (let i = 1; i <= 20; i++) {
+        const sub = plano['aula_' + i + '_subconteudo'];
+        if (sub && sub.trim() !== "") {
+            html += '<div class="aula-box">';
+            html += '<span class="aula-num">Aula ' + i + '</span>';
+            html += '<p><strong>Subconteúdo:</strong> ' + sub + '</p>';
+            html += '<p><strong>Metodologia:</strong> ' + (plano['aula_' + i + '_metodologia'] || '-') + '</p>';
+            html += '</div>';
+        }
+    }
+    return html;
+}
+
+function fecharModal() {
+    document.getElementById('modalPlano').classList.remove('active');
+}
 function gerarEstruturaAulas(plano) {
     let html = '';
     for (let i = 1; i <= 20; i++) {
