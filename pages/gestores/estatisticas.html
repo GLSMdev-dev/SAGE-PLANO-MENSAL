@@ -262,20 +262,44 @@
         .status-medio { background: #fef3c7; color: #92400e; }
         .status-baixo { background: #fee2e2; color: #b91c1c; }
         
-        /* Animação de Loading */
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
         }
         
-        .loading-skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 1.5s infinite;
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
+    <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+    </div>
+
     <header class="header">
         <div class="container">
             <div class="logo">
@@ -408,7 +432,7 @@
         // INICIALIZAÇÃO
         // ============================================================
         document.addEventListener('DOMContentLoaded', async () => {
-            logger.info('Inicializando página de estatísticas');
+            console.log('[INFO] Inicializando página de estatísticas');
             
             if (!Auth.verificarAcesso()) return;
             
@@ -429,7 +453,7 @@
         async function carregarTodosDados() {
             try {
                 mostrarLoading(true);
-                logger.info('Carregando dados para estatísticas...');
+                console.log('[INFO] Carregando dados para estatísticas...');
                 
                 // Carregar todas as tabelas necessárias
                 const [
@@ -452,7 +476,7 @@
                 dadosCompletos.turmas = turmasRes.dados || [];
                 dadosCompletos.lotacoes = lotacoesRes.dados || [];
                 
-                logger.info(`Dados carregados: ${dadosCompletos.planos.length} planos, ${dadosCompletos.professores.length} professores`);
+                console.log(`[INFO] Dados carregados: ${dadosCompletos.planos.length} planos, ${dadosCompletos.professores.length} professores`);
                 
                 // Preencher selects
                 preencherSelectProfessores();
@@ -463,8 +487,8 @@
                 
                 mostrarLoading(false);
             } catch (error) {
-                logger.error('Erro ao carregar dados:', error);
-                mostrarMensagem('Erro ao carregar dados: ' + error.message, 'error');
+                console.error('[ERROR] Erro ao carregar dados:', error);
+                Utils.mostrarMensagem('Erro ao carregar dados: ' + error.message, 'error');
                 mostrarLoading(false);
             }
         }
@@ -477,7 +501,7 @@
             select.innerHTML = '<option value="">Todos os Professores</option>';
             
             dadosCompletos.professores.forEach(prof => {
-                select.innerHTML += `<option value="${prof.id}">${prof.nome}</option>`;
+                select.innerHTML += `<option value="${prof.id}">${Utils.escapeHtml(prof.nome)}</option>`;
             });
         }
         
@@ -486,7 +510,7 @@
             select.innerHTML = '<option value="">Todas as Disciplinas</option>';
             
             dadosCompletos.disciplinas.forEach(disc => {
-                select.innerHTML += `<option value="${disc.id}">${disc.nome}</option>`;
+                select.innerHTML += `<option value="${disc.id}">${Utils.escapeHtml(disc.nome)}</option>`;
             });
         }
         
@@ -500,7 +524,7 @@
             const filtroMes = document.getElementById('filtroMes').value;
             const buscaGeral = document.getElementById('buscaGeral').value.toLowerCase();
             
-            logger.debug('Aplicando filtros', { filtroProfessor, filtroDisciplina, filtroSerie, filtroMes, buscaGeral });
+            console.log('[DEBUG] Aplicando filtros', { filtroProfessor, filtroDisciplina, filtroSerie, filtroMes, buscaGeral });
             
             // Filtrar planos
             let planosFiltrados = dadosCompletos.planos.filter(plano => {
@@ -563,7 +587,7 @@
             document.getElementById('totalPendentes').textContent = pendentes;
             document.getElementById('totalProfessoresAtivos').textContent = profsAtivos;
             
-            logger.info(`Estatísticas: ${total} planos, ${aprovados} aprovados, ${pendentes} pendentes`);
+            console.log(`[INFO] Estatísticas: ${total} planos, ${aprovados} aprovados, ${pendentes} pendentes`);
         }
         
         // ============================================================
@@ -624,7 +648,7 @@
             container.innerHTML = turmasComPlanos.map(turma => `
                 <div class="turma-card">
                     <div class="turma-header">
-                        <h3>${escapeHtml(turma.nome)}</h3>
+                        <h3>${Utils.escapeHtml(turma.nome)}</h3>
                         <p>${turma.serie || 'Série não definida'} | ${turma.turno || 'Turno não definido'}</p>
                     </div>
                     <div class="turma-body">
@@ -650,7 +674,7 @@
                             <strong>Professores:</strong><br>
                             ${turma.professoresInfo.map(p => `
                                 <span class="professor-tag" title="${p.planos} plano(s) - ${p.status}">
-                                    ${escapeHtml(p.nome)} (${p.planos})
+                                    ${Utils.escapeHtml(p.nome)} (${p.planos})
                                 </span>
                             `).join('')}
                         </div>
@@ -720,7 +744,7 @@
                     ${professoresFiltrados.map(prof => `
                         <div class="turma-card">
                             <div class="turma-header" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
-                                <h3>${escapeHtml(prof.nome)}</h3>
+                                <h3>${Utils.escapeHtml(prof.nome)}</h3>
                                 <p>${prof.email || 'Email não cadastrado'}</p>
                             </div>
                             <div class="turma-body">
@@ -746,7 +770,7 @@
                                     <div style="margin-top: 12px;">
                                         <strong>Disciplinas:</strong><br>
                                         ${prof.disciplinasNomes.map(d => `
-                                            <span class="professor-tag">${escapeHtml(d)}</span>
+                                            <span class="professor-tag">${Utils.escapeHtml(d)}</span>
                                         `).join('')}
                                         ${prof.disciplinasNomes.length < 3 && prof.disciplinasNomes.length > 0 ? '' : prof.disciplinasNomes.length >= 3 ? '<span class="professor-tag">+outras</span>' : ''}
                                     </div>
@@ -786,14 +810,6 @@
                 if (mostrar) overlay.classList.add('active');
                 else overlay.classList.remove('active');
             }
-        }
-        
-        function mostrarMensagem(mensagem, tipo) {
-            Utils.mostrarMensagem(mensagem, tipo);
-        }
-        
-        function escapeHtml(texto) {
-            return Utils.escapeHtml(texto);
         }
     </script>
 </body>
