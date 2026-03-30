@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAGE - Estatísticas e Monitoramento</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        /* Padronização de Layout e Filtros */
+        .filtros-painel { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .filtro-group { display: flex; flex-direction: column; gap: 8px; }
+        .filtro-group label { font-size: 11px; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filtro-group select, .filtro-group input { 
+            padding: 10px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .filtro-group select:focus { border-color: #4CAF50; }
+
+        /* Cards de Resumo Numérico */
+        .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .resumo-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            text-align: center; 
+            border: 1px solid #eee; 
+            border-top: 5px solid #cbd5e0;
+            transition: transform 0.2s ease;
+        }
+        .resumo-card:hover { transform: translateY(-3px); }
+        .resumo-card.total { border-top-color: #6366f1; }
+        .resumo-card.enviados { border-top-color: #3b82f6; }
+        .resumo-card.aprovados { border-top-color: #10b981; }
+        .resumo-card.pendentes { border-top-color: #f59e0b; }
+        .resumo-valor { font-size: 30px; font-weight: 800; color: #1a202c; margin-top: 5px; }
+        .resumo-titulo { font-size: 12px; color: #718096; font-weight: 600; text-transform: uppercase; }
+
+        /* Grades de Monitoramento */
+        .monitoramento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .monitoramento-grid { grid-template-columns: 1fr; } }
+
+        .painel-box { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03); 
+            border: 1px solid #edf2f7; 
+        }
+        .painel-header { 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: #2d3748; 
+            margin-bottom: 20px; 
+            padding-bottom: 12px; 
+            border-bottom: 2px solid #f7fafc;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Estilo dos Itens das Listas */
+        .item-lista { 
+            background: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 12px; 
+            transition: all 0.2s;
+        }
+        .item-lista:hover { background: #f1f5f9; border-color: #cbd5e0; }
+        .item-lista h4 { margin: 0 0 8px 0; font-size: 14px; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
+        .item-lista p { margin: 0; font-size: 12.5px; color: #475569; line-height: 1.5; }
+
+        /* Badges de Status */
+        .badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+        .bg-success { background: #dcfce7; color: #15803d; }
+        .bg-warning { background: #fef3c7; color: #92400e; }
+        .bg-danger { background: #fee2e2; color: #b91c1c; }
+        .bg-info { background: #e0f2fe; color: #0369a1; }
+
+        .serie-tag { background: #6366f1; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo"><h1>SAGE <span>Estatísticas</span></h1><p>Gestão Pedagógica</p></div>
+            <nav class="user-info">
+                <span id="userName" class="user-name">Carregando...</span>
+                <button onclick="Auth.logout()" class="btn-logout">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="margin-top: 20px;">
+        <div style="margin-bottom: 20px;">
+            <button onclick="location.href='dashboard.html'" class="btn-secondary">← Voltar ao Painel</button>
+        </div>
+
+        <section class="filtros-painel">
+            <div class="filtro-group">
+                <label>Mês/Ano de Referência</label>
+                <input type="month" id="filtroMes" onchange="processarDados()">
+            </div>
+            <div class="filtro-group">
+                <label>Série/Turma</label>
+                <select id="filtroSerie" onchange="processarDados()">
+                    <option value="">Todas as Séries</option>
+                    <option value="1ª SÉRIE">1ª SÉRIE</option>
+                    <option value="2ª SÉRIE">2ª SÉRIE</option>
+                    <option value="3ª SÉRIE">3ª SÉRIE</option>
+                </select>
+            </div>
+            <div class="filtro-group">
+                <label>Disciplina</label>
+                <select id="filtroDisciplina" onchange="processarDados()"><option value="">Todas as Disciplinas</option></select>
+            </div>
+        </section>
+
+        <section class="resumo-grid">
+            <div class="resumo-card total">
+                <div class="resumo-titulo">Planos no Período</div>
+                <div class="resumo-valor" id="countTotal">0</div>
+            </div>
+            <div class="resumo-card enviados">
+                <div class="resumo-titulo">Aguardando Revisão</div>
+                <div class="resumo-valor" id="countEnviados">0</div>
+            </div>
+            <div class="resumo-card aprovados">
+                <div class="resumo-titulo">Planos Aprovados</div>
+                <div class="resumo-valor" id="countAprovados">0</div>
+            </div>
+            <div class="resumo-card pendentes">
+                <div class="resumo-titulo">Rascunhos/Correção</div>
+                <div class="resumo-valor" id="countPendentes">0</div>
+            </div>
+        </section>
+
+        <div class="monitoramento-grid">
+            
+            <section class="painel-box">
+                <div class="painel-header"><span>📖</span> Conteúdos Ministrados (Mapa de Assuntos)</div>
+                <div id="listaConteudos">
+                    <p style="text-align:center; color:#999; padding:20px;">Selecione os filtros para visualizar o mapa de conteúdos.</p>
+                </div>
+            </section>
+
+            <section class="painel-box">
+                <div class="painel-header"><span>👨‍🏫</span> Status de Entrega por Professor</div>
+                <div id="listaProfessores">
+                    <p style="text-align:center; color:#999; padding:20px;">Carregando status dos docentes...</p>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+
+    <script>
+        let dadosPlanos = [];
+        let listaProfs = [];
+        let mapaDisciplinas = {};
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!Auth.verificarAcesso()) return;
+            document.getElementById('userName').textContent = Auth.getUsuarioLogado().nome;
+
+            // Define mês atual como padrão
+            const d = new Date();
+            document.getElementById('filtroMes').value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+            await inicializarPagina();
+        });
+
+        async function inicializarPagina() {
+            try {
+                Utils.mostrarLoading(true);
+                const [resP, resU, resD] = await Promise.all([
+                    API.listarPlanos(),
+                    API.listarUsuarios(),
+                    API.listarDisciplinas()
+                ]);
+
+                dadosPlanos = resP.dados || [];
+                listaProfs = (resU.dados || []).filter(u => u.perfil === 'professor');
+                
+                const selectD = document.getElementById('filtroDisciplina');
+                (resD.dados || []).forEach(d => {
+                    mapaDisciplinas[d.id] = d.nome;
+                    selectD.innerHTML += `<option value="${d.id}">${d.nome}</option>`;
+                });
+
+                processarDados();
+                Utils.mostrarLoading(false);
+            } catch (e) {
+                console.error(e);
+                Utils.mostrarLoading(false);
+            }
+        }
+
+        function processarDados() {
+            const mesFiltro = document.getElementById('filtroMes').value;
+            const serieFiltro = document.getElementById('filtroSerie').value;
+            const discFiltro = document.getElementById('filtroDisciplina').value;
+
+            // 1. Filtragem Base
+            const filtrados = dadosPlanos.filter(p => {
+                let matchData = true;
+                if (mesFiltro) {
+                    const [a, m] = mesFiltro.split('-');
+                    matchData = (p.ano_referencia == a && p.mes_referencia == parseInt(m));
+                }
+                return matchData && (!serieFiltro || p.serie === serieFiltro) && (!discFiltro || p.disciplina_id == discFiltro);
+            });
+
+            // 2. Atualizar Contadores
+            document.getElementById('countTotal').textContent = filtrados.length;
+            document.getElementById('countEnviados').textContent = filtrados.filter(p => p.status === 'enviado').length;
+            document.getElementById('countAprovados').textContent = filtrados.filter(p => p.status === 'aprovado').length;
+            document.getElementById('countPendentes').textContent = filtrados.filter(p => p.status === 'rascunho' || p.status === 'revisar').length;
+
+            renderizarConteudos(filtrados);
+            renderizarProfessores(filtrados);
+        }
+
+        function renderizarConteudos(planos) {
+            const container = document.getElementById('listaConteudos');
+            // Apenas planos que chegaram para a gestão (Enviados ou Aprovados)
+            const ativos = planos.filter(p => p.status !== 'rascunho');
+
+            if (ativos.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:30px; color:#999;">Nenhum conteúdo consolidado para este filtro.</div>`;
+                return;
+            }
+
+            let html = '';
+            // Agrupar por série
+            const grupos = ativos.reduce((acc, p) => {
+                const s = p.serie || 'OUTROS';
+                if (!acc[s]) acc[s] = [];
+                acc[s].push(p);
+                return acc;
+            }, {});
+
+            for (const serie in grupos) {
+                html += `<div style="margin-top:15px; margin-bottom:10px; font-weight:bold; color:#6366f1; font-size:12px;">${serie}</div>`;
+                grupos[serie].forEach(p => {
+                    const dNome = mapaDisciplinas[p.disciplina_id] || 'Disciplina';
+                    html += `
+                        <div class="item-lista">
+                            <h4>${dNome} <span class="badge ${p.status === 'aprovado' ? 'bg-success' : 'bg-info'}">${p.status}</span></h4>
+                            <p>${p.conteudo_mensal ? p.conteudo_mensal.substring(0, 180) + '...' : 'Sem descrição de conteúdo.'}</p>
+                        </div>
+                    `;
+                });
+            }
+            container.innerHTML = html;
+        }
+
+        function renderizarProfessores(planosNoMes) {
+            const container = document.getElementById('listaProfessores');
+            let html = '';
+
+            listaProfs.forEach(prof => {
+                const planosDoProf = planosNoMes.filter(p => p.professor_id == prof.id);
+                
+                if (planosDoProf.length === 0) {
+                    html += `
+                        <div class="item-lista" style="border-left: 4px solid #ef4444;">
+                            <h4>${prof.nome} <span class="badge bg-danger">Sem Entrega</span></h4>
+                            <p>Nenhum plano identificado para o período selecionado.</p>
+                        </div>
+                    `;
+                } else {
+                    const statusPrimario = planosDoProf.every(p => p.status === 'aprovado') ? 'bg-success' : 'bg-warning';
+                    const txtStatus = planosDoProf.some(p => p.status === 'enviado') ? 'Em Análise' : (planosDoProf.every(p => p.status === 'aprovado') ? 'Concluído' : 'Pendente');
+                    
+                    html += `
+                        <div class="item-lista" style="border-left: 4px solid #10b981;">
+                            <h4>${prof.nome} <span class="badge ${statusPrimario}">${txtStatus}</span></h4>
+                            <p>Possui <strong>${planosDoProf.length}</strong> plano(s) vinculado(s) aos filtros atuais.</p>
+                        </div>
+                    `;
+                }
+            });
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
