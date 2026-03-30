@@ -16,102 +16,313 @@
         .feedback-area { background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #ffc107; }
         .filtros { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        .btn-primary { background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-        .btn-secondary { background: #666; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-        .btn-danger { background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-        .btn-success { background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-        .aulas-info { background: #f5f5f5; padding: 8px; border-radius: 5px; font-size: 12px; margin-top: 10px; }
-        .aula-card { background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .aula-title { font-weight: bold; color: #4CAF50; margin-bottom: 5px; }
+        
+        /* Ajuste do modal para visualização prévia */
+        .modal-body { padding: 20px; }
+        .view-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; }
+        .view-table td { border: 1px solid #ddd; padding: 8px; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="container">
-            <div class="logo"><h1>SAGE Planos</h1><p>Meus Planos de Aula</p></div>
-            <div class="user-info"><span id="userName">Carregando...</span><button class="btn-logout" onclick="Auth.logout()">Sair</button></div>
+            <div class="logo"><h1>SAGE <span>Planos</span></h1><p>Painel do Professor</p></div>
+            <div class="user-info">
+                <span id="userName">Carregando...</span>
+                <button class="btn-logout" onclick="Auth.logout()">Sair</button>
+            </div>
         </div>
     </div>
     
     <div class="container">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;"><h2>Meus Planos</h2><button class="btn-primary" onclick="window.location.href='plano-form.html'">+ Novo Plano</button></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
+            <h2>Meus Planos de Aula</h2>
+            <button class="btn-primary" onclick="window.location.href='plano-form.html'">+ Novo Plano</button>
+        </div>
+
         <div class="filtros">
             <select id="filtroDisciplina"><option value="">Todas disciplinas</option></select>
-            <select id="filtroSerie"><option value="">Todas séries</option><option value="1ª Série">1ª Série</option><option value="2ª Série">2ª Série</option><option value="3ª Série">3ª Série</option></select>
-            <select id="filtroStatus"><option value="">Todos status</option><option value="rascunho">Rascunho</option><option value="enviado">Enviado</option><option value="aprovado">Aprovado</option><option value="revisar">Revisar</option></select>
-            <select id="filtroMes"><option value="">Todos meses</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select>
+            <select id="filtroSerie">
+                <option value="">Todas séries</option>
+                <option value="1ª SÉRIE">1ª SÉRIE</option>
+                <option value="2ª SÉRIE">2ª SÉRIE</option>
+                <option value="3ª SÉRIE">3ª SÉRIE</option>
+            </select>
+            <select id="filtroStatus">
+                <option value="">Todos status</option>
+                <option value="rascunho">Rascunho</option>
+                <option value="enviado">Enviado</option>
+                <option value="aprovado">Aprovado</option>
+                <option value="revisar">Revisar</option>
+            </select>
+            <select id="filtroMes">
+                <option value="">Todos meses</option>
+                <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+                <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+                <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+                <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
         </div>
+
         <div id="planosLista"></div>
     </div>
     
-    <div id="modalPlano" class="modal"><div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;"><div class="modal-header"><h3>Visualizar Plano</h3><span class="modal-close" onclick="fecharModal()">&times;</span></div><div class="modal-body" id="planoConteudo"></div><div class="modal-footer"><button class="btn-secondary" onclick="fecharModal()">Fechar</button><button class="btn-primary" onclick="imprimirPlano()">Imprimir</button><button class="btn-success" id="btnEditar" style="display:none;" onclick="editarPlano()">Editar</button></div></div></div>
+    <div id="modalPlano" class="modal">
+        <div class="modal-content" style="max-width: 850px;">
+            <div class="modal-header">
+                <h3>Visualizar Plano</h3>
+                <span class="modal-close" onclick="fecharModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="planoConteudo"></div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="fecharModal()">Fechar</button>
+                <button class="btn-primary" onclick="imprimirPlano()">📥 Gerar PDF para Impressão</button>
+                <button class="btn-success" id="btnEditar" style="display:none;" onclick="editarPlano()">Editar</button>
+            </div>
+        </div>
+    </div>
     
     <script src="../../assets/js/config.js"></script>
     <script src="../../assets/js/api.js"></script>
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/utils.js"></script>
+
     <script>
-        let planos = [], disciplinas = [], usuario = null, planoAtual = null, lotacoes = [];
+        let planos = [], disciplinas = [], usuario = null, planoAtual = null;
         
         document.addEventListener('DOMContentLoaded', async function() {
             if (!Auth.verificarAcesso()) return;
             usuario = Auth.getUsuarioLogado();
-            if (usuario.perfil !== 'professor') { Auth.redirecionarPorPerfil(); return; }
             document.getElementById('userName').textContent = usuario.nome;
             await carregarDados();
-            document.getElementById('filtroDisciplina').addEventListener('change', aplicarFiltros);
-            document.getElementById('filtroSerie').addEventListener('change', aplicarFiltros);
-            document.getElementById('filtroStatus').addEventListener('change', aplicarFiltros);
-            document.getElementById('filtroMes').addEventListener('change', aplicarFiltros);
+            
+            ['filtroDisciplina', 'filtroSerie', 'filtroStatus', 'filtroMes'].forEach(id => {
+                document.getElementById(id).addEventListener('change', aplicarFiltros);
+            });
         });
         
         async function carregarDados() {
             try {
                 Utils.mostrarLoading(true);
-                const [planosRes, discRes, lotacoesRes] = await Promise.all([API.listarPlanos(), API.listarDisciplinas(), API.listarLotacoes()]);
+                const [planosRes, discRes] = await Promise.all([API.listarPlanos(), API.listarDisciplinas()]);
                 planos = (planosRes.dados || []).filter(p => p.professor_id == usuario.id);
                 disciplinas = discRes.dados || [];
-                lotacoes = (lotacoesRes.dados || []).filter(l => l.professor_id == usuario.id);
+                
                 const selectDisc = document.getElementById('filtroDisciplina');
-                const discUnicas = [...new Set(lotacoes.map(l => l.disciplina_id))];
-                discUnicas.forEach(discId => { const disc = disciplinas.find(d => d.id == discId); if(disc) selectDisc.innerHTML += `<option value="${discId}">${disc.nome}</option>`; });
+                const discIdsNoPlano = [...new Set(planos.map(p => p.disciplina_id))];
+                discIdsNoPlano.forEach(id => {
+                    const d = disciplinas.find(x => x.id == id);
+                    if(d) selectDisc.innerHTML += `<option value="${id}">${d.nome}</option>`;
+                });
+
                 aplicarFiltros();
                 Utils.mostrarLoading(false);
-            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+            } catch (error) { 
+                Utils.mostrarMensagem('Erro ao carregar dados', 'error'); 
+                Utils.mostrarLoading(false); 
+            }
         }
         
         function aplicarFiltros() {
-            const discId = document.getElementById('filtroDisciplina').value;
-            const serie = document.getElementById('filtroSerie').value;
-            const status = document.getElementById('filtroStatus').value;
+            const dId = document.getElementById('filtroDisciplina').value;
+            const ser = document.getElementById('filtroSerie').value;
+            const sta = document.getElementById('filtroStatus').value;
             const mes = document.getElementById('filtroMes').value;
-            let filtrados = [...planos];
-            if (discId) filtrados = filtrados.filter(p => p.disciplina_id == discId);
-            if (serie) filtrados = filtrados.filter(p => p.serie === serie);
-            if (status) filtrados = filtrados.filter(p => p.status === status);
-            if (mes) filtrados = filtrados.filter(p => p.mes_referencia == mes);
+
+            let filtrados = planos.filter(p => {
+                return (!dId || p.disciplina_id == dId) &&
+                       (!ser || p.serie === ser) &&
+                       (!sta || p.status === sta) &&
+                       (!mes || p.mes_referencia == mes);
+            });
             renderizarPlanos(filtrados);
         }
         
-        function renderizarPlanos(planosFiltrados) {
+        function renderizarPlanos(lista) {
             const container = document.getElementById('planosLista');
-            if (!planosFiltrados.length) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">Nenhum plano encontrado</div>'; return; }
-            container.innerHTML = planosFiltrados.map(p => { const disc = disciplinas.find(d => d.id == p.disciplina_id); return `<div class="plano-card"><div class="plano-header"><div><strong>${disc ? disc.nome : '-'}</strong> | ${p.serie || '-'}<br><small>${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small></div><span class="status-badge status-${p.status}">${getStatusNome(p.status)}</span></div>${p.conteudo_mensal ? `<div style="background:#e8f5e9;padding:10px;border-radius:5px;margin-bottom:10px;"><strong>📖 Conteúdo:</strong><br>${Utils.escapeHtml(p.conteudo_mensal.substring(0, 100))}${p.conteudo_mensal.length > 100 ? '...' : ''}</div>` : ''}${p.total_aulas_mes ? `<div class="aulas-info">📊 ${p.aulas_semana || '-'} aulas/semana | Total: ${p.total_aulas_mes} aulas</div>` : ''}${p.feedback_gestor ? `<div class="feedback-area"><strong>📝 Feedback:</strong><br>${Utils.escapeHtml(p.feedback_gestor)}</div>` : ''}<div class="btn-group"><button class="btn-secondary" onclick="visualizarPlano(${p.id})">Visualizar</button>${p.status === 'rascunho' ? `<button class="btn-primary" onclick="editarPlanoById(${p.id})">Editar</button><button class="btn-success" onclick="enviarPlano(${p.id})">Enviar</button><button class="btn-danger" onclick="excluirPlano(${p.id})">Excluir</button>` : ''}${p.status === 'revisar' ? `<button class="btn-primary" onclick="editarPlanoById(${p.id})">Revisar</button>` : ''}</div></div>`; }).join('');
+            if (!lista.length) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">Nenhum plano encontrado</div>'; return; }
+            
+            container.innerHTML = lista.map(p => {
+                const disc = disciplinas.find(d => d.id == p.disciplina_id);
+                return `
+                <div class="plano-card">
+                    <div class="plano-header">
+                        <div>
+                            <strong>${disc ? disc.nome : 'Sem Disciplina'}</strong> | ${p.serie || '---'}<br>
+                            <small>${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small>
+                        </div>
+                        <span class="status-badge status-${p.status}">${getStatusNome(p.status)}</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-secondary" onclick="visualizarPlano(${p.id})">Visualizar / Imprimir</button>
+                        ${(p.status === 'rascunho' || p.status === 'revisar') ? `
+                            <button class="btn-primary" onclick="editarPlanoById(${p.id})">Editar</button>
+                            <button class="btn-success" onclick="enviarPlano(${p.id})">Enviar</button>
+                            <button class="btn-danger" onclick="excluirPlano(${p.id})">Excluir</button>
+                        ` : ''}
+                    </div>
+                </div>`;
+            }).join('');
         }
         
-        function getMesNome(mes) { const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; return meses[mes-1] || mes; }
-        function getStatusNome(s) { const nomes = { rascunho: 'Rascunho', enviado: 'Enviado', aprovado: 'Aprovado', revisar: 'Revisar' }; return nomes[s] || s; }
-        
-        function visualizarPlano(id) { planoAtual = planos.find(p => p.id == id); if(!planoAtual) return; const disc = disciplinas.find(d => d.id == planoAtual.disciplina_id); let html = `<h2>Plano de Aula</h2><p><strong>Disciplina:</strong> ${disc ? disc.nome : '-'}</p><p><strong>Série:</strong> ${planoAtual.serie || '-'}</p><p><strong>Período:</strong> ${getMesNome(planoAtual.mes_referencia)}/${planoAtual.ano_referencia}</p><p><strong>Status:</strong> ${getStatusNome(planoAtual.status)}</p><p><strong>Carga:</strong> ${planoAtual.aulas_semana || '-'} aulas/semana | Total: ${planoAtual.total_aulas_mes || 0}</p>${planoAtual.feedback_gestor ? `<p><strong>Feedback:</strong> ${planoAtual.feedback_gestor}</p>` : ''}<hr>${planoAtual.conteudo_mensal ? `<div style="background:#e8f5e9;padding:10px;margin-bottom:15px"><strong>📖 Conteúdo:</strong><br>${Utils.escapeHtml(planoAtual.conteudo_mensal)}</div>` : ''}${planoAtual.referencias ? `<div style="background:#fff3cd;padding:10px;margin-bottom:15px"><strong>📚 Referências:</strong><br>${Utils.escapeHtml(planoAtual.referencias)}</div>` : ''}<h3>📝 Aulas</h3>`;
-            const totalAulas = parseInt(planoAtual.total_aulas_mes) || 0;
-            for (let aula = 1; aula <= totalAulas; aula++) { const sub = planoAtual[`aula_${aula}_subconteudo`]; const met = planoAtual[`aula_${aula}_metodologia`]; const ava = planoAtual[`aula_${aula}_avaliacao`]; const rec = planoAtual[`aula_${aula}_recursos`]; if(sub || met || ava || rec) html += `<div class="aula-card"><div class="aula-title">Aula ${aula}</div>${sub ? `<p><strong>Sub-conteúdo:</strong><br>${Utils.escapeHtml(sub)}</p>` : ''}${met ? `<p><strong>Metodologia:</strong><br>${Utils.escapeHtml(met)}</p>` : ''}${ava ? `<p><strong>Avaliação:</strong><br>${Utils.escapeHtml(ava)}</p>` : ''}${rec ? `<p><strong>Recursos:</strong><br>${Utils.escapeHtml(rec)}</p>` : ''}</div>`; }
-            document.getElementById('planoConteudo').innerHTML = html; document.getElementById('btnEditar').style.display = (planoAtual.status === 'rascunho' || planoAtual.status === 'revisar') ? 'inline-block' : 'none'; document.getElementById('modalPlano').classList.add('active'); }
-        
+        function getMesNome(m) { return ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][m-1]; }
+        function getStatusNome(s) { return {rascunho:'Rascunho', enviado:'Enviado', aprovado:'Aprovado', revisar:'Revisar'}[s] || s; }
+
+        function visualizarPlano(id) {
+            planoAtual = planos.find(p => p.id == id);
+            if(!planoAtual) return;
+            const disc = disciplinas.find(d => d.id == planoAtual.disciplina_id);
+            const nomeDisc = disc ? disc.nome : '---';
+            
+            let html = `
+                <table class="view-table">
+                    <tr><td><strong>Professor:</strong> ${usuario.nome}</td><td><strong>Disciplina:</strong> ${nomeDisc}</td></tr>
+                    <tr><td><strong>Série:</strong> ${planoAtual.serie}</td><td><strong>Período:</strong> ${String(planoAtual.mes_referencia).padStart(2,'0')}/${planoAtual.ano_referencia}</td></tr>
+                </table>
+                <p><strong>Conteúdo Mensal:</strong></p>
+                <div style="background:#f9f9f9; padding:10px; border:1px solid #ddd; margin-bottom:15px; border-radius:4px;">
+                    ${planoAtual.conteudo_mensal || 'Não informado'}
+                </div>
+            `;
+            document.getElementById('planoConteudo').innerHTML = html;
+            document.getElementById('btnEditar').style.display = (planoAtual.status === 'rascunho' || planoAtual.status === 'revisar') ? 'inline-block' : 'none';
+            document.getElementById('modalPlano').classList.add('active');
+        }
+
+        // LÓGICA DE IMPRESSÃO IDÊNTICA AO PDF DO GESTOR
+        function imprimirPlano() {
+            if(!planoAtual) return;
+            const disc = disciplinas.find(d => d.id == planoAtual.disciplina_id);
+            const nomeDisc = disc ? disc.nome : '---';
+            const periodo = `${String(planoAtual.mes_referencia).padStart(2, '0')}/${planoAtual.ano_referencia}`;
+            
+            let aulasHtml = '';
+            const aulasPorSemana = parseInt(planoAtual.aulas_semana) || 4; 
+            let currentWeek = 0;
+            let aulaNaSemana = 0;
+
+            for (let i = 1; i <= 40; i++) {
+                const sub = planoAtual[`aula_${i}_subconteudo`];
+                if (sub) {
+                    let weekNumber = Math.ceil(i / aulasPorSemana);
+                    if (weekNumber > currentWeek) {
+                        aulasHtml += `<div class="week-title">SEMANA ${String(weekNumber).padStart(2, '0')}</div>`;
+                        currentWeek = weekNumber;
+                        aulaNaSemana = 1;
+                    } else {
+                        aulaNaSemana++;
+                    }
+
+                    aulasHtml += `
+                        <div class="aula-box">
+                            <span class="aula-title">AULA ${String(aulaNaSemana).padStart(2, '0')}</span>
+                            <strong>Subconteúdo:</strong> ${sub}<br>
+                            <strong>Metodologia:</strong> ${planoAtual[`aula_${i}_metodologia`] || '-'}<br>
+                            <strong>Recursos:</strong> ${planoAtual[`aula_${i}_recursos`] || '-'}<br>
+                            <strong>Avaliação:</strong> ${planoAtual[`aula_${i}_avaliacao`] || '-'}
+                        </div>`;
+                }
+            }
+
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                <head>
+                    <title>Plano de Aula - ${usuario.nome}</title>
+                    <style>
+                        @page { margin: 1cm; }
+                        body { font-family: Arial, sans-serif; font-size: 11px; color: #000; line-height: 1.3; margin: 0; padding: 0; }
+                        .print-container { width: 100%; border-collapse: collapse; }
+                        .header-content { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 10px; }
+                        .logo { max-width: 65px; display: block; margin: 0 auto 10px; }
+                        .header-text { font-size: 12px; line-height: 1.5; color: #000; }
+                        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                        .info-table td { border: 1px solid #000; padding: 6px; }
+                        .label { font-weight: bold; background-color: #f2f2f2; width: 140px; }
+                        .section-title { background-color: #e0e0e0; font-weight: bold; padding: 5px; border: 1px solid #000; text-align: center; text-transform: uppercase; margin-top: 10px; }
+                        .content-box { border: 1px solid #000; border-top: none; padding: 10px; min-height: 40px; margin-bottom: 15px; }
+                        .week-title { background-color: #d1e7dd; padding: 4px; border: 1px solid #000; font-weight: bold; text-align: center; margin-top: 10px; margin-bottom: 5px; border-radius: 3px; font-size: 12px; }
+                        .aula-box { border: 1px solid #000; padding: 10px; margin-bottom: 8px; page-break-inside: avoid; }
+                        .aula-title { font-weight: bold; text-decoration: underline; margin-bottom: 5px; display: block; }
+                        .footer-content { margin-top: 20px; text-align: center; }
+                        .signatures { display: flex; justify-content: space-around; margin-top: 30px; margin-bottom: 20px; page-break-inside: avoid; }
+                        .sig-line { border-top: 1px solid #000; width: 250px; text-align: center; padding-top: 5px; font-weight: bold; font-size: 10px; }
+                        .contact-info { font-size: 9px; line-height: 1.4; color: #000; border-top: 1px solid #000; padding-top: 10px; margin-bottom: 10px; }
+                        .sage-tag { font-size: 8px; color: #777; }
+                    </style>
+                </head>
+                <body onload="setTimeout(() => { window.print(); window.close(); }, 500);">
+                    <table class="print-container">
+                        <thead>
+                            <tr>
+                                <td>
+                                    <div class="header-content">
+                                        <img src="../../assets/logo-escola.png" class="logo" onerror="this.style.display='none'">
+                                        <div class="header-text">
+                                            Coordenadoria Regional de Desenvolvimento da Educação – CREDE 16<br>
+                                            Escola de Ensino Médio em Tempo Integral Filgueiras Lima – INEP: 23142804
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <table class="info-table">
+                                        <tr><td class="label">PROFESSOR(A):</td><td>${usuario.nome.toUpperCase()}</td><td class="label">DISCIPLINA:</td><td>${nomeDisc.toUpperCase()}</td></tr>
+                                        <tr><td class="label">SÉRIE / TURMA:</td><td>${planoAtual.serie.toUpperCase()}</td><td class="label">MÊS/ANO REF:</td><td>${periodo}</td></tr>
+                                    </table>
+                                    <div class="section-title">Conteúdo Programático Mensal</div>
+                                    <div class="content-box">${planoAtual.conteudo_mensal || ''}</div>
+                                    <div class="section-title">Referências / Recursos Didáticos</div>
+                                    <div class="content-box">${planoAtual.referencias || ''}</div>
+                                    <div class="section-title">Detalhamento das Aulas</div>
+                                    ${aulasHtml || '<div class="content-box">Nenhuma aula detalhada.</div>'}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <div class="footer-content">
+                                        <div class="signatures">
+                                            <div class="sig-line">Assinatura do Professor(a)</div>
+                                            <div class="sig-line">Coordenação Pedagógica</div>
+                                        </div>
+                                        <div class="contact-info">
+                                            Rua Vereador Nelson de Sousa Alencar, sn – Veneza | Iguatu – Ceará | CEP: 63.504-356 - Fone: (88) 3581.9463<br>
+                                            E-mail: filgueiraslimacrede16@escola.ce.gov.br | Instagram: @filgueiraslimaiguatu
+                                        </div>
+                                        <div class="sage-tag">
+                                            SAGE | Gerado em ${new Date().toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        }
+
         function editarPlano() { if(planoAtual) window.location.href = `plano-form.html?id=${planoAtual.id}`; }
         function editarPlanoById(id) { window.location.href = `plano-form.html?id=${id}`; }
-        async function enviarPlano(id) { Utils.confirmarAcao('Enviar plano?', async (c) => { if(c) { try { Utils.mostrarLoading(true); await API.atualizarPlano(id, { status: 'enviado' }); Utils.mostrarMensagem('Enviado!', 'success'); await carregarDados(); Utils.mostrarLoading(false); } catch(e) { Utils.mostrarMensagem('Erro: '+e.message,'error'); Utils.mostrarLoading(false); } } }); }
-        async function excluirPlano(id) { Utils.confirmarAcao('Excluir plano?', async (c) => { if(c) { try { Utils.mostrarLoading(true); await API.deletarPlano(id); Utils.mostrarMensagem('Excluído!', 'success'); await carregarDados(); Utils.mostrarLoading(false); } catch(e) { Utils.mostrarMensagem('Erro: '+e.message,'error'); Utils.mostrarLoading(false); } } }); }
-        function imprimirPlano() { const c = document.getElementById('planoConteudo').innerHTML; const w = window.open('', '_blank'); w.document.write(`<html><head><title>Plano de Aula</title><style>body{font-family:Arial;padding:20px}.aula-card{background:#f9f9f9;padding:10px;margin-bottom:10px}</style></head><body>${c}</body></html>`); w.document.close(); w.print(); }
+        
+        async function enviarPlano(id) { 
+            Utils.confirmarAcao('Enviar este plano para coordenação?', async (c) => { 
+                if(c) { try { await API.atualizarPlano(id, { status: 'enviado' }); carregarDados(); } catch(e) { alert(e.message); } } 
+            }); 
+        }
+
+        async function excluirPlano(id) { 
+            Utils.confirmarAcao('Deseja realmente excluir?', async (c) => { 
+                if(c) { try { await API.deletarPlano(id); carregarDados(); } catch(e) { alert(e.message); } } 
+            }); 
+        }
+
         function fecharModal() { document.getElementById('modalPlano').classList.remove('active'); }
     </script>
 </body>
