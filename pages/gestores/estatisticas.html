@@ -2,102 +2,286 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAGE - Estatísticas e Monitoramento</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAGE - Estatísticas Avançadas | Monitoramento Pedagógico</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
-        /* Padronização de Layout e Filtros */
-        .filtros-painel { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            margin-bottom: 25px; 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 20px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        /* ============================================================
+           ESTILOS ESPECÍFICOS PARA ESTATÍSTICAS
+           ============================================================ */
+        
+        :root {
+            --card-hover-transform: translateY(-3px);
+            --transition-speed: 0.2s;
         }
-        .filtro-group { display: flex; flex-direction: column; gap: 8px; }
-        .filtro-group label { font-size: 11px; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.5px; }
-        .filtro-group select, .filtro-group input { 
-            padding: 10px; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 6px; 
-            font-size: 14px; 
-            outline: none;
-            transition: border-color 0.2s;
+        
+        /* Painel de Filtros Avançado */
+        .filtros-avancados {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
         }
-        .filtro-group select:focus { border-color: #4CAF50; }
-
-        /* Cards de Resumo Numérico */
-        .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .resumo-card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 10px; 
-            text-align: center; 
-            border: 1px solid #eee; 
-            border-top: 5px solid #cbd5e0;
-            transition: transform 0.2s ease;
+        
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
         }
-        .resumo-card:hover { transform: translateY(-3px); }
-        .resumo-card.total { border-top-color: #6366f1; }
-        .resumo-card.enviados { border-top-color: #3b82f6; }
-        .resumo-card.aprovados { border-top-color: #10b981; }
-        .resumo-card.pendentes { border-top-color: #f59e0b; }
-        .resumo-valor { font-size: 30px; font-weight: 800; color: #1a202c; margin-top: 5px; }
-        .resumo-titulo { font-size: 12px; color: #718096; font-weight: 600; text-transform: uppercase; }
-
-        /* Grades de Monitoramento */
-        .monitoramento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 900px) { .monitoramento-grid { grid-template-columns: 1fr; } }
-
-        .painel-box { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.03); 
-            border: 1px solid #edf2f7; 
-        }
-        .painel-header { 
-            font-size: 16px; 
-            font-weight: 700; 
-            color: #2d3748; 
-            margin-bottom: 20px; 
-            padding-bottom: 12px; 
-            border-bottom: 2px solid #f7fafc;
+        
+        .filtro-group {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            flex-direction: column;
+            gap: 8px;
         }
-
-        /* Estilo dos Itens das Listas */
-        .item-lista { 
-            background: #f8fafc; 
-            border: 1px solid #e2e8f0; 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-bottom: 12px; 
+        
+        .filtro-group label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .filtro-group select,
+        .filtro-group input {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .filtro-group select:focus,
+        .filtro-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        
+        .barra-busca {
+            grid-column: 1 / -1;
+        }
+        
+        .barra-busca input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"></circle><line x1="21" y1="21" x2="15" y2="15"></line></svg>') no-repeat 12px center;
+            padding-left: 40px;
+        }
+        
+        /* Cards de Resumo */
+        .resumo-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card-modern {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border-top: 4px solid #4CAF50;
+            transition: transform var(--transition-speed);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .stat-card-modern:hover {
+            transform: var(--card-hover-transform);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: #2d3748;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-icon {
+            font-size: 32px;
+            opacity: 0.3;
+        }
+        
+        /* Cards de Turmas */
+        .turmas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .turma-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all var(--transition-speed);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+        }
+        
+        .turma-card:hover {
+            transform: var(--card-hover-transform);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+        }
+        
+        .turma-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 20px;
+        }
+        
+        .turma-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .turma-header p {
+            margin: 5px 0 0;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .turma-body {
+            padding: 20px;
+        }
+        
+        .turma-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .turma-stat-item {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .turma-stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .turma-stat-label {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        
+        .professores-list {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .professor-tag {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            margin: 3px;
             transition: all 0.2s;
         }
-        .item-lista:hover { background: #f1f5f9; border-color: #cbd5e0; }
-        .item-lista h4 { margin: 0 0 8px 0; font-size: 14px; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
-        .item-lista p { margin: 0; font-size: 12.5px; color: #475569; line-height: 1.5; }
-
-        /* Badges de Status */
-        .badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
-        .bg-success { background: #dcfce7; color: #15803d; }
-        .bg-warning { background: #fef3c7; color: #92400e; }
-        .bg-danger { background: #fee2e2; color: #b91c1c; }
-        .bg-info { background: #e0f2fe; color: #0369a1; }
-
-        .serie-tag { background: #6366f1; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 5px; }
+        
+        .professor-tag:hover {
+            background: #4CAF50;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        /* Container de Monitoramento */
+        .monitoramento-container {
+            margin-top: 30px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 25px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+            color: #2d3748;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .filtros-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .turmas-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .turma-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card-modern {
+                padding: 15px;
+            }
+            
+            .stat-value {
+                font-size: 28px;
+            }
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .status-alto { background: #dcfce7; color: #15803d; }
+        .status-medio { background: #fef3c7; color: #92400e; }
+        .status-baixo { background: #fee2e2; color: #b91c1c; }
+        
+        /* Animação de Loading */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 1.5s infinite;
+        }
     </style>
 </head>
 <body>
     <header class="header">
         <div class="container">
-            <div class="logo"><h1>SAGE <span>Estatísticas</span></h1><p>Gestão Pedagógica</p></div>
+            <div class="logo">
+                <h1>SAGE <span>Estatísticas Avançadas</span></h1>
+                <p>Monitoramento Pedagógico em Tempo Real</p>
+            </div>
             <nav class="user-info">
                 <span id="userName" class="user-name">Carregando...</span>
                 <button onclick="Auth.logout()" class="btn-logout">Sair</button>
@@ -106,65 +290,93 @@
     </header>
 
     <main class="container" style="margin-top: 20px;">
+        <!-- Botão Voltar -->
         <div style="margin-bottom: 20px;">
-            <button onclick="location.href='dashboard.html'" class="btn-secondary">← Voltar ao Painel</button>
+            <button onclick="location.href='dashboard.html'" class="btn-secondary" style="background: #6c757d;">
+                ← Voltar ao Painel
+            </button>
         </div>
 
-        <section class="filtros-painel">
-            <div class="filtro-group">
-                <label>Mês/Ano de Referência</label>
-                <input type="month" id="filtroMes" onchange="processarDados()">
-            </div>
-            <div class="filtro-group">
-                <label>Série/Turma</label>
-                <select id="filtroSerie" onchange="processarDados()">
-                    <option value="">Todas as Séries</option>
-                    <option value="1ª SÉRIE">1ª SÉRIE</option>
-                    <option value="2ª SÉRIE">2ª SÉRIE</option>
-                    <option value="3ª SÉRIE">3ª SÉRIE</option>
-                </select>
-            </div>
-            <div class="filtro-group">
-                <label>Disciplina</label>
-                <select id="filtroDisciplina" onchange="processarDados()"><option value="">Todas as Disciplinas</option></select>
-            </div>
-        </section>
-
-        <section class="resumo-grid">
-            <div class="resumo-card total">
-                <div class="resumo-titulo">Planos no Período</div>
-                <div class="resumo-valor" id="countTotal">0</div>
-            </div>
-            <div class="resumo-card enviados">
-                <div class="resumo-titulo">Aguardando Revisão</div>
-                <div class="resumo-valor" id="countEnviados">0</div>
-            </div>
-            <div class="resumo-card aprovados">
-                <div class="resumo-titulo">Planos Aprovados</div>
-                <div class="resumo-valor" id="countAprovados">0</div>
-            </div>
-            <div class="resumo-card pendentes">
-                <div class="resumo-titulo">Rascunhos/Correção</div>
-                <div class="resumo-valor" id="countPendentes">0</div>
-            </div>
-        </section>
-
-        <div class="monitoramento-grid">
-            
-            <section class="painel-box">
-                <div class="painel-header"><span>📖</span> Conteúdos Ministrados (Mapa de Assuntos)</div>
-                <div id="listaConteudos">
-                    <p style="text-align:center; color:#999; padding:20px;">Selecione os filtros para visualizar o mapa de conteúdos.</p>
+        <!-- Filtros Avançados -->
+        <div class="filtros-avancados">
+            <h3 style="margin-bottom: 15px; color: #2d3748;">🔍 Filtros de Análise</h3>
+            <div class="filtros-grid">
+                <div class="filtro-group barra-busca">
+                    <label>🔎 Busca Geral</label>
+                    <input type="text" id="buscaGeral" placeholder="Buscar por professor, disciplina, conteúdo..." oninput="aplicarFiltros()">
                 </div>
-            </section>
-
-            <section class="painel-box">
-                <div class="painel-header"><span>👨‍🏫</span> Status de Entrega por Professor</div>
-                <div id="listaProfessores">
-                    <p style="text-align:center; color:#999; padding:20px;">Carregando status dos docentes...</p>
+                <div class="filtro-group">
+                    <label>👨‍🏫 Professor</label>
+                    <select id="filtroProfessor" onchange="aplicarFiltros()">
+                        <option value="">Todos os Professores</option>
+                    </select>
                 </div>
-            </section>
+                <div class="filtro-group">
+                    <label>📚 Disciplina</label>
+                    <select id="filtroDisciplina" onchange="aplicarFiltros()">
+                        <option value="">Todas as Disciplinas</option>
+                    </select>
+                </div>
+                <div class="filtro-group">
+                    <label>🏫 Série/Turma</label>
+                    <select id="filtroSerie" onchange="aplicarFiltros()">
+                        <option value="">Todas as Séries</option>
+                        <option value="1ª Série">1ª Série</option>
+                        <option value="2ª Série">2ª Série</option>
+                        <option value="3ª Série">3ª Série</option>
+                    </select>
+                </div>
+                <div class="filtro-group">
+                    <label>📅 Mês/Ano</label>
+                    <input type="month" id="filtroMes" onchange="aplicarFiltros()">
+                </div>
+            </div>
+        </div>
 
+        <!-- Cards de Resumo Estatístico -->
+        <div class="resumo-stats">
+            <div class="stat-card-modern">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value" id="totalPlanos">0</div>
+                <div class="stat-label">Total de Planos</div>
+            </div>
+            <div class="stat-card-modern">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value" id="totalAprovados">0</div>
+                <div class="stat-label">Planos Aprovados</div>
+            </div>
+            <div class="stat-card-modern">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-value" id="totalPendentes">0</div>
+                <div class="stat-label">Aguardando Revisão</div>
+            </div>
+            <div class="stat-card-modern">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value" id="totalProfessoresAtivos">0</div>
+                <div class="stat-label">Professores com Planos</div>
+            </div>
+        </div>
+
+        <!-- Cards de Turmas -->
+        <div class="monitoramento-container">
+            <div class="section-title">
+                🏫 Desempenho por Turma
+                <span style="font-size: 12px; color: #718096; margin-left: 10px;" id="totalTurmasInfo"></span>
+            </div>
+            <div id="turmasContainer" class="turmas-grid">
+                <p style="text-align: center; padding: 40px; color: #999;">Carregando dados das turmas...</p>
+            </div>
+        </div>
+
+        <!-- Conteúdos por Professor (Análise Detalhada) -->
+        <div class="monitoramento-container">
+            <div class="section-title">
+                📖 Análise Detalhada por Professor
+                <span style="font-size: 12px; color: #718096; margin-left: 10px;">Clique para expandir</span>
+            </div>
+            <div id="professoresContainer">
+                <p style="text-align: center; padding: 40px; color: #999;">Carregando dados dos professores...</p>
+            </div>
         </div>
     </main>
 
@@ -174,133 +386,414 @@
     <script src="../../assets/js/utils.js"></script>
 
     <script>
-        let dadosPlanos = [];
-        let listaProfs = [];
-        let mapaDisciplinas = {};
-
+        // ============================================================
+        // ESTATISTICAS.JS - LÓGICA COMPLETA DE ANÁLISE
+        // Sistema: SAGE Planos
+        // ============================================================
+        
+        let dadosCompletos = {
+            planos: [],
+            professores: [],
+            disciplinas: [],
+            turmas: [],
+            lotacoes: []
+        };
+        
+        let dadosFiltrados = {
+            planos: [],
+            professores: []
+        };
+        
+        // ============================================================
+        // INICIALIZAÇÃO
+        // ============================================================
         document.addEventListener('DOMContentLoaded', async () => {
+            logger.info('Inicializando página de estatísticas');
+            
             if (!Auth.verificarAcesso()) return;
-            document.getElementById('userName').textContent = Auth.getUsuarioLogado().nome;
-
-            // Define mês atual como padrão
-            const d = new Date();
-            document.getElementById('filtroMes').value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-
-            await inicializarPagina();
+            
+            const usuario = Auth.getUsuarioLogado();
+            document.getElementById('userName').textContent = usuario.nome;
+            
+            // Configurar mês atual como padrão
+            const hoje = new Date();
+            const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('filtroMes').value = mesAtual;
+            
+            await carregarTodosDados();
         });
-
-        async function inicializarPagina() {
+        
+        // ============================================================
+        // CARREGAR TODOS OS DADOS
+        // ============================================================
+        async function carregarTodosDados() {
             try {
-                Utils.mostrarLoading(true);
-                const [resP, resU, resD] = await Promise.all([
+                mostrarLoading(true);
+                logger.info('Carregando dados para estatísticas...');
+                
+                // Carregar todas as tabelas necessárias
+                const [
+                    planosRes,
+                    usuariosRes,
+                    disciplinasRes,
+                    turmasRes,
+                    lotacoesRes
+                ] = await Promise.all([
                     API.listarPlanos(),
                     API.listarUsuarios(),
-                    API.listarDisciplinas()
+                    API.listarDisciplinas(),
+                    API.listarTurmas(),
+                    API.listarLotacoes()
                 ]);
-
-                dadosPlanos = resP.dados || [];
-                listaProfs = (resU.dados || []).filter(u => u.perfil === 'professor');
                 
-                const selectD = document.getElementById('filtroDisciplina');
-                (resD.dados || []).forEach(d => {
-                    mapaDisciplinas[d.id] = d.nome;
-                    selectD.innerHTML += `<option value="${d.id}">${d.nome}</option>`;
-                });
-
+                dadosCompletos.planos = planosRes.dados || [];
+                dadosCompletos.professores = (usuariosRes.dados || []).filter(u => u.perfil === 'professor');
+                dadosCompletos.disciplinas = disciplinasRes.dados || [];
+                dadosCompletos.turmas = turmasRes.dados || [];
+                dadosCompletos.lotacoes = lotacoesRes.dados || [];
+                
+                logger.info(`Dados carregados: ${dadosCompletos.planos.length} planos, ${dadosCompletos.professores.length} professores`);
+                
+                // Preencher selects
+                preencherSelectProfessores();
+                preencherSelectDisciplinas();
+                
+                // Processar e exibir dados
                 processarDados();
-                Utils.mostrarLoading(false);
-            } catch (e) {
-                console.error(e);
-                Utils.mostrarLoading(false);
+                
+                mostrarLoading(false);
+            } catch (error) {
+                logger.error('Erro ao carregar dados:', error);
+                mostrarMensagem('Erro ao carregar dados: ' + error.message, 'error');
+                mostrarLoading(false);
             }
         }
-
-        function processarDados() {
-            const mesFiltro = document.getElementById('filtroMes').value;
-            const serieFiltro = document.getElementById('filtroSerie').value;
-            const discFiltro = document.getElementById('filtroDisciplina').value;
-
-            // 1. Filtragem Base
-            const filtrados = dadosPlanos.filter(p => {
-                let matchData = true;
-                if (mesFiltro) {
-                    const [a, m] = mesFiltro.split('-');
-                    matchData = (p.ano_referencia == a && p.mes_referencia == parseInt(m));
-                }
-                return matchData && (!serieFiltro || p.serie === serieFiltro) && (!discFiltro || p.disciplina_id == discFiltro);
+        
+        // ============================================================
+        // PREENCHER SELECTS
+        // ============================================================
+        function preencherSelectProfessores() {
+            const select = document.getElementById('filtroProfessor');
+            select.innerHTML = '<option value="">Todos os Professores</option>';
+            
+            dadosCompletos.professores.forEach(prof => {
+                select.innerHTML += `<option value="${prof.id}">${prof.nome}</option>`;
             });
-
-            // 2. Atualizar Contadores
-            document.getElementById('countTotal').textContent = filtrados.length;
-            document.getElementById('countEnviados').textContent = filtrados.filter(p => p.status === 'enviado').length;
-            document.getElementById('countAprovados').textContent = filtrados.filter(p => p.status === 'aprovado').length;
-            document.getElementById('countPendentes').textContent = filtrados.filter(p => p.status === 'rascunho' || p.status === 'revisar').length;
-
-            renderizarConteudos(filtrados);
-            renderizarProfessores(filtrados);
         }
-
-        function renderizarConteudos(planos) {
-            const container = document.getElementById('listaConteudos');
-            // Apenas planos que chegaram para a gestão (Enviados ou Aprovados)
-            const ativos = planos.filter(p => p.status !== 'rascunho');
-
-            if (ativos.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:30px; color:#999;">Nenhum conteúdo consolidado para este filtro.</div>`;
+        
+        function preencherSelectDisciplinas() {
+            const select = document.getElementById('filtroDisciplina');
+            select.innerHTML = '<option value="">Todas as Disciplinas</option>';
+            
+            dadosCompletos.disciplinas.forEach(disc => {
+                select.innerHTML += `<option value="${disc.id}">${disc.nome}</option>`;
+            });
+        }
+        
+        // ============================================================
+        // PROCESSAR DADOS COM FILTROS
+        // ============================================================
+        function processarDados() {
+            const filtroProfessor = document.getElementById('filtroProfessor').value;
+            const filtroDisciplina = document.getElementById('filtroDisciplina').value;
+            const filtroSerie = document.getElementById('filtroSerie').value;
+            const filtroMes = document.getElementById('filtroMes').value;
+            const buscaGeral = document.getElementById('buscaGeral').value.toLowerCase();
+            
+            logger.debug('Aplicando filtros', { filtroProfessor, filtroDisciplina, filtroSerie, filtroMes, buscaGeral });
+            
+            // Filtrar planos
+            let planosFiltrados = dadosCompletos.planos.filter(plano => {
+                // Filtro por mês
+                if (filtroMes) {
+                    const [ano, mes] = filtroMes.split('-');
+                    if (plano.ano_referencia != ano || plano.mes_referencia != parseInt(mes)) {
+                        return false;
+                    }
+                }
+                
+                // Filtro por série
+                if (filtroSerie && plano.serie !== filtroSerie) return false;
+                
+                // Filtro por disciplina
+                if (filtroDisciplina && plano.disciplina_id != filtroDisciplina) return false;
+                
+                // Filtro por professor
+                if (filtroProfessor && plano.professor_id != filtroProfessor) return false;
+                
+                // Busca geral
+                if (buscaGeral) {
+                    const professor = dadosCompletos.professores.find(p => p.id == plano.professor_id);
+                    const disciplina = dadosCompletos.disciplinas.find(d => d.id == plano.disciplina_id);
+                    const textoBusca = `${professor?.nome || ''} ${disciplina?.nome || ''} ${plano.conteudo_mensal || ''}`.toLowerCase();
+                    if (!textoBusca.includes(buscaGeral)) return false;
+                }
+                
+                return true;
+            });
+            
+            dadosFiltrados.planos = planosFiltrados;
+            
+            // Atualizar estatísticas
+            atualizarEstatisticas();
+            
+            // Renderizar cards de turmas
+            renderizarTurmas();
+            
+            // Renderizar análise por professor
+            renderizarProfessores();
+        }
+        
+        // ============================================================
+        // ATUALIZAR ESTATÍSTICAS GERAIS
+        // ============================================================
+        function atualizarEstatisticas() {
+            const planos = dadosFiltrados.planos;
+            
+            const total = planos.length;
+            const aprovados = planos.filter(p => p.status === 'aprovado').length;
+            const pendentes = planos.filter(p => p.status === 'enviado' || p.status === 'revisar').length;
+            
+            // Professores únicos com planos no período
+            const profIdsUnicos = [...new Set(planos.map(p => p.professor_id))];
+            const profsAtivos = profIdsUnicos.length;
+            
+            document.getElementById('totalPlanos').textContent = total;
+            document.getElementById('totalAprovados').textContent = aprovados;
+            document.getElementById('totalPendentes').textContent = pendentes;
+            document.getElementById('totalProfessoresAtivos').textContent = profsAtivos;
+            
+            logger.info(`Estatísticas: ${total} planos, ${aprovados} aprovados, ${pendentes} pendentes`);
+        }
+        
+        // ============================================================
+        // RENDERIZAR CARDS DE TURMAS
+        // ============================================================
+        function renderizarTurmas() {
+            const container = document.getElementById('turmasContainer');
+            const turmasAtivas = dadosCompletos.turmas.filter(t => t.ativo === 'TRUE' || t.ativo === true);
+            
+            if (turmasAtivas.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px;">Nenhuma turma cadastrada</p>';
                 return;
             }
-
-            let html = '';
-            // Agrupar por série
-            const grupos = ativos.reduce((acc, p) => {
-                const s = p.serie || 'OUTROS';
-                if (!acc[s]) acc[s] = [];
-                acc[s].push(p);
-                return acc;
-            }, {});
-
-            for (const serie in grupos) {
-                html += `<div style="margin-top:15px; margin-bottom:10px; font-weight:bold; color:#6366f1; font-size:12px;">${serie}</div>`;
-                grupos[serie].forEach(p => {
-                    const dNome = mapaDisciplinas[p.disciplina_id] || 'Disciplina';
-                    html += `
-                        <div class="item-lista">
-                            <h4>${dNome} <span class="badge ${p.status === 'aprovado' ? 'bg-success' : 'bg-info'}">${p.status}</span></h4>
-                            <p>${p.conteudo_mensal ? p.conteudo_mensal.substring(0, 180) + '...' : 'Sem descrição de conteúdo.'}</p>
-                        </div>
-                    `;
-                });
-            }
-            container.innerHTML = html;
-        }
-
-        function renderizarProfessores(planosNoMes) {
-            const container = document.getElementById('listaProfessores');
-            let html = '';
-
-            listaProfs.forEach(prof => {
-                const planosDoProf = planosNoMes.filter(p => p.professor_id == prof.id);
+            
+            document.getElementById('totalTurmasInfo').textContent = `(${turmasAtivas.length} turmas ativas)`;
+            
+            // Agrupar planos por turma via lotações
+            const turmasComPlanos = turmasAtivas.map(turma => {
+                // Buscar lotações desta turma
+                const lotacoesTurma = dadosCompletos.lotacoes.filter(l => l.turma_id == turma.id);
+                const professoresIds = lotacoesTurma.map(l => l.professor_id);
                 
-                if (planosDoProf.length === 0) {
-                    html += `
-                        <div class="item-lista" style="border-left: 4px solid #ef4444;">
-                            <h4>${prof.nome} <span class="badge bg-danger">Sem Entrega</span></h4>
-                            <p>Nenhum plano identificado para o período selecionado.</p>
-                        </div>
-                    `;
-                } else {
-                    const statusPrimario = planosDoProf.every(p => p.status === 'aprovado') ? 'bg-success' : 'bg-warning';
-                    const txtStatus = planosDoProf.some(p => p.status === 'enviado') ? 'Em Análise' : (planosDoProf.every(p => p.status === 'aprovado') ? 'Concluído' : 'Pendente');
-                    
-                    html += `
-                        <div class="item-lista" style="border-left: 4px solid #10b981;">
-                            <h4>${prof.nome} <span class="badge ${statusPrimario}">${txtStatus}</span></h4>
-                            <p>Possui <strong>${planosDoProf.length}</strong> plano(s) vinculado(s) aos filtros atuais.</p>
-                        </div>
-                    `;
-                }
+                // Buscar planos dos professores desta turma
+                const planosTurma = dadosFiltrados.planos.filter(p => professoresIds.includes(p.professor_id));
+                
+                // Estatísticas da turma
+                const totalPlanos = planosTurma.length;
+                const aprovados = planosTurma.filter(p => p.status === 'aprovado').length;
+                const pendentes = planosTurma.filter(p => p.status === 'enviado' || p.status === 'revisar').length;
+                const taxaAprovacao = totalPlanos > 0 ? Math.round((aprovados / totalPlanos) * 100) : 0;
+                
+                // Professores da turma com seus status
+                const professoresInfo = professoresIds.map(profId => {
+                    const prof = dadosCompletos.professores.find(p => p.id == profId);
+                    const planosProf = planosTurma.filter(p => p.professor_id == profId);
+                    const status = planosProf.some(p => p.status === 'enviado') ? 'Em análise' :
+                                  planosProf.every(p => p.status === 'aprovado') ? 'Concluído' :
+                                  planosProf.length > 0 ? 'Pendente' : 'Sem planos';
+                    return { nome: prof?.nome || 'Desconhecido', status, planos: planosProf.length };
+                });
+                
+                const statusClass = taxaAprovacao >= 70 ? 'status-alto' : (taxaAprovacao >= 40 ? 'status-medio' : 'status-baixo');
+                
+                return {
+                    ...turma,
+                    totalPlanos,
+                    aprovados,
+                    pendentes,
+                    taxaAprovacao,
+                    professoresInfo,
+                    statusClass
+                };
             });
-            container.innerHTML = html;
+            
+            // Ordenar por taxa de aprovação decrescente
+            turmasComPlanos.sort((a, b) => b.taxaAprovacao - a.taxaAprovacao);
+            
+            container.innerHTML = turmasComPlanos.map(turma => `
+                <div class="turma-card">
+                    <div class="turma-header">
+                        <h3>${escapeHtml(turma.nome)}</h3>
+                        <p>${turma.serie || 'Série não definida'} | ${turma.turno || 'Turno não definido'}</p>
+                    </div>
+                    <div class="turma-body">
+                        <div class="turma-stats">
+                            <div class="turma-stat-item">
+                                <div class="turma-stat-number">${turma.totalPlanos}</div>
+                                <div class="turma-stat-label">Planos</div>
+                            </div>
+                            <div class="turma-stat-item">
+                                <div class="turma-stat-number">${turma.aprovados}</div>
+                                <div class="turma-stat-label">Aprovados</div>
+                            </div>
+                            <div class="turma-stat-item">
+                                <div class="turma-stat-number">${turma.pendentes}</div>
+                                <div class="turma-stat-label">Pendentes</div>
+                            </div>
+                            <div class="turma-stat-item">
+                                <div class="turma-stat-number">${turma.taxaAprovacao}%</div>
+                                <div class="turma-stat-label">Aprovação</div>
+                            </div>
+                        </div>
+                        <div class="professores-list">
+                            <strong>Professores:</strong><br>
+                            ${turma.professoresInfo.map(p => `
+                                <span class="professor-tag" title="${p.planos} plano(s) - ${p.status}">
+                                    ${escapeHtml(p.nome)} (${p.planos})
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // ============================================================
+        // RENDERIZAR ANÁLISE POR PROFESSOR
+        // ============================================================
+        function renderizarProfessores() {
+            const container = document.getElementById('professoresContainer');
+            
+            if (dadosCompletos.professores.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px;">Nenhum professor cadastrado</p>';
+                return;
+            }
+            
+            // Calcular estatísticas por professor
+            const professoresStats = dadosCompletos.professores.map(prof => {
+                const planosProf = dadosFiltrados.planos.filter(p => p.professor_id == prof.id);
+                const total = planosProf.length;
+                const aprovados = planosProf.filter(p => p.status === 'aprovado').length;
+                const enviados = planosProf.filter(p => p.status === 'enviado').length;
+                const revisar = planosProf.filter(p => p.status === 'revisar').length;
+                const rascunhos = planosProf.filter(p => p.status === 'rascunho').length;
+                
+                // Disciplinas do professor
+                const disciplinasProf = [...new Set(planosProf.map(p => p.disciplina_id))];
+                const disciplinasNomes = disciplinasProf.map(discId => {
+                    const disc = dadosCompletos.disciplinas.find(d => d.id == discId);
+                    return disc?.nome || 'Desconhecida';
+                });
+                
+                // Último plano
+                const ultimoPlano = planosProf.sort((a, b) => b.id - a.id)[0];
+                const ultimoPlanoInfo = ultimoPlano ? 
+                    `${String(ultimoPlano.mes_referencia).padStart(2, '0')}/${ultimoPlano.ano_referencia} - ${ultimoPlano.status}` : 
+                    'Nenhum plano';
+                
+                const taxaAprovacao = total > 0 ? Math.round((aprovados / total) * 100) : 0;
+                
+                return {
+                    ...prof,
+                    total,
+                    aprovados,
+                    enviados,
+                    revisar,
+                    rascunhos,
+                    disciplinasNomes: disciplinasNomes.slice(0, 3),
+                    ultimoPlanoInfo,
+                    taxaAprovacao
+                };
+            });
+            
+            // Filtrar professores sem planos se necessário (mas mostrar todos)
+            const professoresFiltrados = professoresStats;
+            
+            if (professoresFiltrados.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px;">Nenhum professor encontrado</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="turmas-grid">
+                    ${professoresFiltrados.map(prof => `
+                        <div class="turma-card">
+                            <div class="turma-header" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
+                                <h3>${escapeHtml(prof.nome)}</h3>
+                                <p>${prof.email || 'Email não cadastrado'}</p>
+                            </div>
+                            <div class="turma-body">
+                                <div class="turma-stats">
+                                    <div class="turma-stat-item">
+                                        <div class="turma-stat-number">${prof.total}</div>
+                                        <div class="turma-stat-label">Total Planos</div>
+                                    </div>
+                                    <div class="turma-stat-item">
+                                        <div class="turma-stat-number">${prof.aprovados}</div>
+                                        <div class="turma-stat-label">Aprovados</div>
+                                    </div>
+                                    <div class="turma-stat-item">
+                                        <div class="turma-stat-number">${prof.taxaAprovacao}%</div>
+                                        <div class="turma-stat-label">Aprovação</div>
+                                    </div>
+                                    <div class="turma-stat-item">
+                                        <div class="turma-stat-number">${prof.enviados + prof.revisar}</div>
+                                        <div class="turma-stat-label">Pendentes</div>
+                                    </div>
+                                </div>
+                                ${prof.disciplinasNomes.length > 0 ? `
+                                    <div style="margin-top: 12px;">
+                                        <strong>Disciplinas:</strong><br>
+                                        ${prof.disciplinasNomes.map(d => `
+                                            <span class="professor-tag">${escapeHtml(d)}</span>
+                                        `).join('')}
+                                        ${prof.disciplinasNomes.length < 3 && prof.disciplinasNomes.length > 0 ? '' : prof.disciplinasNomes.length >= 3 ? '<span class="professor-tag">+outras</span>' : ''}
+                                    </div>
+                                ` : ''}
+                                <div style="margin-top: 12px; font-size: 12px; color: #718096;">
+                                    <strong>Último plano:</strong> ${prof.ultimoPlanoInfo}
+                                </div>
+                                <div style="margin-top: 12px;">
+                                    <div style="background: #e9ecef; border-radius: 8px; height: 8px; overflow: hidden;">
+                                        <div style="background: #4CAF50; width: ${prof.taxaAprovacao}%; height: 100%; transition: width 0.3s;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // ============================================================
+        // FUNÇÃO DE FILTRAGEM (DEBOUNCE)
+        // ============================================================
+        let timeoutFiltro;
+        function aplicarFiltros() {
+            if (timeoutFiltro) clearTimeout(timeoutFiltro);
+            timeoutFiltro = setTimeout(() => {
+                processarDados();
+            }, 300);
+        }
+        
+        // ============================================================
+        // UTILITÁRIOS
+        // ============================================================
+        function mostrarLoading(mostrar) {
+            const overlay = document.getElementById('loading');
+            if (overlay) {
+                if (mostrar) overlay.classList.add('active');
+                else overlay.classList.remove('active');
+            }
+        }
+        
+        function mostrarMensagem(mensagem, tipo) {
+            Utils.mostrarMensagem(mensagem, tipo);
+        }
+        
+        function escapeHtml(texto) {
+            return Utils.escapeHtml(texto);
         }
     </script>
 </body>
