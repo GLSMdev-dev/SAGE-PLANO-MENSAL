@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Disciplinas | SAGE Planos</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: 0.3s; border-radius: 24px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: #4CAF50; }
+        input:checked + .toggle-slider:before { transform: translateX(26px); }
+        .toggle-label { display: flex; align-items: center; gap: 10px; }
+        .status-ativo { color: #4CAF50; font-weight: bold; }
+        .status-inativo { color: #f44336; font-weight: bold; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: none; font-size: 14px; }
+        .tab-btn.active { border-bottom: 2px solid #4CAF50; color: #4CAF50; font-weight: bold; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="logo"><h1>SAGE Planos</h1><p>Gerenciamento de Disciplinas</p></div>
+            <div class="user-info"><span id="userName">Carregando...</span><button class="btn-logout" onclick="Auth.logout()">Sair</button></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="disciplinas">📚 Disciplinas</button>
+            <button class="tab-btn" data-tab="cargas">⚖️ Cargas Horárias</button>
+        </div>
+        
+        <div id="tab-disciplinas" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2>Disciplinas</h2>
+                <button class="btn btn-primary" onclick="abrirModalDisciplina()">+ Nova Disciplina</button>
+            </div>
+            <div class="card"><div class="table-container"><table id="tabelaDisciplinas"><thead><tr><th>ID</th><th>Nome</th><th>Área</th><th>Sigla</th><th>Status</th><th>Ações</th></tr></thead><tbody id="listaDisciplinas"><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>
+        </div>
+        
+        <div id="tab-cargas" class="tab-content">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2>Cargas Horárias</h2>
+                <button class="btn btn-primary" onclick="abrirModalCarga()">+ Nova Carga</button>
+            </div>
+            <div class="card"><div class="table-container"><table id="tabelaCargas"><thead><tr><th>ID</th><th>Disciplina</th><th>Série</th><th>Aulas/Semana</th><th>Status</th><th>Ações</th></tr></thead><tbody id="listaCargas"><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>
+        </div>
+    </div>
+    
+    <!-- Modal Disciplina -->
+    <div id="modalDisciplina" class="modal"><div class="modal-content"><div class="modal-header"><h3 id="modalDisciplinaTitle">Nova Disciplina</h3><span class="modal-close" onclick="fecharModalDisciplina()">&times;</span></div><div class="modal-body"><form id="formDisciplina"><input type="hidden" id="disciplinaId"><div class="form-group"><label>Nome *</label><input type="text" id="discNome" required></div><div class="form-group"><label>Área *</label><select id="discArea" required><option value="">Selecione...</option><option value="Matemática">Matemática</option><option value="Linguagens">Linguagens</option><option value="Ciências da Natureza">Ciências da Natureza</option><option value="Ciências Humanas">Ciências Humanas</option></select></div><div class="form-group"><label>Sigla</label><input type="text" id="discSigla" maxlength="5"></div><div class="form-group"><label class="toggle-label"><span>Ativa:</span><label class="toggle-switch"><input type="checkbox" id="discAtivo" checked><span class="toggle-slider"></span></label></label></div></form></div><div class="modal-footer"><button class="btn btn-secondary" onclick="fecharModalDisciplina()">Cancelar</button><button class="btn btn-primary" onclick="salvarDisciplina()">Salvar</button></div></div></div>
+    
+    <!-- Modal Carga -->
+    <div id="modalCarga" class="modal"><div class="modal-content"><div class="modal-header"><h3 id="modalCargaTitle">Nova Carga Horária</h3><span class="modal-close" onclick="fecharModalCarga()">&times;</span></div><div class="modal-body"><form id="formCarga"><input type="hidden" id="cargaId"><div class="form-group"><label>Disciplina *</label><select id="cargaDisciplinaId" required></select></div><div class="form-group"><label>Série *</label><select id="cargaSerie" required><option value="">Selecione...</option><option value="1ª Série">1ª Série</option><option value="2ª Série">2ª Série</option><option value="3ª Série">3ª Série</option></select></div><div class="form-group"><label>Aulas/Semana *</label><input type="number" id="cargaAulas" required min="1" max="10" value="2"></div><div class="form-group"><label class="toggle-label"><span>Ativa:</span><label class="toggle-switch"><input type="checkbox" id="cargaAtivo" checked><span class="toggle-slider"></span></label></label></div></form></div><div class="modal-footer"><button class="btn btn-secondary" onclick="fecharModalCarga()">Cancelar</button><button class="btn btn-primary" onclick="salvarCarga()">Salvar</button></div></div></div>
+    
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script>
+        let disciplinas = [], cargas = [];
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!Auth.verificarAcesso()) return;
+            const usuario = Auth.getUsuarioLogado();
+            if (usuario.perfil !== 'admin') { Auth.redirecionarPorPerfil(); return; }
+            document.getElementById('userName').textContent = usuario.nome;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+            }));
+            await carregarDisciplinas();
+            await carregarCargas();
+        });
+        
+        async function carregarDisciplinas() {
+            try { const result = await API.listarDisciplinas(); disciplinas = result.dados || []; renderizarDisciplinas(); preencherSelectDisciplinas(); }
+            catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); }
+        }
+        
+        function renderizarDisciplinas() {
+            const tbody = document.getElementById('listaDisciplinas');
+            if (!disciplinas.length) { tbody.innerHTML = '<tr><td colspan="6">Nenhuma disciplina</td></tr>'; return; }
+            tbody.innerHTML = disciplinas.map(d => `<tr><td>${d.id}</td><td>${Utils.escapeHtml(d.nome)}</td><td>${d.area_conhecimento || '-'}</td><td>${d.sigla || '-'}</td><td class="${d.ativo === 'TRUE' || d.ativo === true ? 'status-ativo' : 'status-inativo'}">${d.ativo === 'TRUE' || d.ativo === true ? '✅ Ativa' : '❌ Inativa'}</td><td><button class="btn btn-primary" onclick="editarDisciplina(${d.id})">Editar</button><button class="btn btn-danger" onclick="excluirDisciplina(${d.id})">Excluir</button></td></tr>`).join('');
+        }
+        
+        function preencherSelectDisciplinas() {
+            const select = document.getElementById('cargaDisciplinaId');
+            select.innerHTML = '<option value="">Selecione...</option>' + disciplinas.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+        }
+        
+        function abrirModalDisciplina() { document.getElementById('disciplinaId').value = ''; document.getElementById('discNome').value = ''; document.getElementById('discArea').value = ''; document.getElementById('discSigla').value = ''; document.getElementById('discAtivo').checked = true; document.getElementById('modalDisciplina').classList.add('active'); }
+        function fecharModalDisciplina() { document.getElementById('modalDisciplina').classList.remove('active'); }
+        
+        function editarDisciplina(id) { const d = disciplinas.find(d => d.id == id); if(!d) return; document.getElementById('disciplinaId').value = d.id; document.getElementById('discNome').value = d.nome; document.getElementById('discArea').value = d.area_conhecimento || ''; document.getElementById('discSigla').value = d.sigla || ''; document.getElementById('discAtivo').checked = d.ativo === 'TRUE' || d.ativo === true; document.getElementById('modalDisciplina').classList.add('active'); }
+        
+        async function salvarDisciplina() {
+            const id = document.getElementById('disciplinaId').value;
+            const nome = document.getElementById('discNome').value;
+            const area = document.getElementById('discArea').value;
+            const sigla = document.getElementById('discSigla').value;
+            const ativo = document.getElementById('discAtivo').checked;
+            if (!nome || !area) { Utils.mostrarMensagem('Preencha nome e área', 'error'); return; }
+            const dados = { nome, area_conhecimento: area, sigla, ativo: ativo ? 'TRUE' : 'FALSE' };
+            try {
+                Utils.mostrarLoading(true);
+                if (id) { await API.atualizarDisciplina(id, dados); Utils.mostrarMensagem('Atualizada!', 'success'); }
+                else { await API.criarDisciplina(dados); Utils.mostrarMensagem('Criada!', 'success'); }
+                fecharModalDisciplina(); await carregarDisciplinas(); Utils.mostrarLoading(false);
+            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+        }
+        
+        async function excluirDisciplina(id) { Utils.confirmarAcao('Excluir disciplina?', async (c) => { if(c) { try { await API.deletarDisciplina(id); await carregarDisciplinas(); } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); } } }); }
+        
+        async function carregarCargas() {
+            try { const result = await API.getCargasHorarias(); cargas = result.dados || []; renderizarCargas(); }
+            catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); }
+        }
+        
+        function renderizarCargas() {
+            const tbody = document.getElementById('listaCargas');
+            if (!cargas.length) { tbody.innerHTML = '<tr><td colspan="6">Nenhuma carga</td></tr>'; return; }
+            tbody.innerHTML = cargas.map(c => { const disc = disciplinas.find(d => d.id == c.disciplina_id); return `<tr><td>${c.id}</td><td>${disc ? disc.nome : '-'}</td><td>${c.serie}</td><td>${c.aulas_semana}</td><td class="${c.ativo === 'TRUE' || c.ativo === true ? 'status-ativo' : 'status-inativo'}">${c.ativo === 'TRUE' || c.ativo === true ? '✅ Ativa' : '❌ Inativa'}</td><td><button class="btn btn-primary" onclick="editarCarga(${c.id})">Editar</button><button class="btn btn-danger" onclick="excluirCarga(${c.id})">Excluir</button></td></tr>`; }).join('');
+        }
+        
+        function abrirModalCarga() { document.getElementById('cargaId').value = ''; document.getElementById('cargaDisciplinaId').value = ''; document.getElementById('cargaSerie').value = ''; document.getElementById('cargaAulas').value = '2'; document.getElementById('cargaAtivo').checked = true; document.getElementById('modalCarga').classList.add('active'); }
+        function fecharModalCarga() { document.getElementById('modalCarga').classList.remove('active'); }
+        
+        function editarCarga(id) { const c = cargas.find(c => c.id == id); if(!c) return; document.getElementById('cargaId').value = c.id; document.getElementById('cargaDisciplinaId').value = c.disciplina_id; document.getElementById('cargaSerie').value = c.serie; document.getElementById('cargaAulas').value = c.aulas_semana; document.getElementById('cargaAtivo').checked = c.ativo === 'TRUE' || c.ativo === true; document.getElementById('modalCarga').classList.add('active'); }
+        
+        async function salvarCarga() {
+            const id = document.getElementById('cargaId').value;
+            const disciplina_id = document.getElementById('cargaDisciplinaId').value;
+            const serie = document.getElementById('cargaSerie').value;
+            const aulas_semana = document.getElementById('cargaAulas').value;
+            const ativo = document.getElementById('cargaAtivo').checked;
+            if (!disciplina_id || !serie || !aulas_semana) { Utils.mostrarMensagem('Preencha todos os campos', 'error'); return; }
+            const dados = { disciplina_id, serie, aulas_semana, ativo: ativo ? 'TRUE' : 'FALSE' };
+            try {
+                Utils.mostrarLoading(true);
+                if (id) { await API.atualizarCargaHoraria(id, dados); Utils.mostrarMensagem('Atualizada!', 'success'); }
+                else { await API.criarCargaHoraria(dados); Utils.mostrarMensagem('Criada!', 'success'); }
+                fecharModalCarga(); await carregarCargas(); Utils.mostrarLoading(false);
+            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+        }
+        
+        async function excluirCarga(id) { Utils.confirmarAcao('Excluir carga?', async (c) => { if(c) { try { await API.deletarCargaHoraria(id); await carregarCargas(); } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); } } }); }
+    </script>
+</body>
+</html>

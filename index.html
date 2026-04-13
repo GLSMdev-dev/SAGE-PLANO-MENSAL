@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>SAGE Planos - Sistema de Gestão de Planos de Aula</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .login-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+        margin: 20px;
+        overflow: hidden;
+      }
+
+      .login-header {
+        background: #4caf50;
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .login-header h1 {
+        font-size: 24px;
+        margin-bottom: 5px;
+      }
+
+      .login-header p {
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .login-form {
+        padding: 30px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #4caf50;
+      }
+
+      .btn-login {
+        width: 100%;
+        padding: 12px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .btn-login:hover {
+        background: #45a049;
+      }
+
+      .btn-login:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      .error-message {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        margin-top: 15px;
+      }
+
+      .loading.active {
+        display: block;
+      }
+
+      .spinner {
+        width: 30px;
+        height: 30px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #4caf50;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .info {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 12px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <h1>SAGE Planos</h1>
+        <p>Sistema de Gestão de Planos de Aula</p>
+      </div>
+
+      <div class="login-form">
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="email">E-mail</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              placeholder="seu@email.com"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="senha">Senha</label>
+            <input
+              type="password"
+              id="senha"
+              name="senha"
+              required
+              placeholder="••••••"
+            />
+          </div>
+
+          <button type="submit" class="btn-login" id="btnLogin">Entrar</button>
+
+          <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px">Autenticando...</p>
+          </div>
+        </form>
+
+        <div class="info">
+          <p>Credenciais:</p>
+          <p>
+            <strong>Professor:</strong> Email institucional / primeiros 6
+            dígitos do CPF
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script>
+      // Carregar tema visual
+      async function carregarTema() {
+        try {
+          const configs = await API.getConfigVisual();
+          if (configs.success && configs.dados) {
+            Utils.aplicarTema(configs.dados);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar tema:", error);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        carregarTema();
+
+        if (window.APP_CONFIG) {
+          if (window.APP_CONFIG.API_KEY) {
+            console.warn("⚠️ ATENÇÃO: API_KEY exposta no frontend!");
+          } else {
+            console.log("✅ Configuração carregada com segurança.");
+          }
+        }
+
+        const usuario = Auth.getUsuarioLogado();
+        if (usuario) {
+          Auth.redirecionarPorPerfil();
+          return;
+        }
+
+        const form = document.getElementById("loginForm");
+        const btnLogin = document.getElementById("btnLogin");
+        const loading = document.getElementById("loading");
+        const errorMessage = document.getElementById("errorMessage");
+
+        form.addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const email = document.getElementById("email").value;
+          const senha = document.getElementById("senha").value;
+
+          btnLogin.disabled = true;
+          loading.classList.add("active");
+          errorMessage.style.display = "none";
+
+          try {
+            const result = await Auth.login(email, senha);
+
+            if (result.success) {
+              Auth.redirecionarPorPerfil();
+            } else {
+              errorMessage.textContent = result.error || "Erro ao fazer login";
+              errorMessage.style.display = "block";
+              btnLogin.disabled = false;
+              loading.classList.remove("active");
+            }
+          } catch (error) {
+            errorMessage.textContent = "Erro de conexão. Tente novamente.";
+            errorMessage.style.display = "block";
+            btnLogin.disabled = false;
+            loading.classList.remove("active");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

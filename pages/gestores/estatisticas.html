@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SAGE - Monitoramento de Conteúdos | Gestor</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        /* ============================================================
+           ESTILOS ESPECÍFICOS PARA MONITORAMENTO DE CONTEÚDOS
+           ============================================================ */
+        
+        :root {
+            --card-hover-transform: translateY(-2px);
+            --transition-speed: 0.2s;
+        }
+        
+        /* Painel de Filtros */
+        .filtros-painel {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+        }
+        
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .filtro-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .filtro-group label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .filtro-group select,
+        .filtro-group input {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .filtro-group select:focus,
+        .filtro-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        
+        .btn-aplicar {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 28px;
+            transition: background 0.2s;
+        }
+        
+        .btn-aplicar:hover {
+            background: #45a049;
+        }
+        
+        /* Cards de Conteúdo por Turma */
+        .conteudos-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .turma-conteudo-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            transition: transform var(--transition-speed);
+        }
+        
+        .turma-conteudo-card:hover {
+            transform: var(--card-hover-transform);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .turma-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #2e7d32 100%);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .turma-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .turma-header .badge-info {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .disciplinas-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px 24px;
+        }
+        
+        .disciplina-item {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 16px;
+        }
+        
+        .disciplina-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .disciplina-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .disciplina-nome {
+            font-weight: 700;
+            font-size: 16px;
+            color: #2d3748;
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        
+        .professor-nome {
+            font-size: 13px;
+            color: #4CAF50;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-aprovado { background: #dcfce7; color: #15803d; }
+        .status-enviado { background: #dbeafe; color: #1e40af; }
+        .status-revisar { background: #fef3c7; color: #92400e; }
+        .status-rascunho { background: #f3f4f6; color: #6b7280; }
+        
+        .conteudo-box {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .conteudo-box p {
+            margin: 0 0 8px 0;
+            color: #334155;
+            line-height: 1.5;
+        }
+        
+        .conteudo-box strong {
+            color: #1e293b;
+        }
+        
+        .aulas-detalhe {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #475569;
+        }
+        
+        .aulas-detalhe summary {
+            cursor: pointer;
+            font-weight: 500;
+            color: #4CAF50;
+            padding: 8px 0;
+        }
+        
+        .aulas-detalhe details {
+            margin-top: 8px;
+        }
+        
+        .aula-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .aula-item strong {
+            color: #4CAF50;
+        }
+        
+        .sem-conteudo {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            background: white;
+            border-radius: 12px;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .filtros-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-aplicar {
+                margin-top: 0;
+                width: 100%;
+            }
+            
+            .turma-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .disciplinas-list {
+                padding: 12px 16px;
+            }
+        }
+        
+        /* Botão Voltar */
+        .btn-voltar {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+        
+        .btn-voltar:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>SAGE <span>Monitoramento de Conteúdos</span></h1>
+                <p>Acompanhe o que cada turma está estudando</p>
+            </div>
+            <nav class="user-info">
+                <span id="userName" class="user-name">Carregando...</span>
+                <button onclick="Auth.logout()" class="btn-logout">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <button class="btn-voltar" onclick="location.href='dashboard.html'">← Voltar ao Painel</button>
+
+        <!-- Painel de Filtros -->
+        <div class="filtros-painel">
+            <div class="filtros-grid">
+                <div class="filtro-group">
+                    <label>📅 Mês/Ano *</label>
+                    <input type="month" id="filtroMes" required>
+                </div>
+                <div class="filtro-group">
+                    <label>🏫 Série/Turma</label>
+                    <select id="filtroTurma">
+                        <option value="">Todas as Turmas</option>
+                    </select>
+                </div>
+                <div class="filtro-group">
+                    <label>📚 Disciplina</label>
+                    <select id="filtroDisciplina">
+                        <option value="">Todas as Disciplinas</option>
+                    </select>
+                </div>
+                <div class="filtro-group">
+                    <label>👨‍🏫 Professor</label>
+                    <select id="filtroProfessor">
+                        <option value="">Todos os Professores</option>
+                    </select>
+                </div>
+                <div class="filtro-group">
+                    <button class="btn-aplicar" id="btnAplicarFiltros">🔍 Aplicar Filtros</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultados: Conteúdos por Turma -->
+        <div id="conteudosContainer" class="conteudos-container">
+            <div class="sem-conteudo">Selecione um mês/ano e clique em "Aplicar Filtros" para visualizar os conteúdos.</div>
+        </div>
+    </main>
+
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+
+    <script>
+        // ============================================================
+        // MONITORAMENTO DE CONTEÚDOS - LÓGICA PRINCIPAL
+        // Objetivo: Mostrar para o gestor quais conteúdos cada turma 
+        // está estudando em um determinado mês/semana/disciplina
+        // ============================================================
+        
+        let dados = {
+            planos: [],
+            professores: [],
+            disciplinas: [],
+            turmas: [],
+            lotacoes: []
+        };
+        
+        // Mapeamentos para busca rápida
+        let mapaProfessores = {};
+        let mapaDisciplinas = {};
+        let mapaTurmas = {};
+        
+        // ============================================================
+        // INICIALIZAÇÃO
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[INFO] Inicializando página de monitoramento de conteúdos');
+            
+            if (!Auth.verificarAcesso()) return;
+            
+            const usuario = Auth.getUsuarioLogado();
+            document.getElementById('userName').textContent = usuario.nome;
+            
+            // Configurar mês atual como padrão
+            const hoje = new Date();
+            const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('filtroMes').value = mesAtual;
+            
+            await carregarDados();
+            
+            // Configurar evento do botão
+            document.getElementById('btnAplicarFiltros').addEventListener('click', () => {
+                aplicarFiltrosEBuscar();
+            });
+        });
+        
+        // ============================================================
+        // CARREGAR TODOS OS DADOS DA PLANILHA
+        // ============================================================
+        async function carregarDados() {
+            try {
+                mostrarLoading(true);
+                console.log('[INFO] Carregando dados da planilha...');
+                
+                const [
+                    planosRes,
+                    usuariosRes,
+                    disciplinasRes,
+                    turmasRes,
+                    lotacoesRes
+                ] = await Promise.all([
+                    API.listarPlanos(),
+                    API.listarUsuarios(),
+                    API.listarDisciplinas(),
+                    API.listarTurmas(),
+                    API.listarLotacoes()
+                ]);
+                
+                dados.planos = planosRes.dados || [];
+                dados.professores = (usuariosRes.dados || []).filter(u => u.perfil === 'professor');
+                dados.disciplinas = disciplinasRes.dados || [];
+                dados.turmas = turmasRes.dados || [];
+                dados.lotacoes = lotacoesRes.dados || [];
+                
+                // Criar mapeamentos
+                dados.professores.forEach(p => { mapaProfessores[p.id] = p; });
+                dados.disciplinas.forEach(d => { mapaDisciplinas[d.id] = d; });
+                dados.turmas.forEach(t => { mapaTurmas[t.id] = t; });
+                
+                // Preencher selects
+                preencherSelects();
+                
+                console.log(`[INFO] Dados carregados: ${dados.planos.length} planos, ${dados.professores.length} professores, ${dados.turmas.length} turmas`);
+                
+                mostrarLoading(false);
+            } catch (error) {
+                console.error('[ERROR] Erro ao carregar dados:', error);
+                Utils.mostrarMensagem('Erro ao carregar dados: ' + error.message, 'error');
+                mostrarLoading(false);
+            }
+        }
+        
+        // ============================================================
+        // PREENCHER SELECTS COM DADOS
+        // ============================================================
+        function preencherSelects() {
+            // Select de Turmas
+            const selectTurma = document.getElementById('filtroTurma');
+            selectTurma.innerHTML = '<option value="">Todas as Turmas</option>';
+            dados.turmas.forEach(turma => {
+                if (turma.ativo === 'TRUE' || turma.ativo === true) {
+                    selectTurma.innerHTML += `<option value="${turma.id}">${Utils.escapeHtml(turma.nome)} (${turma.serie || '-'})</option>`;
+                }
+            });
+            
+            // Select de Disciplinas
+            const selectDisc = document.getElementById('filtroDisciplina');
+            selectDisc.innerHTML = '<option value="">Todas as Disciplinas</option>';
+            dados.disciplinas.forEach(disc => {
+                selectDisc.innerHTML += `<option value="${disc.id}">${Utils.escapeHtml(disc.nome)}</option>`;
+            });
+            
+            // Select de Professores
+            const selectProf = document.getElementById('filtroProfessor');
+            selectProf.innerHTML = '<option value="">Todos os Professores</option>';
+            dados.professores.forEach(prof => {
+                selectProf.innerHTML += `<option value="${prof.id}">${Utils.escapeHtml(prof.nome)}</option>`;
+            });
+        }
+        
+        // ============================================================
+        // APLICAR FILTROS E BUSCAR CONTEÚDOS
+        // ============================================================
+        function aplicarFiltrosEBuscar() {
+            const mesAno = document.getElementById('filtroMes').value;
+            const turmaId = document.getElementById('filtroTurma').value;
+            const disciplinaId = document.getElementById('filtroDisciplina').value;
+            const professorId = document.getElementById('filtroProfessor').value;
+            
+            if (!mesAno) {
+                Utils.mostrarMensagem('Selecione um mês/ano para visualizar os conteúdos', 'warning');
+                return;
+            }
+            
+            const [ano, mes] = mesAno.split('-');
+            
+            console.log('[INFO] Aplicando filtros:', { ano, mes, turmaId, disciplinaId, professorId });
+            
+            // 1. Filtrar planos pelo mês/ano
+            let planosFiltrados = dados.planos.filter(plano => {
+                return plano.ano_referencia == ano && plano.mes_referencia == parseInt(mes);
+            });
+            
+            // 2. Filtrar por disciplina
+            if (disciplinaId) {
+                planosFiltrados = planosFiltrados.filter(p => p.disciplina_id == disciplinaId);
+            }
+            
+            // 3. Filtrar por professor
+            if (professorId) {
+                planosFiltrados = planosFiltrados.filter(p => p.professor_id == professorId);
+            }
+            
+            // 4. Se filtro por turma, filtrar planos pelos professores lotados na turma
+            if (turmaId) {
+                const professoresDaTurma = dados.lotacoes
+                    .filter(l => l.turma_id == turmaId)
+                    .map(l => l.professor_id);
+                
+                planosFiltrados = planosFiltrados.filter(p => professoresDaTurma.includes(p.professor_id));
+            }
+            
+            // 5. Agrupar por turma (via lotações)
+            const turmasComConteudos = agruparConteudosPorTurma(planosFiltrados);
+            
+            // 6. Renderizar
+            renderizarConteudos(turmasComConteudos, mesAno);
+        }
+        
+        // ============================================================
+        // AGRUPAR CONTEÚDOS POR TURMA
+        // ============================================================
+        function agruparConteudosPorTurma(planos) {
+            const turmasMap = new Map();
+            
+            // Para cada plano, encontrar as turmas onde o professor está lotado
+            for (const plano of planos) {
+                const professorId = plano.professor_id;
+                const lotacoesProfessor = dados.lotacoes.filter(l => l.professor_id == professorId);
+                
+                for (const lotacao of lotacoesProfessor) {
+                    const turmaId = lotacao.turma_id;
+                    const turma = mapaTurmas[turmaId];
+                    
+                    if (!turma) continue;
+                    
+                    if (!turmasMap.has(turmaId)) {
+                        turmasMap.set(turmaId, {
+                            turma: turma,
+                            disciplinas: new Map()
+                        });
+                    }
+                    
+                    const turmaData = turmasMap.get(turmaId);
+                    const disciplinaId = plano.disciplina_id;
+                    const disciplina = mapaDisciplinas[disciplinaId];
+                    
+                    if (!disciplina) continue;
+                    
+                    if (!turmaData.disciplinas.has(disciplinaId)) {
+                        turmaData.disciplinas.set(disciplinaId, {
+                            disciplina: disciplina,
+                            planos: []
+                        });
+                    }
+                    
+                    turmaData.disciplinas.get(disciplinaId).planos.push(plano);
+                }
+            }
+            
+            // Converter para array e ordenar
+            const resultado = [];
+            for (const [turmaId, turmaData] of turmasMap) {
+                const disciplinasArray = [];
+                for (const [discId, discData] of turmaData.disciplinas) {
+                    // Ordenar planos por data de criação (mais recente primeiro)
+                    discData.planos.sort((a, b) => b.id - a.id);
+                    disciplinasArray.push(discData);
+                }
+                // Ordenar disciplinas por nome
+                disciplinasArray.sort((a, b) => a.disciplina.nome.localeCompare(b.disciplina.nome));
+                
+                resultado.push({
+                    turma: turmaData.turma,
+                    disciplinas: disciplinasArray
+                });
+            }
+            
+            // Ordenar turmas por nome
+            resultado.sort((a, b) => a.turma.nome.localeCompare(b.turma.nome));
+            
+            return resultado;
+        }
+        
+        // ============================================================
+        // RENDERIZAR CONTEÚDOS NA TELA
+        // ============================================================
+        function renderizarConteudos(turmasConteudos, mesAno) {
+            const container = document.getElementById('conteudosContainer');
+            
+            if (turmasConteudos.length === 0) {
+                container.innerHTML = `
+                    <div class="sem-conteudo">
+                        📭 Nenhum conteúdo encontrado para o período ${mesAno.replace('-', '/')}.
+                        <br>Verifique se os professores já enviaram os planos para este mês.
+                    </div>
+                `;
+                return;
+            }
+            
+            const [ano, mes] = mesAno.split('-');
+            const mesNome = obterNomeMes(parseInt(mes));
+            
+            let html = '';
+            
+            for (const turmaData of turmasConteudos) {
+                const turma = turmaData.turma;
+                
+                html += `
+                    <div class="turma-conteudo-card">
+                        <div class="turma-header">
+                            <h3>🏫 ${Utils.escapeHtml(turma.nome)}</h3>
+                            <span class="badge-info">${turma.serie || 'Série não definida'} | ${turma.turno || 'Turno'}</span>
+                        </div>
+                        <div class="disciplinas-list">
+                `;
+                
+                for (const discData of turmaData.disciplinas) {
+                    const disciplina = discData.disciplina;
+                    const planos = discData.planos;
+                    const planoMaisRecente = planos[0];
+                    
+                    // Buscar professor
+                    const professor = mapaProfessores[planoMaisRecente?.professor_id];
+                    
+                    html += `
+                        <div class="disciplina-item">
+                            <div class="disciplina-header">
+                                <span class="disciplina-nome">📖 ${Utils.escapeHtml(disciplina.nome)}</span>
+                                <span class="professor-nome">👨‍🏫 ${professor ? Utils.escapeHtml(professor.nome) : 'Professor não identificado'}</span>
+                                <span class="status-badge status-${planoMaisRecente?.status || 'rascunho'}">
+                                    ${getStatusNome(planoMaisRecente?.status)}
+                                </span>
+                            </div>
+                    `;
+                    
+                    // Conteúdo do plano mais recente
+                    if (planoMaisRecente && planoMaisRecente.conteudo_mensal) {
+                        html += `
+                            <div class="conteudo-box">
+                                <p><strong>📌 Conteúdo do Mês (${mesNome}/${ano}):</strong></p>
+                                <p>${Utils.escapeHtml(planoMaisRecente.conteudo_mensal).substring(0, 300)}${planoMaisRecente.conteudo_mensal.length > 300 ? '...' : ''}</p>
+                        `;
+                        
+                        // Mostrar detalhes das aulas
+                        const aulas = extrairAulas(planoMaisRecente);
+                        if (aulas.length > 0) {
+                            html += `
+                                <details class="aulas-detalhe">
+                                    <summary>📋 Ver detalhamento das ${aulas.length} aula(s)</summary>
+                                    ${aulas.map(aula => `
+                                        <div class="aula-item">
+                                            <strong>Aula ${aula.numero}:</strong><br>
+                                            ${aula.subconteudo ? `<span>🎯 Subconteúdo: ${Utils.escapeHtml(aula.subconteudo)}</span><br>` : ''}
+                                            ${aula.metodologia ? `<span>📚 Metodologia: ${Utils.escapeHtml(aula.metodologia)}</span><br>` : ''}
+                                            ${aula.avaliacao ? `<span>📝 Avaliação: ${Utils.escapeHtml(aula.avaliacao)}</span>` : ''}
+                                        </div>
+                                    `).join('')}
+                                </details>
+                            `;
+                        }
+                        
+                        // Feedback se houver
+                        if (planoMaisRecente.feedback_gestor && planoMaisRecente.status === 'revisar') {
+                            html += `
+                                <div style="margin-top: 12px; padding: 8px; background: #fef3c7; border-radius: 6px; font-size: 13px;">
+                                    <strong>💬 Feedback do Gestor:</strong> ${Utils.escapeHtml(planoMaisRecente.feedback_gestor)}
+                                </div>
+                            `;
+                        }
+                        
+                        html += `</div>`;
+                    } else {
+                        html += `
+                            <div class="conteudo-box" style="border-left-color: #f59e0b;">
+                                <p>⚠️ Nenhum plano enviado para esta disciplina no período selecionado.</p>
+                            </div>
+                        `;
+                    }
+                    
+                    html += `</div>`;
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // ============================================================
+        // EXTRAIR AULAS DO PLANO
+        // ============================================================
+        function extrairAulas(plano) {
+            const aulas = [];
+            const aulasPorSemana = parseInt(plano.aulas_semana) || 4;
+            const totalAulas = Math.min(40, aulasPorSemana * (parseInt(plano.semanas_planejadas) || 4));
+            
+            for (let i = 1; i <= totalAulas; i++) {
+                const subconteudo = plano[`aula_${i}_subconteudo`];
+                if (subconteudo && subconteudo.trim() !== '') {
+                    aulas.push({
+                        numero: i,
+                        subconteudo: subconteudo,
+                        metodologia: plano[`aula_${i}_metodologia`] || '',
+                        avaliacao: plano[`aula_${i}_avaliacao`] || '',
+                        recursos: plano[`aula_${i}_recursos`] || ''
+                    });
+                }
+            }
+            
+            return aulas;
+        }
+        
+        // ============================================================
+        // UTILITÁRIOS
+        // ============================================================
+        function getStatusNome(status) {
+            const nomes = {
+                'rascunho': 'Rascunho',
+                'enviado': 'Enviado para Revisão',
+                'aprovado': 'Aprovado',
+                'revisar': 'Aguardando Correções'
+            };
+            return nomes[status] || status || 'Não informado';
+        }
+        
+        function obterNomeMes(mes) {
+            const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                          'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            return meses[mes - 1];
+        }
+        
+        function mostrarLoading(mostrar) {
+            const overlay = document.getElementById('loading');
+            if (overlay) {
+                if (mostrar) overlay.classList.add('active');
+                else overlay.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

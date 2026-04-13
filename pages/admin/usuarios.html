@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Usuários | SAGE Planos</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: 0.3s; border-radius: 24px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: #4CAF50; }
+        input:checked + .toggle-slider:before { transform: translateX(26px); }
+        .toggle-label { display: flex; align-items: center; gap: 10px; }
+        .status-ativo { color: #4CAF50; font-weight: bold; }
+        .status-inativo { color: #f44336; font-weight: bold; }
+        .info-badge { background: #e3f2fd; padding: 10px; border-radius: 5px; font-size: 12px; margin-top: 10px; border-left: 3px solid #2196F3; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="logo"><h1>SAGE Planos</h1><p>Gerenciamento de Usuários</p></div>
+            <div class="user-info"><span id="userName">Carregando...</span><button class="btn-logout" onclick="Auth.logout()">Sair</button></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h2>Usuários</h2>
+            <button class="btn btn-primary" onclick="abrirModalCadastro()">+ Novo Usuário</button>
+        </div>
+        <div class="card">
+            <div class="table-container">
+                <table id="tabelaUsuarios">
+                    <thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Perfil</th><th>Status</th><th>Ações</th></tr></thead>
+                    <tbody id="listaUsuarios"><tr><td colspan="6">Carregando...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modalUsuario" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="modalTitle">Novo Usuário</h3><span class="modal-close" onclick="fecharModal()">&times;</span></div>
+            <div class="modal-body">
+                <form id="formUsuario">
+                    <input type="hidden" id="usuarioId">
+                    <div class="form-group"><label>Nome *</label><input type="text" id="nome" required></div>
+                    <div class="form-group"><label>Email *</label><input type="email" id="email" required></div>
+                    <div class="form-group">
+                        <label>Perfil *</label>
+                        <select id="perfil" required>
+                            <option value="">Selecione...</option>
+                            <option value="admin">Administrador</option>
+                            <option value="gestor">Gestor</option>
+                            <option value="professor">Professor</option>
+                            <option value="dev">Desenvolvedor</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Senha</label><input type="password" id="senha"><small>Deixe em branco para manter</small></div>
+                    <div class="form-group"><label class="toggle-label"><span>Ativo:</span><label class="toggle-switch"><input type="checkbox" id="ativo" checked><span class="toggle-slider"></span></label></label></div>
+                    <div class="info-badge" id="lotacaoInfo" style="display:none;">As lotações são gerenciadas na seção do Gestor.</div>
+                </form>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button><button class="btn btn-primary" onclick="salvarUsuario()">Salvar</button></div>
+        </div>
+    </div>
+    
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script>
+        let usuarios = [];
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!Auth.verificarAcesso()) return;
+            const usuario = Auth.getUsuarioLogado();
+            if (usuario.perfil !== 'admin') { Auth.redirecionarPorPerfil(); return; }
+            document.getElementById('userName').textContent = usuario.nome;
+            await carregarUsuarios();
+            document.getElementById('perfil').addEventListener('change', function() {
+                document.getElementById('lotacaoInfo').style.display = this.value === 'professor' ? 'block' : 'none';
+            });
+        });
+        
+        async function carregarUsuarios() {
+            try {
+                Utils.mostrarLoading(true);
+                const result = await API.listarUsuarios();
+                usuarios = result.dados || [];
+                renderizarTabela();
+                Utils.mostrarLoading(false);
+            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+        }
+        
+        function renderizarTabela() {
+            const tbody = document.getElementById('listaUsuarios');
+            if (!usuarios.length) { tbody.innerHTML = '<tr><td colspan="6">Nenhum usuário</td></tr'; return; }
+            tbody.innerHTML = usuarios.map(u => `
+                <tr><td>${u.id}</td><td>${Utils.escapeHtml(u.nome)}</td><td>${Utils.escapeHtml(u.email)}</td>
+                <td>${u.perfil === 'admin' ? 'Admin' : u.perfil === 'gestor' ? 'Gestor' : u.perfil === 'professor' ? 'Professor' : 'DEV'}</td>
+                <td class="${u.ativo === 'TRUE' || u.ativo === true ? 'status-ativo' : 'status-inativo'}">${u.ativo === 'TRUE' || u.ativo === true ? '✅ Ativo' : '❌ Inativo'}</td>
+                <td><button class="btn btn-primary" onclick="editarUsuario(${u.id})">Editar</button><button class="btn btn-danger" onclick="excluirUsuario(${u.id})">Excluir</button></td></tr>
+            `).join('');
+        }
+        
+        function abrirModalCadastro() {
+            document.getElementById('modalTitle').textContent = 'Novo Usuário';
+            document.getElementById('formUsuario').reset();
+            document.getElementById('usuarioId').value = '';
+            document.getElementById('senha').required = true;
+            document.getElementById('ativo').checked = true;
+            document.getElementById('lotacaoInfo').style.display = 'none';
+            document.getElementById('modalUsuario').classList.add('active');
+        }
+        
+        function editarUsuario(id) {
+            const u = usuarios.find(u => u.id == id);
+            if (!u) return;
+            document.getElementById('modalTitle').textContent = 'Editar Usuário';
+            document.getElementById('usuarioId').value = u.id;
+            document.getElementById('nome').value = u.nome;
+            document.getElementById('email').value = u.email;
+            document.getElementById('perfil').value = u.perfil;
+            document.getElementById('ativo').checked = u.ativo === 'TRUE' || u.ativo === true;
+            document.getElementById('senha').required = false;
+            document.getElementById('senha').value = '';
+            document.getElementById('lotacaoInfo').style.display = u.perfil === 'professor' ? 'block' : 'none';
+            document.getElementById('modalUsuario').classList.add('active');
+        }
+        
+        async function salvarUsuario() {
+            const id = document.getElementById('usuarioId').value;
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            const perfil = document.getElementById('perfil').value;
+            const senha = document.getElementById('senha').value;
+            const ativo = document.getElementById('ativo').checked;
+            if (!nome || !email || !perfil) { Utils.mostrarMensagem('Preencha os campos obrigatórios', 'error'); return; }
+            const dados = { nome, email, perfil, ativo: ativo ? 'TRUE' : 'FALSE' };
+            try {
+                Utils.mostrarLoading(true);
+                if (id) { if (senha) dados.senha = senha; await API.atualizarUsuario(id, dados); Utils.mostrarMensagem('Atualizado!', 'success'); }
+                else { if (!senha) { Utils.mostrarMensagem('Senha obrigatória', 'error'); Utils.mostrarLoading(false); return; } dados.senha = senha; await API.criarUsuario(dados); Utils.mostrarMensagem('Criado!', 'success'); }
+                fecharModal(); await carregarUsuarios(); Utils.mostrarLoading(false);
+            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+        }
+        
+        async function excluirUsuario(id) {
+            Utils.confirmarAcao('Excluir usuário?', async (c) => { if(c) { try { Utils.mostrarLoading(true); await API.deletarUsuario(id); await carregarUsuarios(); Utils.mostrarLoading(false); } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); } } });
+        }
+        
+        function fecharModal() { document.getElementById('modalUsuario').classList.remove('active'); }
+    </script>
+</body>
+</html>

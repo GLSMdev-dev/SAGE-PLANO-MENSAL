@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor - SAGE Planos</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+        .menu-card { background: white; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .menu-icon { font-size: 48px; margin-bottom: 15px; }
+        .menu-title { font-size: 18px; font-weight: 600; color: #4CAF50; margin-bottom: 10px; }
+        .menu-desc { font-size: 14px; color: #666; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; }
+        .stat-number { font-size: 32px; font-weight: bold; }
+        .stat-label { font-size: 14px; margin-top: 5px; opacity: 0.9; }
+        .alert-card { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="logo"><h1>SAGE Planos</h1><p>Painel do Gestor</p></div>
+            <div class="user-info"><span id="userName">Carregando...</span><button class="btn-logout" onclick="Auth.logout()">Sair</button></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="alert-card" id="alertMensagem" style="display: none;"><strong>⚠️ Atenção!</strong> <span id="alertTexto"></span></div>
+        <div class="stats">
+            <div class="stat-card"><div class="stat-number" id="totalPlanosEnviados">-</div><div class="stat-label">Planos Enviados</div></div>
+            <div class="stat-card"><div class="stat-number" id="totalPlanosAprovados">-</div><div class="stat-label">Planos Aprovados</div></div>
+            <div class="stat-card"><div class="stat-number" id="totalPlanosRevisar">-</div><div class="stat-label">Aguardando Revisão</div></div>
+            <div class="stat-card"><div class="stat-number" id="totalProfessores">-</div><div class="stat-label">Professores</div></div>
+        </div>
+        
+        <h2>Módulos de Gestão</h2>
+        <div class="dashboard-grid">
+            <div class="menu-card" onclick="window.location.href='professores-lotacao.html'"><div class="menu-icon">👨‍🏫</div><div class="menu-title">Lotação de Professores</div><div class="menu-desc">Gerenciar múltiplas disciplinas e turmas</div></div>
+            <div class="menu-card" onclick="window.location.href='planos-consulta.html'"><div class="menu-icon">📋</div><div class="menu-title">Planos de Aula</div><div class="menu-desc">Consultar e conferir planos enviados</div></div>
+               <div class="menu-card" onclick="window.location.href='estatisticas.html'">
+    <div class="menu-icon">📊</div>
+    <div class="menu-title">ESTATÍSTICAS</div>
+    <div class="menu-desc">Monitoramento de conteúdos e frequência de envios por professor.</div>
+</div>
+        </div>
+    </div>
+    
+    <script src="../../assets/js/config.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script>
+        async function carregarTema() { try { const configs = await API.getConfigVisual(); if (configs.success && configs.dados) Utils.aplicarTema(configs.dados); } catch (error) { console.error('Erro:', error); } }
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            await carregarTema();
+            if (!Auth.verificarAcesso()) return;
+            const usuario = Auth.getUsuarioLogado();
+            if (usuario.perfil !== 'gestor' && usuario.perfil !== 'admin') { Auth.redirecionarPorPerfil(); return; }
+            document.getElementById('userName').textContent = usuario.nome;
+            try {
+                Utils.mostrarLoading(true);
+                const planos = await API.listarPlanos();
+                const usuarios = await API.listarUsuarios();
+                const planosData = planos.dados || [];
+                document.getElementById('totalPlanosEnviados').textContent = planosData.filter(p => p.status === 'enviado').length;
+                document.getElementById('totalPlanosAprovados').textContent = planosData.filter(p => p.status === 'aprovado').length;
+                document.getElementById('totalPlanosRevisar').textContent = planosData.filter(p => p.status === 'revisar').length;
+                document.getElementById('totalProfessores').textContent = (usuarios.dados || []).filter(u => u.perfil === 'professor').length;
+                Utils.mostrarLoading(false);
+            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+        });
+    </script>
+</body>
+</html>
