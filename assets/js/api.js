@@ -61,7 +61,34 @@ const API = (() => {
         if (config) return request('config_visual', 'atualizar', { valor }, config.id);
         return { success: false, error: 'Configuração não encontrada' };
     }
-    
+
+    // Arquivos
+    async function uploadArquivo(file, fileName, planoId, semana, aula, tipo, usuarioId) {
+        const config = getConfig();
+        if (!config || !config.API_URL) throw new Error('Configuração não carregada');
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileName', fileName);
+        formData.append('planoId', planoId);
+        formData.append('semana', semana);
+        formData.append('aula', aula);
+        formData.append('tipo', tipo);
+        formData.append('usuarioId', usuarioId);
+
+        const response = await fetch(`${config.API_URL}/upload`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || 'Erro no upload');
+        return result;
+    }
+
+    async function listarArquivos(planoId) { return request('arquivos', 'listar', { planoId }); }
+    async function deletarArquivo(id) { return request('arquivos', 'deletar', null, id); }
+
     return {
         listarUsuarios, criarUsuario, atualizarUsuario, deletarUsuario,
         listarTurmas, criarTurma, atualizarTurma, deletarTurma,
@@ -69,6 +96,7 @@ const API = (() => {
         getCargasHorarias, criarCargaHoraria, atualizarCargaHoraria, deletarCargaHoraria,
         listarLotacoes, criarLotacao, atualizarLotacao, deletarLotacao,
         listarPlanos, criarPlano, atualizarPlano, deletarPlano,
-        getConfigVisual, salvarConfigVisual
+        getConfigVisual, salvarConfigVisual,
+        uploadArquivo, listarArquivos, deletarArquivo
     };
 })();

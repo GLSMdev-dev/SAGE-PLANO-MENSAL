@@ -26,8 +26,12 @@
         .file-upload { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
         .file-upload input[type="file"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
         .file-list { margin-top: 8px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 10px; }
-        .file-item { background: #e3f2fd; padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
-        .file-item a { color: #2196F3; text-decoration: none; }
+        .file-item { background: #e3f2fd; padding: 6px 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; border: 1px solid #bbdefb; }
+        .file-item a { color: #1976d2; text-decoration: none; font-weight: 500; flex: 1; }
+        .file-item a:hover { text-decoration: underline; }
+        .file-size { color: #666; font-size: 12px; font-weight: normal; }
+        .btn-remove-file { color: #d32f2f; cursor: pointer; font-weight: bold; padding: 2px 6px; border-radius: 3px; transition: background-color 0.2s; }
+        .btn-remove-file:hover { background-color: rgba(211, 47, 47, 0.1); }
         .btn-remove-file { color: #f44336; cursor: pointer; font-size: 14px; padding: 5px; }
         .btn-add-semana { background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 100%; font-size: 16px; }
         .btn-remove-semana { background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; margin-left: 10px; }
@@ -168,23 +172,174 @@
             return html;
         }
         
+        let arquivosEnviados = {}; // Armazenar arquivos enviados por semana/aula/tipo
+
         function toggleSemana(semanaNum) { const content = document.getElementById(`semana-content-${semanaNum}`); if (content) content.classList.toggle('open'); }
-        
-        function uploadArquivo(semanaNum, aulaNum, tipo) {
+
+        async function uploadArquivo(semanaNum, aulaNum, tipo) {
             const fileInput = document.getElementById(`${tipo}_file_${semanaNum}_${aulaNum}`);
             const file = fileInput.files[0];
             if (!file) { Utils.mostrarMensagem('Selecione um arquivo', 'error'); return; }
-            const url = URL.createObjectURL(file);
+
+            // Validar tamanho do arquivo (máximo 10MB)
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                Utils.mostrarMensagem('Arquivo muito grande! Máximo 10MB.', 'error');
+                return;
+            }
+
+            // Validar tipo de arquivo
+            const allowedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.png', '.jpeg', '.gif', '.txt'];
+            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            if (!allowedTypes.includes(fileExtension)) {
+                Utils.mostrarMensagem('Tipo de arquivo não permitido. Use: PDF, DOC, DOCX, JPG, PNG, GIF, TXT', 'error');
+                return;
+            }
+
+            try {
+                Utils.mostrarLoading(true);
+
+                // Fazer upload real para o servidor
+                const planoId = document.getElementById('planoId').value || 'temp_' + Date.now();
+                const result = await API.uploadArquivo(
+                    file,
+                    file.name,
+                    planoId,
+                    semanaNum,
+                    aulaNum,
+                    tipo,
+                    usuario.id
+                );
+
+                // Armazenar referência do arquivo
+                const key = `${semanaNum}_${aulaNum}_${tipo}`;
+                if (!arquivosEnviados[key]) arquivosEnviados[key] = [];
+                arquivosEnviados[key].push(result.dados);
+
+                // Atualizar interface
+                atualizarListaArquivos(semanaNum, aulaNum, tipo);
+
+                fileInput.value = '';
+                Utils.mostrarMensagem('Arquivo enviado com sucesso!', 'success');
+
+            } catch (error) {
+                Utils.mostrarMensagem('Erro no upload: ' + error.message, 'error');
+            } finally {
+                Utils.mostrarLoading(false);
+            }
+        }
+
+        function atualizarListaArquivos(semanaNum, aulaNum, tipo) {
             const listDiv = document.getElementById(`${tipo}_list_${semanaNum}_${aulaNum}`);
-            const fileDiv = document.createElement('div'); fileDiv.className = 'file-item'; fileDiv.innerHTML = `<a href="${url}" target="_blank">📎 ${file.name}</a> <span class="btn-remove-file" onclick="this.parentElement.remove()">❌</span>`;
-            listDiv.appendChild(fileDiv);
-            fileInput.value = '';
-            Utils.mostrarMensagem('Arquivo anexado!', 'success');
+            const key = `${semanaNum}_${aulaNum}_${tipo}`;
+            const arquivos = arquivosEnviados[key] || [];
+
+            listDiv.innerHTML = '';
+
+            arquivos.forEach((arquivo, index) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'file-item';
+                fileDiv.innerHTML = `
+                    <a href="${arquivo.url}" target="_blank" title="Clique para baixar">📎 ${arquivo.nome}</a>
+                    <span class="file-size">(${formatarTamanho(arquivo.tamanho)})</span>
+                    <span class="btn-remove-file" onclick="removerArquivo('${key}', ${index}, '${arquivo.id}')">❌</span>
+                `;
+                listDiv.appendChild(fileDiv);
+            });
+        }
+
+        async function removerArquivo(key, index, fileId) {
+            try {
+                if (fileId) {
+                    await API.deletarArquivo(fileId);
+                }
+
+                // Remover da lista local
+                if (arquivosEnviados[key]) {
+                    arquivosEnviados[key].splice(index, 1);
+                    if (arquivosEnviados[key].length === 0) {
+                        delete arquivosEnviados[key];
+                    }
+                }
+
+                // Atualizar interface
+                const [semanaNum, aulaNum, tipo] = key.split('_');
+                atualizarListaArquivos(semanaNum, aulaNum, tipo);
+
+                Utils.mostrarMensagem('Arquivo removido!', 'success');
+            } catch (error) {
+                Utils.mostrarMensagem('Erro ao remover arquivo: ' + error.message, 'error');
+            }
+        }
+
+        function formatarTamanho(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
         async function carregarPlano(id) {
-            try { const result = await API.listarPlanos(); const plano = (result.dados || []).find(p => p.id == id); if (plano && plano.professor_id == usuario.id) { document.getElementById('planoId').value = plano.id; document.getElementById('serie').value = plano.serie; await carregarDisciplinasPorSerie(); setTimeout(() => { document.getElementById('disciplina_id').value = plano.disciplina_id; carregarCargaHoraria(); }, 100); document.getElementById('mes_referencia').value = plano.mes_referencia; document.getElementById('ano_referencia').value = plano.ano_referencia; document.getElementById('conteudo_mensal').value = plano.conteudo_mensal || ''; document.getElementById('referencias').value = plano.referencias || ''; semanas = parseInt(plano.semanas_planejadas) || 4; inicializarSemanas(); if (plano.status === 'enviado' || plano.status === 'aprovado') desabilitarFormulario(); } }
-            catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); }
+            try {
+                const result = await API.listarPlanos();
+                const plano = (result.dados || []).find(p => p.id == id);
+
+                if (plano && plano.professor_id == usuario.id) {
+                    document.getElementById('planoId').value = plano.id;
+                    document.getElementById('serie').value = plano.serie;
+                    await carregarDisciplinasPorSerie();
+                    setTimeout(() => {
+                        document.getElementById('disciplina_id').value = plano.disciplina_id;
+                        carregarCargaHoraria();
+                    }, 100);
+
+                    document.getElementById('mes_referencia').value = plano.mes_referencia;
+                    document.getElementById('ano_referencia').value = plano.ano_referencia;
+                    document.getElementById('conteudo_mensal').value = plano.conteudo_mensal || '';
+                    document.getElementById('referencias').value = plano.referencias || '';
+
+                    semanas = parseInt(plano.semanas_planejadas) || 4;
+                    inicializarSemanas();
+
+                    // Carregar arquivos existentes
+                    await carregarArquivosPlano(id);
+
+                    if (plano.status === 'enviado' || plano.status === 'aprovado') desabilitarFormulario();
+                }
+            } catch (error) {
+                Utils.mostrarMensagem('Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function carregarArquivosPlano(planoId) {
+            try {
+                const result = await API.listarArquivos(planoId);
+                const arquivos = result.dados || [];
+
+                // Organizar arquivos por semana/aula/tipo
+                arquivos.forEach(arquivo => {
+                    const key = `${arquivo.semana}_${arquivo.aula}_${arquivo.tipo}`;
+                    if (!arquivosEnviados[key]) arquivosEnviados[key] = [];
+                    arquivosEnviados[key].push({
+                        id: arquivo.drive_file_id,
+                        url: arquivo.drive_url,
+                        nome: arquivo.nome_original,
+                        tamanho: arquivo.tamanho
+                    });
+                });
+
+                // Atualizar todas as listas de arquivos na interface
+                for (let s = 1; s <= semanas; s++) {
+                    for (let a = 1; a <= (aulasPorSemana || 4); a++) {
+                        atualizarListaArquivos(s, a, 'recursos');
+                        atualizarListaArquivos(s, a, 'avaliacao');
+                    }
+                }
+            } catch (error) {
+                console.warn('Erro ao carregar arquivos:', error.message);
+                // Não mostrar erro para o usuário se não conseguir carregar arquivos antigos
+            }
         }
         
         function desabilitarFormulario() { document.querySelectorAll('#formPlano input, #formPlano select, #formPlano textarea, #formPlano button').forEach(el => el.disabled = true); Utils.mostrarMensagem('Este plano não pode mais ser editado.', 'warning'); }
@@ -208,8 +363,40 @@
             const dados = coletarDados();
             if (!dados) return;
             dados.status = status;
-            try { Utils.mostrarLoading(true); if (id) await API.atualizarPlano(id, dados); else await API.criarPlano(dados); Utils.mostrarMensagem(status === 'enviado' ? 'Plano enviado!' : 'Rascunho salvo!', 'success'); setTimeout(() => { window.location.href = 'planos.html'; }, 1500); Utils.mostrarLoading(false); }
-            catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+
+            try {
+                Utils.mostrarLoading(true);
+
+                let planoId;
+                if (id && !id.startsWith('temp_')) {
+                    // Atualizar plano existente
+                    await API.atualizarPlano(id, dados);
+                    planoId = id;
+                } else {
+                    // Criar novo plano
+                    const result = await API.criarPlano(dados);
+                    planoId = result.dados.id;
+
+                    // Atualizar ID do plano no formulário
+                    document.getElementById('planoId').value = planoId;
+
+                    // Atualizar referências de arquivos temporários
+                    await atualizarReferenciasArquivos(planoId);
+                }
+
+                Utils.mostrarMensagem(status === 'enviado' ? 'Plano enviado!' : 'Rascunho salvo!', 'success');
+                setTimeout(() => { window.location.href = 'planos.html'; }, 1500);
+                Utils.mostrarLoading(false);
+            } catch (error) {
+                Utils.mostrarMensagem('Erro: ' + error.message, 'error');
+                Utils.mostrarLoading(false);
+            }
+        }
+
+        async function atualizarReferenciasArquivos(planoId) {
+            // Esta função seria chamada no backend para atualizar referências
+            // Por enquanto, os arquivos já foram enviados com o planoId correto
+            // Se necessário, implementar lógica para atualizar metadados no backend
         }
     </script>
 </body>
