@@ -26,7 +26,7 @@ O **SAGE Planos** é um sistema completo para gestão de planos de aula mensais,
   - Sub-conteúdo por aula
   - Metodologia por aula
   - Avaliação por aula
-  - Recursos didáticos (com upload de arquivos)
+  - **Recursos didáticos (com upload real de arquivos para Google Drive)**
   - Referências bibliográficas
 - ✅ Carga horária automática por disciplina/série
 - ✅ Adicionar/remover semanas conforme necessidade
@@ -78,6 +78,101 @@ O **SAGE Planos** é um sistema completo para gestão de planos de aula mensais,
 - ✅ Preview em tempo real das alterações
 - ✅ Persistência das configurações no banco de dados
 - ✅ Informações técnicas do sistema (versão, API, planilha)
+
+---
+
+## 🚀 Configuração e Deploy
+
+### 📋 Pré-requisitos
+- Conta Google (para Google Sheets e Apps Script)
+- Conta GitHub (para hospedagem)
+- Navegador moderno com suporte a ES6+
+
+### 🔧 Configuração do Backend (Google Apps Script)
+
+1. **Criar novo projeto no Google Apps Script:**
+   - Acesse [script.google.com](https://script.google.com)
+   - Clique em "Novo Projeto"
+   - Nomeie como "SAGE-Planos-API"
+
+2. **Configurar a Planilha Google Sheets:**
+   - Crie uma nova planilha em [sheets.google.com](https://sheets.google.com)
+   - Copie o ID da planilha da URL (parte entre `/d/` e `/edit`)
+   - Atualize a constante `SPREADSHEET_ID` no código Apps Script
+
+3. **Deploy do Apps Script:**
+   - Cole o código completo do arquivo `backend/apps-script.js`
+   - Clique em "Salvar" (ícone de disquete)
+   - Clique em "Deploy" > "New deployment"
+   - Selecione tipo "Web app"
+   - Configure:
+     - **Execute as:** Me (seu email)
+     - **Who has access:** Anyone
+   - Clique em "Deploy"
+   - **COPIE A URL GERADA** - você precisará dela!
+
+4. **Configurar permissões:**
+   - O Apps Script precisa de permissões para:
+     - Ler/escrever na planilha
+     - Criar arquivos no Google Drive
+     - Compartilhar arquivos publicamente
+
+### 🌐 Configuração do Frontend (GitHub Pages)
+
+1. **Fork ou clone este repositório:**
+   ```bash
+   git clone https://github.com/SEU_USERNAME/SAGE-PLANO-MENSAL.git
+   cd SAGE-PLANO-MENSAL
+   ```
+
+2. **Configurar variáveis de ambiente:**
+   - No GitHub, vá para Settings > Secrets and variables > Actions
+   - Adicione as seguintes secrets:
+     - `API_URL`: URL do seu Apps Script (copiada no passo 3 acima)
+     - `SPREADSHEET_ID`: ID da sua planilha Google Sheets
+
+3. **Deploy automático:**
+   - O GitHub Actions fará o deploy automático quando você fizer push
+   - Ou clique em "Actions" > "Deploy to GitHub Pages" > "Run workflow"
+
+4. **Configuração manual (desenvolvimento local):**
+   - Edite `assets/js/config.js`:
+   ```javascript
+   window.APP_CONFIG = {
+       API_URL: 'https://script.google.com/macros/s/SEU_SCRIPT_ID/exec',
+       SPREADSHEET_ID: 'SUA_PLANILHA_ID',
+       APP_NAME: 'SAGE Planos',
+       APP_VERSION: '2.0.0'
+   };
+   ```
+
+### 📁 Estrutura de Arquivos no Google Drive
+
+O sistema cria automaticamente a seguinte estrutura:
+```
+📁 SAGE_Planos_Arquivos/
+  📁 Plano_123/
+    📄 aula_recursos_semana1.pdf
+    📄 aula_avaliacao_semana2.docx
+    ...
+```
+
+### 🧪 Teste do Sistema
+
+1. **Teste básico:**
+   - Acesse a URL do GitHub Pages
+   - Tente fazer login com as credenciais padrão
+
+2. **Teste de upload:**
+   - Faça login como professor
+   - Crie um novo plano de aula
+   - Adicione um arquivo de recurso
+   - Verifique se o arquivo aparece no Google Drive
+
+3. **Credenciais padrão:**
+   - **Admin:** admin@escola.com / admin123
+   - **Gestor:** ana.paula@escola.com / 123456
+   - **Professor:** joao.silva@escola.com / 123456
 
 ---
 

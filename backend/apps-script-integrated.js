@@ -240,6 +240,22 @@ function generateId() {
   return 'file_' + new Date().getTime() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
+function getSheetByName(nome) {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  return spreadsheet.getSheetByName(nome);
+}
+
+function getOrCreateSheet(nome) {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(nome);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(nome);
+  }
+
+  return sheet;
+}
+
 // ============================================================
 // FUNÇÕES CRUD EXISTENTES (mantidas)
 // ============================================================
@@ -397,24 +413,8 @@ function autenticarUsuario(email, senha) {
   }
 }
 
-function getSheetByName(nome) {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  return spreadsheet.getSheetByName(nome);
-}
-
-function getOrCreateSheet(nome) {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(nome);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(nome);
-  }
-
-  return sheet;
-}
-
 // ============================================================
-// FUNÇÕES DE CONFIGURAÇÃO DA PLANILHA (mantidas)
+// FUNÇÕES PARA ATUALIZAR A PLANILHA
 // ============================================================
 
 function atualizarPlanilhaCompleta() {
@@ -634,5 +634,365 @@ function gerarRelatorioLotacoes() {
   }
   formatarAba(relatorio, ['Professor', 'Disciplina', 'Turma', 'Aulas/Semana', 'Status']);
 }
+function importarLotacoesCSV_Atualizado() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
-// ... resto das funções mantidas do código original ...
+  // Abas necessárias
+  var sheetCsv = ss.getSheetByName('import_csv');
+  if (!sheetCsv) {
+    SpreadsheetApp.getUi().alert('Erro: Aba "import_csv" não encontrada!');
+    return;
+  }
+
+  var csv = sheetCsv.getDataRange().getValues();
+  var usuarios = ss.getSheetByName('usuarios');
+  var disciplinas = ss.getSheetByName('disciplinas');
+  var turmas = ss.getSheetByName('turmas');
+  var lotacoes = ss.getSheetByName('lotacoes');
+
+  var dadosUsuarios = usuarios.getDataRange().getValues();
+  var dadosDisciplinas = disciplinas.getDataRange().getValues();
+  var dadosTurmas = turmas.getDataRange().getValues();
+
+  function normalizar(txt) {
+    return txt ? txt.toString().toUpperCase().trim() : "";
+  }
+
+  // Função auxiliar para evitar duplicados e retornar ID
+  function buscarOuCriar(sheet, dadosAtuais, nome, colNomeNaTabela, estrutura) {
+    var nomeNorm = normalizar(nome);
+    if (!nomeNorm || nomeNorm === "-") return "";
+
+    for (var i = 1; i < dadosAtuais.length; i++) {
+      if (normalizar(dadosAtuais[i][colNomeNaTabela]) === nomeNorm) {
+        return dadosAtuais[i][0];
+      }
+    }
+
+    var novoId = sheet.getLastRow() + 1;
+    var novaLinha = estrutura(novoId, nome);
+    sheet.appendRow(novaLinha);
+    // Atualiza a memória local para não criar o mesmo item duas vezes no mesmo loop
+    dadosAtuais.push(novaLinha);
+    return novoId;
+  }
+
+  var novasLotacoes = [];
+  var dataAtual = new Date().toISOString();
+
+  // Começa do 1 para pular o cabeçalho
+  for (var i = 1; i < csv.length; i++) {
+    var linha = csv[i];
+
+    var profNome = linha[1];      // Coluna PROFESSOR
+    var area = linha[3];          // Coluna ÁREA
+    var discNome = linha[4];      // Coluna LOTAÇÃO/DISCIPLINA
+    var cargaH = linha[5];        // Coluna CH
+    var turmaNome = linha[6];     // Coluna TURMA
+
+    if (!profNome || profNome === "") continue;
+
+    // 1. Resolve Professor
+    var professorId = buscarOuCriar(usuarios, dadosUsuarios, profNome, 1, function(id, nome) {
+      return [id, nome, nome.toLowerCase().replace(/ /g, '.') + "@escola.com", 'professor', 'TRUE', '123456', dataAtual, dataAtual];
+    });
+
+    // 2. Resolve Disciplina
+    var disciplinaId = buscarOuCriar(disciplinas, dadosDisciplinas, discNome, 1, function(id, nome) {
+      return [id, nome, area, nome.substring(0,3).toUpperCase(), 'TRUE'];
+    });
+
+    // 3. Resolve Turma
+    var turmaId = buscarOuCriar(turmas, dadosTurmas, turmaNome, 1, function(id, nome) {
+      var serie = nome.includes("SÉRIE") ? nome.split("SÉRIE")[0] + "SÉRIE" : "Outros";
+      return [id, nome, serie, 'Manhã', 2026, 'TRUE'];
+    });
+
+    // 4. Monta a linha de Lotação
+    // ['id', 'professor_id', 'professor_nome', 'disciplina_id', 'disciplina_nome', 'turma_id', 'turma_nome', 'serie', 'carga_horaria_id', 'aulas_semana', 'ano_letivo', 'ativo', 'created_at', 'updated_at']
+    novasLotacoes.push([
+      lotacoes.getLastRow() + novasLotacoes.length + 1,
+      professorId,
+      profNome,
+      disciplinaId,
+      discNome,
+      turmaId,
+      turmaNome,
+      turmaNome.split(' ')[0], // Tenta pegar a série pelo primeiro nome
+      "", // carga_horaria_id (opcional)
+      cargaH,
+      2026,
+      'TRUE',
+      dataAtual,
+      dataAtual
+    ]);
+  }
+
+  // Insere tudo de uma vez para performance
+  if (novasLotacoes.length > 0) {
+    lotacoes.getRange(lotacoes.getLastRow() + 1, 1, novasLotacoes.length, novasLotacoes[0].length).setValues(novasLotacoes);
+    SpreadsheetApp.getUi().alert('Sucesso! ' + novasLotacoes.length + ' registros importados.');
+  }
+}
+
+/////
+
+/**
+ * SISTEMA SAGE - Importação de Lotação 2026.1
+ * Objetivo: Popular as abas 'usuarios', 'disciplinas', 'turmas' e 'lotacoes'
+ * a partir de uma aba temporária 'import_csv'.
+ */
+function executarImportacaoSAGE() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const dataRef = new Date().toISOString();
+
+  // 1. Verificação de Aba de Origem
+  const sheetCsv = ss.getSheetByName('import_csv');
+  if (!sheetCsv) {
+    Browser.msgBox("Erro: Crie a aba 'import_csv' e cole os dados do seu arquivo nela.");
+    return;
+  }
+
+  const dados = sheetCsv.getDataRange().getValues();
+  const sUsuarios = ss.getSheetByName('usuarios');
+  const sDisciplinas = ss.getSheetByName('disciplinas');
+  const sTurmas = ss.getSheetByName('turmas');
+  const sLotacoes = ss.getSheetByName('lotacoes');
+
+  // Mapeamento das colunas do seu arquivo específico
+  // ORD[0], PROFESSOR[1], VÍNCULO[2], ÁREA[3], LOTAÇÃO/DISCIPLINA[4], CH[5], TURMA[6]
+  const COL_PROF = 1, COL_AREA = 3, COL_DISC = 4, COL_CH = 5, COL_TURMA = 6;
+
+  // Carregar caches para evitar duplicidade (Regra de Otimização do Manual)
+  const cacheUser = carregarMapa(sUsuarios, 1); // Nome como chave
+  const cacheDisc = carregarMapa(sDisciplinas, 1); // Nome como chave
+  const cacheTurma = carregarMapa(sTurmas, 1); // Nome como chave
+
+  let registrosLotacao = [];
+
+  // Iniciar processamento (pula linha 1 de cabeçalho)
+  for (let i = 1; i < dados.length; i++) {
+    let linha = dados[i];
+    let nomeProfessor = linha[COL_PROF];
+    let nomeDisciplina = linha[COL_DISC];
+    let nomeTurma = linha[COL_TURMA];
+    let cargaHoraria = linha[COL_CH];
+    let areaConhecimento = linha[COL_AREA];
+
+    if (!nomeProfessor || nomeProfessor === "" || nomeProfessor === "-") continue;
+
+    // A. Gerenciar Professor (Tabela: usuarios)
+    let profId = cacheUser[nomeProfessor.toUpperCase()];
+    if (!profId) {
+      profId = sUsuarios.getLastRow() + 1;
+      let emailPadrao = nomeProfessor.toLowerCase().split(" ")[0] + profId + "@escola.com";
+      sUsuarios.appendRow([profId, nomeProfessor, emailPadrao, 'professor', 'TRUE', '123456', dataRef, dataRef]);
+      cacheUser[nomeProfessor.toUpperCase()] = profId;
+    }
+
+    // B. Gerenciar Disciplina (Tabela: disciplinas)
+    let discId = cacheDisc[nomeDisciplina.toUpperCase()];
+    if (!discId) {
+      discId = 100 + sDisciplinas.getLastRow();
+      sDisciplinas.appendRow([discId, nomeDisciplina, areaConhecimento, nomeDisciplina.substring(0,3).toUpperCase(), 'TRUE']);
+      cacheDisc[nomeDisciplina.toUpperCase()] = discId;
+    }
+
+    // C. Gerenciar Turma (Tabela: turmas)
+    let turmaId = cacheTurma[nomeTurma.toUpperCase()];
+    if (!turmaId) {
+      turmaId = sTurmas.getLastRow() + 1;
+      let serie = nomeTurma.includes("SÉRIE") ? nomeTurma.split("SÉRIE")[0] + "SÉRIE" : "Geral";
+      sTurmas.appendRow([turmaId, nomeTurma, serie, 'Manhã', 2026, 'TRUE']);
+      cacheTurma[nomeTurma.toUpperCase()] = turmaId;
+    }
+
+    // D. Criar Lotação (Tabela: lotacoes)
+    // Conforme o cabeçalho: [id, prof_id, prof_nome, disc_id, disc_nome, turma_id, turma_nome, serie, carga_id, aulas_sem, ano, ativo, created, updated]
+    registrosLotacao.push([
+      sLotacoes.getLastRow() + registrosLotacao.length + 1,
+      profId, nomeProfessor,
+      discId, nomeDisciplina,
+      turmaId, nomeTurma,
+      nomeTurma.split(' ')[0],
+      "", // carga_horaria_id (vazio se não houver referência direta)
+      cargaHoraria,
+      2026,
+      'TRUE',
+      dataRef,
+      dataRef
+    ]);
+  }
+
+  // Gravação em lote (Bulk Insert) para evitar timeout do Apps Script
+  if (registrosLotacao.length > 0) {
+    sLotacoes.getRange(sLotacoes.getLastRow() + 1, 1, registrosLotacao.length, registrosLotacao[0].length).setValues(registrosLotacao);
+  }
+
+  Browser.msgBox("Sucesso! O sistema SAGE foi populado com a lotação 2026.1.");
+}
+
+// Função utilitária para mapear dados existentes e evitar duplicados
+function carregarMapa(aba, colunaBusca) {
+  let valores = aba.getDataRange().getValues();
+  let mapa = {};
+  for (let i = 1; i < valores.length; i++) {
+    if (valores[i][colunaBusca]) {
+      mapa[valores[i][colunaBusca].toString().toUpperCase()] = valores[i][0];
+    }
+  }
+  return mapa;
+}
+/**
+ * Sincroniza a aba 'cargas_horarias' com base nos dados reais da aba 'lotacoes'.
+ * Isso garante que disciplinas como 'CNT ENEM' apareçam na tabela de referência.
+ */
+function sincronizarCargasHorarias() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sLotacoes = ss.getSheetByName('lotacoes');
+  const sCargas = ss.getSheetByName('cargas_horarias');
+
+  if (!sLotacoes || !sCargas) {
+    Browser.msgBox("Erro: Certifique-se que as abas 'lotacoes' e 'cargas_horarias' existem.");
+    return;
+  }
+
+  const dadosLotacoes = sLotacoes.getDataRange().getValues();
+  const dadosCargasAtuais = sCargas.getDataRange().getValues();
+
+  // Criar um set para evitar duplicados na aba de cargas
+  // Chave: DisciplinaID + Serie
+  let chExistentes = new Set();
+  for (let i = 1; i < dadosCargasAtuais.length; i++) {
+    chExistentes.add(dadosCargasAtuais[i][1] + "|" + dadosCargasAtuais[i][3]);
+  }
+
+  let novasCargas = [];
+  let ultimoId = 0;
+
+  // Achar o último ID da aba cargas_horarias
+  if (dadosCargasAtuais.length > 1) {
+    ultimoId = Math.max(...dadosCargasAtuais.slice(1).map(r => r[0] || 0));
+  }
+
+  // Percorrer lotações para encontrar o que falta
+  for (let j = 1; j < dadosLotacoes.length; j++) {
+    let linha = dadosLotacoes[j];
+    let discId = linha[3];
+    let discNome = linha[4];
+    let serie = linha[7];
+    let aulasSemana = linha[9];
+    let ano = linha[10];
+
+    let chave = discId + "|" + serie;
+
+    if (!chExistentes.has(chave)) {
+      ultimoId++;
+      novasCargas.push([
+        ultimoId,
+        discId,
+        discNome,
+        serie,
+        aulasSemana,
+        ano,
+        'TRUE'
+      ]);
+      chExistentes.add(chave); // Evita adicionar a mesma disciplina/série duas vezes no loop
+    }
+  }
+
+  if (novasCargas.length > 0) {
+    sCargas.getRange(sCargas.getLastRow() + 1, 1, novasCargas.length, novasCargas[0].length).setValues(novasCargas);
+    Browser.msgBox("Sucesso! " + novasCargas.length + " novas definições de carga horária foram adicionadas (incluindo CNT ENEM).");
+  } else {
+    Browser.msgBox("Todas as disciplinas já possuem carga horária registrada.");
+  }
+}
+
+/**
+ * Sincroniza a aba 'cargas_horarias' com o padrão correto de nomes de série.
+ * Exemplo: Transforma "3ª" em "3ª Série".
+ */
+/**
+ * Sincroniza a aba 'cargas_horarias' com o padrão correto de nomes de série.
+ * Exemplo: Transforma "3ª" em "3ª Série".
+ */
+function sincronizarCargasHorariasSAGE() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sLotacoes = ss.getSheetByName('lotacoes');
+  const sCargas = ss.getSheetByName('cargas_horarias');
+
+  if (!sLotacoes || !sCargas) {
+    Browser.msgBox("Erro: Abas não encontradas.");
+    return;
+  }
+
+  // 1. CORREÇÃO DE DADOS EXISTENTES na Coluna D (Série)
+  const rangeCargas = sCargas.getDataRange();
+  let dadosCargasAtuais = rangeCargas.getValues();
+  let houveAlteracao = false;
+
+  for (let i = 1; i < dadosCargasAtuais.length; i++) {
+    let serieAtual = dadosCargasAtuais[i][3].toString().trim();
+    // Se tiver apenas "1ª", "2ª" ou "3ª", adiciona " Série"
+    if (/^[1-3]ª$/.test(serieAtual)) {
+      dadosCargasAtuais[i][3] = serieAtual + " Série";
+      houveAlteracao = true;
+    }
+  }
+
+  if (houveAlteracao) {
+    sCargas.getDataRange().setValues(dadosCargasAtuais);
+  }
+
+  // 2. ADIÇÃO DE NOVOS REGISTROS (como CNT ENEM)
+  const dadosLotacoes = sLotacoes.getDataRange().getValues();
+  let chExistentes = new Set();
+
+  // Recarrega o cache com os nomes já corrigidos
+  for (let i = 1; i < dadosCargasAtuais.length; i++) {
+    chExistentes.add(dadosCargasAtuais[i][1] + "|" + dadosCargasAtuais[i][3]);
+  }
+
+  let novasCargas = [];
+  let ultimoId = dadosCargasAtuais.length > 1 ?
+                 Math.max(...dadosCargasAtuais.slice(1).map(r => r[0] || 0)) : 0;
+
+  for (let j = 1; j < dadosLotacoes.length; j++) {
+    let discId = dadosLotacoes[j][3];
+    let discNome = dadosLotacoes[j][4];
+    let serieOriginal = dadosLotacoes[j][7].toString().trim();
+
+    // Normaliza a série da lotação para o padrão "Xª Série"
+    let serieNormalizada = serieOriginal;
+    if (/^[1-3]ª$/.test(serieOriginal)) {
+      serieNormalizada = serieOriginal + " Série";
+    } else if (serieOriginal.includes("ª") && !serieOriginal.includes("Série")) {
+      serieNormalizada = serieOriginal.split(" ")[0] + " Série";
+    }
+
+    let aulasSemana = dadosLotacoes[j][9];
+    let ano = dadosLotacoes[j][10];
+    let chave = discId + "|" + serieNormalizada;
+
+    if (!chExistentes.has(chave) && discId) {
+      ultimoId++;
+      novasCargas.push([
+        ultimoId,
+        discId,
+        discNome,
+        serieNormalizada,
+        aulasSemana,
+        ano,
+        'TRUE'
+      ]);
+      chExistentes.add(chave);
+    }
+  }
+
+  if (novasCargas.length > 0) {
+    sCargas.getRange(sCargas.getLastRow() + 1, 1, novasCargas.length, novasCargas[0].length).setValues(novasCargas);
+  }
+
+  Browser.msgBox("Aba 'cargas_horarias' atualizada e corrigida para o padrão 'Xª Série'!");
+}

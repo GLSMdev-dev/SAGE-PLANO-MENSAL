@@ -76,9 +76,12 @@ const API = (() => {
         formData.append('tipo', tipo);
         formData.append('usuarioId', usuarioId);
 
-        const response = await fetch(`${config.API_URL}/upload`, {
+        // Usar a mesma URL base com parâmetros entity e action
+        const url = `${config.API_URL}?entity=arquivos&action=upload&fileName=${encodeURIComponent(fileName)}&planoId=${planoId}&semana=${semana}&aula=${aula}&tipo=${tipo}&usuarioId=${usuarioId}`;
+
+        const response = await fetch(url, {
             method: 'POST',
-            body: formData
+            body: file
         });
 
         const result = await response.json();
