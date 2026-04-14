@@ -19,16 +19,10 @@
         .semana-group { background: #f9f9f9; border-radius: 8px; margin-bottom: 20px; overflow: hidden; border: 1px solid #e0e0e0; }
         .semana-header { background: #4CAF50; color: white; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .semana-header h3 { margin: 0; font-size: 16px; }
-        .semana-content { padding: 15px; display: none; }
-        .semana-content.open { display: block; }
+        .semana-content { padding: 15px; display: block; }
+        .semana-content.collapsed { display: none; }
         .aula-card { background: white; border-radius: 8px; margin-bottom: 15px; padding: 15px; border: 1px solid #e0e0e0; }
         .aula-title { font-weight: bold; margin-bottom: 10px; color: #4CAF50; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-        .file-upload { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
-        .file-upload input[type="file"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-        .file-list { margin-top: 8px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 10px; }
-        .file-item { background: #e3f2fd; padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
-        .file-item a { color: #2196F3; text-decoration: none; }
-        .btn-remove-file { color: #f44336; cursor: pointer; font-size: 14px; padding: 5px; }
         .btn-add-semana { background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 100%; font-size: 16px; }
         .btn-remove-semana { background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; margin-left: 10px; }
         .btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
@@ -43,12 +37,35 @@
             .aula-card { padding: 10px; }
             .btn-group { flex-direction: column; }
             .btn-group button { width: 100%; }
-            .file-upload { flex-direction: column; }
-            .file-upload input[type="file"] { width: 100%; }
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-rascunho { background: #e0e0e0; color: #666; }
+        .status-enviado { background: #2196F3; color: white; }
+        .status-aprovado { background: #4CAF50; color: white; }
+        .status-revisar { background: #ff9800; color: white; }
+        
+        .feedback-area {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
         }
     </style>
 </head>
 <body>
+    <div class="loading-overlay" id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="width:50px; height:50px; border:4px solid white; border-top:4px solid #4CAF50; border-radius:50%; animation:spin 1s linear infinite;"></div>
+    </div>
+
     <div class="header">
         <div class="container">
             <div class="logo"><h1>SAGE Planos</h1><p id="pageTitle">Plano de Aula Mensal</p></div>
@@ -59,6 +76,7 @@
     <div class="container">
         <form id="formPlano">
             <input type="hidden" id="planoId">
+            <input type="hidden" id="planoStatus">
             
             <div class="form-card">
                 <h3>📋 Informações do Plano</h3>
@@ -77,11 +95,27 @@
                 <div id="cargaInfo" class="carga-info" style="display: none;">📊 <span id="cargaTexto"></span></div>
             </div>
             
-            <div class="form-card"><h3>📖 Conteúdo Programático</h3><div class="form-group"><label>Conteúdo do Mês</label><textarea id="conteudo_mensal" rows="4"></textarea></div><div class="form-group"><label>📚 Referências</label><textarea id="referencias" rows="3"></textarea></div></div>
+            <div class="form-card">
+                <h3>📖 Conteúdo Programático</h3>
+                <div class="form-group"><label>Conteúdo do Mês</label><textarea id="conteudo_mensal" rows="4" placeholder="Descreva o conteúdo que será trabalhado durante o mês..."></textarea></div>
+                <div class="form-group"><label>📚 Referências Bibliográficas</label><textarea id="referencias" rows="3" placeholder="Livros, sites, materiais de apoio..."></textarea></div>
+            </div>
             
             <div id="aulasContainer" class="aulas-container"></div>
-            <div style="text-align: center; margin: 20px 0;"><button type="button" class="btn-add-semana" onclick="adicionarSemana()">+ Adicionar Semana</button></div>
-            <div class="btn-group"><button type="button" class="btn-secondary" onclick="window.location.href='planos.html'">Cancelar</button><button type="button" class="btn-primary" onclick="salvarPlano('rascunho')">💾 Salvar Rascunho</button><button type="button" class="btn-success" onclick="salvarPlano('enviado')">📤 Salvar e Enviar</button></div>
+            <div style="text-align: center; margin: 20px 0;">
+                <button type="button" class="btn-add-semana" onclick="adicionarSemana()">+ Adicionar Semana</button>
+            </div>
+            
+            <div id="feedbackArea" class="feedback-area" style="display: none;">
+                <strong>💬 Feedback do Gestor:</strong>
+                <p id="feedbackTexto"></p>
+            </div>
+            
+            <div class="btn-group">
+                <button type="button" class="btn-secondary" onclick="window.location.href='planos.html'">Cancelar</button>
+                <button type="button" class="btn-primary" id="btnSalvarRascunho" onclick="salvarPlano('rascunho')">💾 Salvar Rascunho</button>
+                <button type="button" class="btn-success" id="btnEnviar" onclick="salvarPlano('enviado')">📤 Salvar e Enviar</button>
+            </div>
         </form>
     </div>
     
@@ -89,106 +123,460 @@
     <script src="../../assets/js/api.js"></script>
     <script src="../../assets/js/auth.js"></script>
     <script src="../../assets/js/utils.js"></script>
+    
     <script>
-        let usuario = null, planoId = null, lotacoes = [], disciplinas = [], turmas = [], cargas = [], aulasPorSemana = 0, semanas = 4;
+        // ============================================================
+        // PLANO-FORM.JS - LÓGICA COMPLETA COM CARREGAMENTO DE RASCUNHOS
+        // ============================================================
         
+        let usuario = null;
+        let planoId = null;
+        let planoStatus = null;
+        let lotacoes = [];
+        let disciplinas = [];
+        let turmas = [];
+        let cargas = [];
+        let aulasPorSemana = 0;
+        let semanas = 4;
+        
+        // Mapeamento para armazenar os dados carregados do plano
+        let dadosPlanoCarregado = null;
+        
+        // ============================================================
+        // INICIALIZAÇÃO
+        // ============================================================
         document.addEventListener('DOMContentLoaded', async function() {
-            if (!Auth.verificarAcesso()) return;
+            mostrarLoading(true);
+            
+            if (!Auth.verificarAcesso()) {
+                mostrarLoading(false);
+                return;
+            }
+            
             usuario = Auth.getUsuarioLogado();
-            if (usuario.perfil !== 'professor') { Auth.redirecionarPorPerfil(); return; }
+            if (usuario.perfil !== 'professor') {
+                Auth.redirecionarPorPerfil();
+                return;
+            }
+            
             document.getElementById('userName').textContent = usuario.nome;
+            
             const urlParams = new URLSearchParams(window.location.search);
             planoId = urlParams.get('id');
-            if (planoId) document.getElementById('pageTitle').textContent = 'Editar Plano';
+            
+            if (planoId) {
+                document.getElementById('pageTitle').textContent = 'Editar Plano de Aula';
+            }
+            
             await carregarDados();
-            if (planoId) await carregarPlano(planoId);
-            else inicializarSemanas();
+            
+            if (planoId) {
+                await carregarPlano(planoId);
+            } else {
+                inicializarSemanas();
+            }
+            
+            mostrarLoading(false);
         });
         
+        // ============================================================
+        // CARREGAR DADOS BASE (LOTAÇÕES, DISCIPLINAS, TURMAS, CARGAS)
+        // ============================================================
         async function carregarDados() {
             try {
-                Utils.mostrarLoading(true);
-                const [lotacoesRes, discRes, turmasRes, cargasRes] = await Promise.all([API.listarLotacoes(), API.listarDisciplinas(), API.listarTurmas(), API.getCargasHorarias()]);
+                const [lotacoesRes, discRes, turmasRes, cargasRes] = await Promise.all([
+                    API.listarLotacoes(),
+                    API.listarDisciplinas(),
+                    API.listarTurmas(),
+                    API.getCargasHorarias()
+                ]);
+                
                 lotacoes = (lotacoesRes.dados || []).filter(l => l.professor_id == usuario.id);
                 disciplinas = discRes.dados || [];
                 turmas = turmasRes.dados || [];
                 cargas = cargasRes.dados || [];
-                Utils.mostrarLoading(false);
-            } catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+                
+                console.log('[INFO] Dados base carregados:', {
+                    lotacoes: lotacoes.length,
+                    disciplinas: disciplinas.length,
+                    turmas: turmas.length,
+                    cargas: cargas.length
+                });
+                
+            } catch (error) {
+                console.error('[ERROR] Erro ao carregar dados:', error);
+                Utils.mostrarMensagem('Erro ao carregar dados: ' + error.message, 'error');
+            }
         }
         
-        function carregarDisciplinasPorSerie() {
+        // ============================================================
+        // CARREGAR PLANO PARA EDIÇÃO (RASCUNHO)
+        // ============================================================
+        async function carregarPlano(id) {
+            try {
+                console.log('[INFO] Carregando plano ID:', id);
+                
+                const result = await API.listarPlanos();
+                const planos = result.dados || [];
+                const plano = planos.find(p => p.id == id);
+                
+                if (!plano) {
+                    Utils.mostrarMensagem('Plano não encontrado', 'error');
+                    setTimeout(() => window.location.href = 'planos.html', 1500);
+                    return;
+                }
+                
+                if (plano.professor_id != usuario.id) {
+                    Utils.mostrarMensagem('Você não tem permissão para editar este plano', 'error');
+                    setTimeout(() => window.location.href = 'planos.html', 1500);
+                    return;
+                }
+                
+                dadosPlanoCarregado = plano;
+                planoStatus = plano.status;
+                
+                // Preencher campos básicos
+                document.getElementById('planoId').value = plano.id;
+                document.getElementById('planoStatus').value = plano.status;
+                document.getElementById('serie').value = plano.serie;
+                document.getElementById('mes_referencia').value = plano.mes_referencia;
+                document.getElementById('ano_referencia').value = plano.ano_referencia;
+                document.getElementById('conteudo_mensal').value = plano.conteudo_mensal || '';
+                document.getElementById('referencias').value = plano.referencias || '';
+                
+                // Mostrar feedback se houver e plano estiver em revisão
+                if (plano.feedback_gestor && plano.status === 'revisar') {
+                    document.getElementById('feedbackArea').style.display = 'block';
+                    document.getElementById('feedbackTexto').textContent = plano.feedback_gestor;
+                }
+                
+                // Carregar disciplinas disponíveis para a série
+                await carregarDisciplinasPorSerie();
+                
+                // Aguardar o select ser preenchido
+                setTimeout(async () => {
+                    // Selecionar a disciplina
+                    const discSelect = document.getElementById('disciplina_id');
+                    discSelect.value = plano.disciplina_id;
+                    
+                    // Carregar carga horária
+                    await carregarCargaHoraria();
+                    
+                    // Configurar semanas
+                    semanas = parseInt(plano.semanas_planejadas) || 4;
+                    aulasPorSemana = parseInt(plano.aulas_semana) || 4;
+                    
+                    // Inicializar estrutura de semanas
+                    inicializarSemanas();
+                    
+                    // Preencher os campos das aulas
+                    await preencherCamposAulas(plano);
+                    
+                    // Se o plano já foi enviado ou aprovado, desabilitar edição
+                    if (plano.status === 'enviado' || plano.status === 'aprovado') {
+                        desabilitarFormulario();
+                        Utils.mostrarMensagem('Este plano não pode mais ser editado.', 'warning');
+                    }
+                    
+                    console.log('[INFO] Plano carregado com sucesso');
+                    
+                }, 300);
+                
+            } catch (error) {
+                console.error('[ERROR] Erro ao carregar plano:', error);
+                Utils.mostrarMensagem('Erro ao carregar plano: ' + error.message, 'error');
+            }
+        }
+        
+        // ============================================================
+        // PREENCHER CAMPOS DAS AULAS
+        // ============================================================
+        function preencherCamposAulas(plano) {
+            return new Promise((resolve) => {
+                // Aguardar um pouco para garantir que os elementos DOM existam
+                setTimeout(() => {
+                    const totalAulasEsperado = aulasPorSemana * semanas;
+                    
+                    console.log('[INFO] Preenchendo aulas:', {
+                        semanas: semanas,
+                        aulasPorSemana: aulasPorSemana,
+                        totalAulas: totalAulasEsperado
+                    });
+                    
+                    for (let aulaNum = 1; aulaNum <= totalAulasEsperado; aulaNum++) {
+                        const subconteudo = plano[`aula_${aulaNum}_subconteudo`] || '';
+                        const metodologia = plano[`aula_${aulaNum}_metodologia`] || '';
+                        const avaliacao = plano[`aula_${aulaNum}_avaliacao`] || '';
+                        const recursos = plano[`aula_${aulaNum}_recursos`] || '';
+                        
+                        if (subconteudo || metodologia || avaliacao || recursos) {
+                            console.log(`[DEBUG] Preenchendo aula ${aulaNum}`);
+                        }
+                        
+                        // Encontrar o campo correto baseado na semana e aula dentro da semana
+                        const semanaNum = Math.ceil(aulaNum / aulasPorSemana);
+                        const aulaNaSemana = ((aulaNum - 1) % aulasPorSemana) + 1;
+                        
+                        const subconteudoEl = document.getElementById(`semana_${semanaNum}_aula_${aulaNaSemana}_subconteudo`);
+                        const metodologiaEl = document.getElementById(`semana_${semanaNum}_aula_${aulaNaSemana}_metodologia`);
+                        const avaliacaoEl = document.getElementById(`semana_${semanaNum}_aula_${aulaNaSemana}_avaliacao`);
+                        const recursosEl = document.getElementById(`semana_${semanaNum}_aula_${aulaNaSemana}_recursos`);
+                        
+                        if (subconteudoEl) subconteudoEl.value = subconteudo;
+                        if (metodologiaEl) metodologiaEl.value = metodologia;
+                        if (avaliacaoEl) avaliacaoEl.value = avaliacao;
+                        if (recursosEl) recursosEl.value = recursos;
+                    }
+                    
+                    resolve();
+                }, 200);
+            });
+        }
+        
+        // ============================================================
+        // CARREGAR DISCIPLINAS POR SÉRIE
+        // ============================================================
+        async function carregarDisciplinasPorSerie() {
             const serie = document.getElementById('serie').value;
             const discSelect = document.getElementById('disciplina_id');
             discSelect.innerHTML = '<option value="">Selecione...</option>';
             document.getElementById('aulas_semana').value = '';
             document.getElementById('total_aulas').value = '';
             document.getElementById('cargaInfo').style.display = 'none';
+            
             if (!serie) return;
-            const lotacoesFiltradas = lotacoes.filter(l => { const turma = turmas.find(t => t.id == l.turma_id); return turma && turma.serie === serie; });
+            
+            // Buscar disciplinas que o professor pode lecionar baseado nas lotações
+            const lotacoesFiltradas = lotacoes.filter(l => {
+                const turma = turmas.find(t => t.id == l.turma_id);
+                return turma && turma.serie === serie;
+            });
+            
             const discIds = [...new Set(lotacoesFiltradas.map(l => l.disciplina_id))];
-            discIds.forEach(discId => { const disc = disciplinas.find(d => d.id == discId); if(disc) discSelect.innerHTML += `<option value="${disc.id}">${disc.nome}</option>`; });
+            
+            discIds.forEach(discId => {
+                const disc = disciplinas.find(d => d.id == discId);
+                if (disc) {
+                    discSelect.innerHTML += `<option value="${disc.id}">${Utils.escapeHtml(disc.nome)}</option>`;
+                }
+            });
         }
         
-        function carregarCargaHoraria() {
+        // ============================================================
+        // CARREGAR CARGA HORÁRIA
+        // ============================================================
+        async function carregarCargaHoraria() {
             const discId = document.getElementById('disciplina_id').value;
             const serie = document.getElementById('serie').value;
+            
             if (discId && serie) {
                 const carga = cargas.find(c => c.disciplina_id == discId && c.serie == serie);
-                if (carga) { aulasPorSemana = parseInt(carga.aulas_semana); document.getElementById('aulas_semana').value = aulasPorSemana; const totalAulas = aulasPorSemana * 4; document.getElementById('total_aulas').value = totalAulas; const discNome = disciplinas.find(d => d.id == discId)?.nome || ''; document.getElementById('cargaTexto').innerHTML = `${discNome} - ${serie}: ${aulasPorSemana} aulas/semana | Total: ${totalAulas} aulas`; document.getElementById('cargaInfo').style.display = 'block'; reconstruirAulas(); }
-                else Utils.mostrarMensagem('Nenhuma carga horária encontrada', 'warning');
+                
+                if (carga) {
+                    aulasPorSemana = parseInt(carga.aulas_semana);
+                    document.getElementById('aulas_semana').value = aulasPorSemana;
+                    const totalAulas = aulasPorSemana * 4;
+                    document.getElementById('total_aulas').value = totalAulas;
+                    
+                    const discNome = disciplinas.find(d => d.id == discId)?.nome || '';
+                    document.getElementById('cargaTexto').innerHTML = `${discNome} - ${serie}: ${aulasPorSemana} aulas/semana | Total: ${totalAulas} aulas`;
+                    document.getElementById('cargaInfo').style.display = 'block';
+                    
+                    // Reconstruir aulas se já tiver estrutura
+                    if (document.getElementById('aulasContainer').children.length > 0) {
+                        reconstruirAulas();
+                    }
+                } else {
+                    Utils.mostrarMensagem('Nenhuma carga horária encontrada para esta disciplina/série', 'warning');
+                }
             }
         }
         
-        function inicializarSemanas() { const container = document.getElementById('aulasContainer'); container.innerHTML = ''; for (let s = 1; s <= semanas; s++) adicionarSemanaUI(s); }
-        function reconstruirAulas() { const container = document.getElementById('aulasContainer'); const semanasDivs = container.querySelectorAll('.semana-group'); semanas = semanasDivs.length; semanasDivs.forEach((div, idx) => { const semanaNum = idx + 1; const content = div.querySelector('.semana-content'); if (content) content.innerHTML = gerarAulasUI(semanaNum, aulasPorSemana || 4); }); }
-        function adicionarSemana() { semanas++; adicionarSemanaUI(semanas); }
-        function removerSemana(semanaNum) { Utils.confirmarAcao('Remover semana?', (c) => { if(c) { document.getElementById(`semana_${semanaNum}`).remove(); reorganizarSemanas(); } }); }
+        // ============================================================
+        // INICIALIZAR SEMANAS
+        // ============================================================
+        function inicializarSemanas() {
+            const container = document.getElementById('aulasContainer');
+            container.innerHTML = '';
+            for (let s = 1; s <= semanas; s++) {
+                adicionarSemanaUI(s);
+            }
+        }
         
+        // ============================================================
+        // RECONSTRUIR AULAS (após mudança de carga horária)
+        // ============================================================
+        function reconstruirAulas() {
+            const container = document.getElementById('aulasContainer');
+            const semanasDivs = container.querySelectorAll('.semana-group');
+            const semanasAtuais = semanasDivs.length;
+            
+            if (semanasAtuais !== semanas) {
+                // Recriar tudo
+                inicializarSemanas();
+            } else {
+                // Atualizar cada semana
+                semanasDivs.forEach((div, idx) => {
+                    const semanaNum = idx + 1;
+                    const content = div.querySelector('.semana-content');
+                    if (content) {
+                        const aulasAntigas = content.querySelectorAll('.aula-card');
+                        const aulasAtuais = aulasPorSemana || 4;
+                        
+                        if (aulasAntigas.length !== aulasAtuais) {
+                            content.innerHTML = gerarAulasUI(semanaNum, aulasAtuais);
+                        }
+                    }
+                });
+            }
+            
+            // Recarregar os dados do plano se existir
+            if (dadosPlanoCarregado) {
+                preencherCamposAulas(dadosPlanoCarregado);
+            }
+        }
+        
+        // ============================================================
+        // ADICIONAR SEMANA
+        // ============================================================
+        function adicionarSemana() {
+            semanas++;
+            adicionarSemanaUI(semanas);
+        }
+        
+        // ============================================================
+        // REMOVER SEMANA
+        // ============================================================
+        function removerSemana(semanaNum) {
+            Utils.confirmarAcao('Remover esta semana e todo seu conteúdo?', (confirmado) => {
+                if (confirmado) {
+                    const semanaDiv = document.getElementById(`semana_${semanaNum}`);
+                    if (semanaDiv) semanaDiv.remove();
+                    reorganizarSemanas();
+                }
+            });
+        }
+        
+        // ============================================================
+        // REORGANIZAR SEMANAS (renumerar após remoção)
+        // ============================================================
         function reorganizarSemanas() {
             const container = document.getElementById('aulasContainer');
             const semanasDivs = container.querySelectorAll('.semana-group');
             semanas = semanasDivs.length;
-            semanasDivs.forEach((div, idx) => { const newNum = idx + 1; div.id = `semana_${newNum}`; const header = div.querySelector('.semana-header h3'); if (header) header.innerHTML = `📅 Semana ${newNum} <button type="button" class="btn-remove-semana" onclick="removerSemana(${newNum})">🗑️</button>`; });
+            
+            semanasDivs.forEach((div, idx) => {
+                const newNum = idx + 1;
+                div.id = `semana_${newNum}`;
+                const header = div.querySelector('.semana-header h3');
+                if (header) {
+                    const btnRemove = header.querySelector('.btn-remove-semana');
+                    header.innerHTML = `📅 Semana ${newNum}`;
+                    if (btnRemove) header.appendChild(btnRemove);
+                }
+                
+                // Atualizar IDs dos elementos dentro da semana
+                const content = div.querySelector('.semana-content');
+                if (content) {
+                    const aulas = content.querySelectorAll('.aula-card');
+                    aulas.forEach((aula, aulaIdx) => {
+                        const aulaNum = aulaIdx + 1;
+                        const inputs = aula.querySelectorAll('textarea');
+                        inputs.forEach(input => {
+                            const oldId = input.id;
+                            const newId = oldId.replace(/semana_\d+_aula_\d+/, `semana_${newNum}_aula_${aulaNum}`);
+                            input.id = newId;
+                        });
+                    });
+                }
+            });
         }
         
+        // ============================================================
+        // ADICIONAR SEMANA NA INTERFACE
+        // ============================================================
         function adicionarSemanaUI(semanaNum) {
             const container = document.getElementById('aulasContainer');
             const aulas = aulasPorSemana || 4;
-            const semanaDiv = document.createElement('div'); semanaDiv.className = 'semana-group'; semanaDiv.id = `semana_${semanaNum}`;
-            semanaDiv.innerHTML = `<div class="semana-header" onclick="toggleSemana(${semanaNum})"><h3>📅 Semana ${semanaNum} <button type="button" class="btn-remove-semana" onclick="event.stopPropagation(); removerSemana(${semanaNum})">🗑️</button></h3><span>▼</span></div><div class="semana-content" id="semana-content-${semanaNum}">${gerarAulasUI(semanaNum, aulas)}</div>`;
+            
+            const semanaDiv = document.createElement('div');
+            semanaDiv.className = 'semana-group';
+            semanaDiv.id = `semana_${semanaNum}`;
+            
+            semanaDiv.innerHTML = `
+                <div class="semana-header" onclick="toggleSemana(${semanaNum})">
+                    <h3>📅 Semana ${semanaNum} <button type="button" class="btn-remove-semana" onclick="event.stopPropagation(); removerSemana(${semanaNum})">🗑️ Remover Semana</button></h3>
+                    <span>▼</span>
+                </div>
+                <div class="semana-content" id="semana-content-${semanaNum}">
+                    ${gerarAulasUI(semanaNum, aulas)}
+                </div>
+            `;
+            
             container.appendChild(semanaDiv);
         }
         
+        // ============================================================
+        // GERAR AULAS UI
+        // ============================================================
         function gerarAulasUI(semanaNum, totalAulas) {
             let html = '';
             for (let aula = 1; aula <= totalAulas; aula++) {
-                html += `<div class="aula-card"><div class="aula-title">Aula ${aula} <span>${aula}ª aula</span></div><div class="form-group"><label>🎯 Sub-conteúdo</label><textarea id="semana_${semanaNum}_aula_${aula}_subconteudo" rows="2"></textarea></div><div class="form-group"><label>📚 Recursos</label><div class="file-upload"><input type="file" id="recursos_file_${semanaNum}_${aula}" accept=".pdf,.doc,.docx,.jpg,.png"><button type="button" class="btn-secondary" onclick="uploadArquivo(${semanaNum}, ${aula}, 'recursos')">📎 Anexar</button></div><div class="file-list" id="recursos_list_${semanaNum}_${aula}"></div><textarea id="semana_${semanaNum}_aula_${aula}_recursos" rows="2"></textarea></div><div class="form-group"><label>🎯 Metodologia</label><textarea id="semana_${semanaNum}_aula_${aula}_metodologia" rows="2"></textarea></div><div class="form-group"><label>📝 Avaliação</label><div class="file-upload"><input type="file" id="avaliacao_file_${semanaNum}_${aula}" accept=".pdf,.doc,.docx,.jpg,.png"><button type="button" class="btn-secondary" onclick="uploadArquivo(${semanaNum}, ${aula}, 'avaliacao')">📎 Anexar</button></div><div class="file-list" id="avaliacao_list_${semanaNum}_${aula}"></div><textarea id="semana_${semanaNum}_aula_${aula}_avaliacao" rows="2"></textarea></div></div>`;
+                html += `
+                    <div class="aula-card">
+                        <div class="aula-title">🎯 Aula ${aula}</div>
+                        <div class="form-group">
+                            <label>Sub-conteúdo</label>
+                            <textarea id="semana_${semanaNum}_aula_${aula}_subconteudo" rows="2" placeholder="Conteúdo específico desta aula..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>📚 Metodologia</label>
+                            <textarea id="semana_${semanaNum}_aula_${aula}_metodologia" rows="2" placeholder="Como será ministrada esta aula? Ex: Aula expositiva, debate, atividade em grupo..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>📝 Avaliação</label>
+                            <textarea id="semana_${semanaNum}_aula_${aula}_avaliacao" rows="2" placeholder="Como será avaliado o aprendizado?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>🔧 Recursos Didáticos</label>
+                            <textarea id="semana_${semanaNum}_aula_${aula}_recursos" rows="2" placeholder="Materiais necessários: slides, vídeos, apostilas..."></textarea>
+                        </div>
+                    </div>
+                `;
             }
             return html;
         }
         
-        function toggleSemana(semanaNum) { const content = document.getElementById(`semana-content-${semanaNum}`); if (content) content.classList.toggle('open'); }
-        
-        function uploadArquivo(semanaNum, aulaNum, tipo) {
-            const fileInput = document.getElementById(`${tipo}_file_${semanaNum}_${aulaNum}`);
-            const file = fileInput.files[0];
-            if (!file) { Utils.mostrarMensagem('Selecione um arquivo', 'error'); return; }
-            const url = URL.createObjectURL(file);
-            const listDiv = document.getElementById(`${tipo}_list_${semanaNum}_${aulaNum}`);
-            const fileDiv = document.createElement('div'); fileDiv.className = 'file-item'; fileDiv.innerHTML = `<a href="${url}" target="_blank">📎 ${file.name}</a> <span class="btn-remove-file" onclick="this.parentElement.remove()">❌</span>`;
-            listDiv.appendChild(fileDiv);
-            fileInput.value = '';
-            Utils.mostrarMensagem('Arquivo anexado!', 'success');
+        // ============================================================
+        // TOGGLE SEMANA
+        // ============================================================
+        function toggleSemana(semanaNum) {
+            const content = document.getElementById(`semana-content-${semanaNum}`);
+            if (content) {
+                content.classList.toggle('collapsed');
+                const header = document.querySelector(`#semana_${semanaNum} .semana-header span`);
+                if (header) {
+                    header.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+                }
+            }
         }
         
-        async function carregarPlano(id) {
-            try { const result = await API.listarPlanos(); const plano = (result.dados || []).find(p => p.id == id); if (plano && plano.professor_id == usuario.id) { document.getElementById('planoId').value = plano.id; document.getElementById('serie').value = plano.serie; await carregarDisciplinasPorSerie(); setTimeout(() => { document.getElementById('disciplina_id').value = plano.disciplina_id; carregarCargaHoraria(); }, 100); document.getElementById('mes_referencia').value = plano.mes_referencia; document.getElementById('ano_referencia').value = plano.ano_referencia; document.getElementById('conteudo_mensal').value = plano.conteudo_mensal || ''; document.getElementById('referencias').value = plano.referencias || ''; semanas = parseInt(plano.semanas_planejadas) || 4; inicializarSemanas(); if (plano.status === 'enviado' || plano.status === 'aprovado') desabilitarFormulario(); } }
-            catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); }
+        // ============================================================
+        // DESABILITAR FORMULÁRIO (planos já enviados/aprovados)
+        // ============================================================
+        function desabilitarFormulario() {
+            document.querySelectorAll('#formPlano input, #formPlano select, #formPlano textarea, #formPlano button').forEach(el => {
+                if (el.id !== 'btnVoltar') {
+                    el.disabled = true;
+                }
+            });
+            document.getElementById('btnSalvarRascunho').style.display = 'none';
+            document.getElementById('btnEnviar').style.display = 'none';
         }
         
-        function desabilitarFormulario() { document.querySelectorAll('#formPlano input, #formPlano select, #formPlano textarea, #formPlano button').forEach(el => el.disabled = true); Utils.mostrarMensagem('Este plano não pode mais ser editado.', 'warning'); }
-        
+        // ============================================================
+        // COLETAR DADOS DO FORMULÁRIO
+        // ============================================================
         function coletarDados() {
             const serie = document.getElementById('serie').value;
             const disciplina_id = document.getElementById('disciplina_id').value;
@@ -196,20 +584,97 @@
             const ano = document.getElementById('ano_referencia').value;
             const conteudo_mensal = document.getElementById('conteudo_mensal').value;
             const referencias = document.getElementById('referencias').value;
-            if (!serie || !disciplina_id || !mes || !ano) { Utils.mostrarMensagem('Preencha série, disciplina, mês e ano', 'error'); return null; }
-            const dados = { professor_id: usuario.id, disciplina_id, serie, mes_referencia: parseInt(mes), ano_referencia: parseInt(ano), conteudo_mensal, referencias, aulas_semana: aulasPorSemana, total_aulas_mes: aulasPorSemana * 4, semanas_planejadas: semanas };
+            
+            if (!serie || !disciplina_id || !mes || !ano) {
+                Utils.mostrarMensagem('Preencha série, disciplina, mês e ano', 'error');
+                return null;
+            }
+            
             const aulasPorSemanaAtual = aulasPorSemana || 4;
-            for (let s = 1; s <= semanas; s++) for (let a = 1; a <= aulasPorSemanaAtual; a++) { const aulaNum = (s-1)*aulasPorSemanaAtual + a; dados[`aula_${aulaNum}_subconteudo`] = document.getElementById(`semana_${s}_aula_${a}_subconteudo`)?.value || ''; dados[`aula_${aulaNum}_metodologia`] = document.getElementById(`semana_${s}_aula_${a}_metodologia`)?.value || ''; dados[`aula_${aulaNum}_avaliacao`] = document.getElementById(`semana_${s}_aula_${a}_avaliacao`)?.value || ''; dados[`aula_${aulaNum}_recursos`] = document.getElementById(`semana_${s}_aula_${a}_recursos`)?.value || ''; }
+            const semanasAtual = semanas;
+            const totalAulas = aulasPorSemanaAtual * semanasAtual;
+            
+            const dados = {
+                professor_id: usuario.id,
+                disciplina_id: parseInt(disciplina_id),
+                serie: serie,
+                mes_referencia: parseInt(mes),
+                ano_referencia: parseInt(ano),
+                conteudo_mensal: conteudo_mensal || '',
+                referencias: referencias || '',
+                aulas_semana: aulasPorSemanaAtual,
+                total_aulas_mes: totalAulas,
+                semanas_planejadas: semanasAtual
+            };
+            
+            // Coletar dados de cada aula
+            for (let aulaNum = 1; aulaNum <= totalAulas; aulaNum++) {
+                const semanaNum = Math.ceil(aulaNum / aulasPorSemanaAtual);
+                const aulaNaSemana = ((aulaNum - 1) % aulasPorSemanaAtual) + 1;
+                
+                const subconteudo = document.getElementById(`semana_${semanaNum}_aula_${aulaNaSemana}_subconteudo`)?.value || '';
+                const metodologia = document.getElementById(`semana_${semanaNum}_aula_${aulaNaSemana}_metodologia`)?.value || '';
+                const avaliacao = document.getElementById(`semana_${semanaNum}_aula_${aulaNaSemana}_avaliacao`)?.value || '';
+                const recursos = document.getElementById(`semana_${semanaNum}_aula_${aulaNaSemana}_recursos`)?.value || '';
+                
+                dados[`aula_${aulaNum}_subconteudo`] = subconteudo;
+                dados[`aula_${aulaNum}_metodologia`] = metodologia;
+                dados[`aula_${aulaNum}_avaliacao`] = avaliacao;
+                dados[`aula_${aulaNum}_recursos`] = recursos;
+            }
+            
             return dados;
         }
         
+        // ============================================================
+        // SALVAR PLANO (RASCUNHO OU ENVIADO)
+        // ============================================================
         async function salvarPlano(status) {
             const id = document.getElementById('planoId').value;
             const dados = coletarDados();
+            
             if (!dados) return;
+            
             dados.status = status;
-            try { Utils.mostrarLoading(true); if (id) await API.atualizarPlano(id, dados); else await API.criarPlano(dados); Utils.mostrarMensagem(status === 'enviado' ? 'Plano enviado!' : 'Rascunho salvo!', 'success'); setTimeout(() => { window.location.href = 'planos.html'; }, 1500); Utils.mostrarLoading(false); }
-            catch (error) { Utils.mostrarMensagem('Erro: ' + error.message, 'error'); Utils.mostrarLoading(false); }
+            
+            // Preservar feedback existente se for rascunho
+            if (status === 'rascunho' && dadosPlanoCarregado?.feedback_gestor) {
+                dados.feedback_gestor = dadosPlanoCarregado.feedback_gestor;
+            }
+            
+            try {
+                mostrarLoading(true);
+                console.log(`[INFO] Salvando plano como: ${status}`);
+                
+                if (id) {
+                    await API.atualizarPlano(id, dados);
+                } else {
+                    await API.criarPlano(dados);
+                }
+                
+                const mensagem = status === 'enviado' ? 'Plano enviado para revisão!' : 'Rascunho salvo com sucesso!';
+                Utils.mostrarMensagem(mensagem, 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'planos.html';
+                }, 1500);
+                
+                mostrarLoading(false);
+            } catch (error) {
+                console.error('[ERROR] Erro ao salvar:', error);
+                Utils.mostrarMensagem('Erro ao salvar: ' + error.message, 'error');
+                mostrarLoading(false);
+            }
+        }
+        
+        // ============================================================
+        // MOSTRAR/OCULTAR LOADING
+        // ============================================================
+        function mostrarLoading(mostrar) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = mostrar ? 'flex' : 'none';
+            }
         }
     </script>
 </body>
