@@ -8,22 +8,43 @@
     <style>
         .plano-card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .plano-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 10px; }
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .status-rascunho { background: #e0e0e0; color: #666; }
         .status-enviado { background: #2196F3; color: white; }
         .status-aprovado { background: #4CAF50; color: white; }
         .status-revisar { background: #ff9800; color: white; }
-        .feedback-area { background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #ffc107; }
+        
+        .feedback-area { background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #ffc107; font-size: 13px; }
         .filtros { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .btn-primary { background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+        .btn-success { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+        .btn-warning { background: #ff9800; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+        .btn-danger { background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+        .btn-secondary { background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
         
-        /* Ajuste do modal para visualização prévia */
-        .modal-body { padding: 20px; }
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 10px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 8px; width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 20px; position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
+        .modal-close { cursor: pointer; font-size: 24px; font-weight: bold; }
         .view-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; }
-        .view-table td { border: 1px solid #ddd; padding: 8px; }
+        .view-table td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+        .view-box { border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; background: #f9f9f9; border-radius: 5px; }
+        .week-title { background-color: #4CAF50; color: white; padding: 6px; margin-top: 10px; margin-bottom: 8px; border-radius: 4px; font-weight: bold; }
+        .aula-box { border: 1px solid #ddd; padding: 10px; margin-bottom: 8px; border-radius: 5px; }
+        .aula-title { font-weight: bold; color: #4CAF50; margin-bottom: 5px; }
+        
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 9999; }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #4CAF50; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
+
     <div class="header">
         <div class="container">
             <div class="logo"><h1>SAGE <span>Planos</span></h1><p>Painel do Professor</p></div>
@@ -35,8 +56,8 @@
     </div>
     
     <div class="container">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
-            <h2>Meus Planos de Aula</h2>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h2>📝 Meus Planos de Aula</h2>
             <button class="btn-primary" onclick="window.location.href='plano-form.html'">+ Novo Plano</button>
         </div>
 
@@ -44,40 +65,43 @@
             <select id="filtroDisciplina"><option value="">Todas disciplinas</option></select>
             <select id="filtroSerie">
                 <option value="">Todas séries</option>
-                <option value="1ª SÉRIE">1ª SÉRIE</option>
-                <option value="2ª SÉRIE">2ª SÉRIE</option>
-                <option value="3ª SÉRIE">3ª SÉRIE</option>
+                <option value="1ª Série">1ª Série</option>
+                <option value="2ª Série">2ª Série</option>
+                <option value="3ª Série">3ª Série</option>
             </select>
             <select id="filtroStatus">
                 <option value="">Todos status</option>
-                <option value="rascunho">Rascunho</option>
-                <option value="enviado">Enviado</option>
-                <option value="aprovado">Aprovado</option>
-                <option value="revisar">Revisar</option>
+                <option value="rascunho">📝 Rascunho</option>
+                <option value="enviado">📤 Enviado</option>
+                <option value="aprovado">✅ Aprovado</option>
+                <option value="revisar">🔄 Aguardando Correções</option>
             </select>
             <select id="filtroMes">
                 <option value="">Todos meses</option>
-                <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
-                <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
-                <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
-                <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+                <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+                <option value="3">Março</option><option value="4">Abril</option>
+                <option value="5">Maio</option><option value="6">Junho</option>
+                <option value="7">Julho</option><option value="8">Agosto</option>
+                <option value="9">Setembro</option><option value="10">Outubro</option>
+                <option value="11">Novembro</option><option value="12">Dezembro</option>
             </select>
         </div>
 
         <div id="planosLista"></div>
     </div>
     
+    <!-- Modal de Visualização -->
     <div id="modalPlano" class="modal">
-        <div class="modal-content" style="max-width: 850px;">
+        <div class="modal-content">
             <div class="modal-header">
-                <h3>Visualizar Plano</h3>
+                <h3>📋 Visualizar Plano</h3>
                 <span class="modal-close" onclick="fecharModal()">&times;</span>
             </div>
             <div class="modal-body" id="planoConteudo"></div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee;">
                 <button class="btn-secondary" onclick="fecharModal()">Fechar</button>
-                <button class="btn-primary" onclick="imprimirPlano()">📥 Gerar PDF para Impressão</button>
-                <button class="btn-success" id="btnEditar" style="display:none;" onclick="editarPlano()">Editar</button>
+                <button class="btn-primary" id="btnImprimir" onclick="imprimirPlano()">📥 Gerar PDF</button>
+                <button class="btn-warning" id="btnEditar" style="display:none;" onclick="editarPlano()">✏️ Editar e Reenviar</button>
             </div>
         </div>
     </div>
@@ -88,41 +112,71 @@
     <script src="../../assets/js/utils.js"></script>
 
     <script>
-        let planos = [], disciplinas = [], usuario = null, planoAtual = null;
+        // ============================================================
+        // PLANOS.JS - PROFESSOR COM GESTÃO DE FEEDBACK
+        // ============================================================
         
+        let planos = [];
+        let disciplinas = [];
+        let usuario = null;
+        let planoAtual = null;
+        
+        // ============================================================
+        // INICIALIZAÇÃO
+        // ============================================================
         document.addEventListener('DOMContentLoaded', async function() {
-            if (!Auth.verificarAcesso()) return;
+            mostrarLoading(true);
+            
+            if (!Auth.verificarAcesso()) {
+                mostrarLoading(false);
+                return;
+            }
+            
             usuario = Auth.getUsuarioLogado();
             document.getElementById('userName').textContent = usuario.nome;
+            
             await carregarDados();
             
+            // Event listeners dos filtros
             ['filtroDisciplina', 'filtroSerie', 'filtroStatus', 'filtroMes'].forEach(id => {
                 document.getElementById(id).addEventListener('change', aplicarFiltros);
             });
+            
+            mostrarLoading(false);
         });
         
+        // ============================================================
+        // CARREGAR DADOS
+        // ============================================================
         async function carregarDados() {
             try {
-                Utils.mostrarLoading(true);
-                const [planosRes, discRes] = await Promise.all([API.listarPlanos(), API.listarDisciplinas()]);
+                const [planosRes, discRes] = await Promise.all([
+                    API.listarPlanos(),
+                    API.listarDisciplinas()
+                ]);
+                
                 planos = (planosRes.dados || []).filter(p => p.professor_id == usuario.id);
                 disciplinas = discRes.dados || [];
                 
+                // Preencher select de disciplinas
                 const selectDisc = document.getElementById('filtroDisciplina');
                 const discIdsNoPlano = [...new Set(planos.map(p => p.disciplina_id))];
                 discIdsNoPlano.forEach(id => {
                     const d = disciplinas.find(x => x.id == id);
-                    if(d) selectDisc.innerHTML += `<option value="${id}">${d.nome}</option>`;
+                    if(d) selectDisc.innerHTML += `<option value="${id}">${Utils.escapeHtml(d.nome)}</option>`;
                 });
-
+                
                 aplicarFiltros();
-                Utils.mostrarLoading(false);
+                
             } catch (error) { 
+                console.error('Erro ao carregar dados:', error);
                 Utils.mostrarMensagem('Erro ao carregar dados', 'error'); 
-                Utils.mostrarLoading(false); 
             }
         }
         
+        // ============================================================
+        // APLICAR FILTROS
+        // ============================================================
         function aplicarFiltros() {
             const dId = document.getElementById('filtroDisciplina').value;
             const ser = document.getElementById('filtroSerie').value;
@@ -135,75 +189,169 @@
                        (!sta || p.status === sta) &&
                        (!mes || p.mes_referencia == mes);
             });
+            
+            // Ordenar: pendentes primeiro (revisar e enviado)
+            filtrados.sort((a, b) => {
+                const ordem = { 'revisar': 1, 'enviado': 2, 'rascunho': 3, 'aprovado': 4 };
+                return (ordem[a.status] || 5) - (ordem[b.status] || 5);
+            });
+            
             renderizarPlanos(filtrados);
         }
         
+        // ============================================================
+        // RENDERIZAR PLANOS
+        // ============================================================
         function renderizarPlanos(lista) {
             const container = document.getElementById('planosLista');
-            if (!lista.length) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">Nenhum plano encontrado</div>'; return; }
+            if (!lista.length) { 
+                container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">📭 Nenhum plano encontrado</div>'; 
+                return; 
+            }
             
             container.innerHTML = lista.map(p => {
                 const disc = disciplinas.find(d => d.id == p.disciplina_id);
+                const statusNome = getStatusNome(p.status);
+                const precisaAcao = (p.status === 'revisar' || p.status === 'rascunho');
+                
                 return `
-                <div class="plano-card">
+                <div class="plano-card" style="${p.status === 'revisar' ? 'border-left: 4px solid #ff9800;' : ''}">
                     <div class="plano-header">
                         <div>
-                            <strong>${disc ? disc.nome : 'Sem Disciplina'}</strong> | ${p.serie || '---'}<br>
-                            <small>${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small>
+                            <strong>${disc ? Utils.escapeHtml(disc.nome) : 'Sem Disciplina'}</strong> | ${p.serie || '---'}<br>
+                            <small>📅 ${getMesNome(p.mes_referencia)}/${p.ano_referencia}</small>
+                            ${p.status === 'revisar' ? '<span style="background:#ff9800; color:white; padding:2px 8px; border-radius:12px; font-size:10px; margin-left:8px;">⚠️ PRECISA CORREÇÃO</span>' : ''}
                         </div>
-                        <span class="status-badge status-${p.status}">${getStatusNome(p.status)}</span>
+                        <span class="status-badge status-${p.status}">${statusNome}</span>
                     </div>
+                    ${p.feedback_gestor && p.status === 'revisar' ? `
+                        <div class="feedback-area">
+                            <strong>💬 Feedback do Gestor:</strong><br>
+                            ${Utils.escapeHtml(p.feedback_gestor)}
+                        </div>
+                    ` : ''}
                     <div class="btn-group">
-                        <button class="btn-secondary" onclick="visualizarPlano(${p.id})">Visualizar / Imprimir</button>
-                        ${(p.status === 'rascunho' || p.status === 'revisar') ? `
-                            <button class="btn-primary" onclick="editarPlanoById(${p.id})">Editar</button>
-                            <button class="btn-success" onclick="enviarPlano(${p.id})">Enviar</button>
-                            <button class="btn-danger" onclick="excluirPlano(${p.id})">Excluir</button>
+                        <button class="btn-secondary" onclick="visualizarPlano(${p.id})">👁️ Visualizar</button>
+                        ${precisaAcao ? `
+                            <button class="btn-primary" onclick="editarPlanoById(${p.id})">✏️ ${p.status === 'revisar' ? 'Corrigir e Reenviar' : 'Editar'}</button>
+                            <button class="btn-success" onclick="enviarPlano(${p.id})">📤 Enviar</button>
+                            <button class="btn-danger" onclick="excluirPlano(${p.id})">🗑️ Excluir</button>
+                        ` : ''}
+                        ${p.status === 'enviado' ? `
+                            <button class="btn-warning" disabled style="opacity:0.6;">⏳ Aguardando Análise</button>
+                        ` : ''}
+                        ${p.status === 'aprovado' ? `
+                            <button class="btn-success" disabled style="opacity:0.6;">✅ Plano Aprovado</button>
                         ` : ''}
                     </div>
                 </div>`;
             }).join('');
         }
         
-        function getMesNome(m) { return ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][m-1]; }
-        function getStatusNome(s) { return {rascunho:'Rascunho', enviado:'Enviado', aprovado:'Aprovado', revisar:'Revisar'}[s] || s; }
-
+        // ============================================================
+        // VISUALIZAR PLANO
+        // ============================================================
         function visualizarPlano(id) {
             planoAtual = planos.find(p => p.id == id);
             if(!planoAtual) return;
+            
             const disc = disciplinas.find(d => d.id == planoAtual.disciplina_id);
             const nomeDisc = disc ? disc.nome : '---';
             
             let html = `
                 <table class="view-table">
-                    <tr><td><strong>Professor:</strong> ${usuario.nome}</td><td><strong>Disciplina:</strong> ${nomeDisc}</td></tr>
-                    <tr><td><strong>Série:</strong> ${planoAtual.serie}</td><td><strong>Período:</strong> ${String(planoAtual.mes_referencia).padStart(2,'0')}/${planoAtual.ano_referencia}</td></tr>
+                    <tr><td style="width:120px;"><strong>Professor:</strong></td><td>${Utils.escapeHtml(usuario.nome)}</td></tr>
+                    <tr><td><strong>Disciplina:</strong></td><td>${Utils.escapeHtml(nomeDisc)}</td></tr>
+                    <tr><td><strong>Série:</strong></td><td>${planoAtual.serie || '---'}</td></tr>
+                    <tr><td><strong>Período:</strong></td><td>${String(planoAtual.mes_referencia).padStart(2,'0')}/${planoAtual.ano_referencia}</td></tr>
+                    <tr><td><strong>Status:</strong></td><td><span class="status-badge status-${planoAtual.status}">${getStatusNome(planoAtual.status)}</span></td></tr>
                 </table>
-                <p><strong>Conteúdo Mensal:</strong></p>
-                <div style="background:#f9f9f9; padding:10px; border:1px solid #ddd; margin-bottom:15px; border-radius:4px;">
-                    ${planoAtual.conteudo_mensal || 'Não informado'}
-                </div>
+                
+                <h3>📖 Conteúdo Mensal</h3>
+                <div class="view-box">${planoAtual.conteudo_mensal || 'Não informado'}</div>
+                
+                <h3>📚 Referências</h3>
+                <div class="view-box">${planoAtual.referencias || 'Não informado'}</div>
             `;
+            
+            // Adicionar aulas
+            const aulasPorSemana = parseInt(planoAtual.aulas_semana) || 4;
+            let currentWeek = 0;
+            let aulaNaSemana = 0;
+            let temAula = false;
+            
+            for (let i = 1; i <= 200; i++) {
+                const sub = planoAtual[`aula_${i}_subconteudo`];
+                if (sub && sub.trim() !== '') {
+                    temAula = true;
+                    let weekNumber = Math.ceil(i / aulasPorSemana);
+                    
+                    if (weekNumber > currentWeek) {
+                        html += `<div class="week-title">📅 SEMANA ${String(weekNumber).padStart(2, '0')}</div>`;
+                        currentWeek = weekNumber;
+                        aulaNaSemana = 1;
+                    } else {
+                        aulaNaSemana++;
+                    }
+                    
+                    html += `
+                        <div class="aula-box">
+                            <div class="aula-title">🎯 Aula ${String(aulaNaSemana).padStart(2, '0')}</div>
+                            <strong>Subconteúdo:</strong> ${Utils.escapeHtml(sub)}<br>
+                            <strong>Metodologia:</strong> ${Utils.escapeHtml(planoAtual[`aula_${i}_metodologia`] || '-')}<br>
+                            <strong>Recursos:</strong> ${Utils.escapeHtml(planoAtual[`aula_${i}_recursos`] || '-')}<br>
+                            <strong>Avaliação:</strong> ${Utils.escapeHtml(planoAtual[`aula_${i}_avaliacao`] || '-')}
+                        </div>
+                    `;
+                }
+            }
+            
+            if (!temAula) {
+                html += '<div class="view-box">Nenhuma aula detalhada foi preenchida.</div>';
+            }
+            
+            // Adicionar feedback se houver
+            if (planoAtual.feedback_gestor) {
+                html += `
+                    <div class="feedback-area" style="margin-top:15px;">
+                        <strong>💬 Feedback do Gestor:</strong><br>
+                        ${Utils.escapeHtml(planoAtual.feedback_gestor)}
+                    </div>
+                `;
+            }
+            
             document.getElementById('planoConteudo').innerHTML = html;
-            document.getElementById('btnEditar').style.display = (planoAtual.status === 'rascunho' || planoAtual.status === 'revisar') ? 'inline-block' : 'none';
+            
+            // Mostrar botão de editar apenas se for rascunho ou revisar
+            const btnEditar = document.getElementById('btnEditar');
+            if (planoAtual.status === 'rascunho' || planoAtual.status === 'revisar') {
+                btnEditar.style.display = 'inline-block';
+                btnEditar.textContent = planoAtual.status === 'revisar' ? '✏️ Corrigir e Reenviar' : '✏️ Editar';
+            } else {
+                btnEditar.style.display = 'none';
+            }
+            
             document.getElementById('modalPlano').classList.add('active');
         }
-
-        // LÓGICA DE IMPRESSÃO IDÊNTICA AO PDF DO GESTOR
+        
+        // ============================================================
+        // IMPRIMIR PLANO (PDF)
+        // ============================================================
         function imprimirPlano() {
             if(!planoAtual) return;
+            
             const disc = disciplinas.find(d => d.id == planoAtual.disciplina_id);
             const nomeDisc = disc ? disc.nome : '---';
             const periodo = `${String(planoAtual.mes_referencia).padStart(2, '0')}/${planoAtual.ano_referencia}`;
             
             let aulasHtml = '';
-            const aulasPorSemana = parseInt(planoAtual.aulas_semana) || 4; 
+            const aulasPorSemana = parseInt(planoAtual.aulas_semana) || 4;
             let currentWeek = 0;
             let aulaNaSemana = 0;
-
-            for (let i = 1; i <= 40; i++) {
+            
+            for (let i = 1; i <= 200; i++) {
                 const sub = planoAtual[`aula_${i}_subconteudo`];
-                if (sub) {
+                if (sub && sub.trim() !== '') {
                     let weekNumber = Math.ceil(i / aulasPorSemana);
                     if (weekNumber > currentWeek) {
                         aulasHtml += `<div class="week-title">SEMANA ${String(weekNumber).padStart(2, '0')}</div>`;
@@ -212,118 +360,129 @@
                     } else {
                         aulaNaSemana++;
                     }
-
                     aulasHtml += `
                         <div class="aula-box">
                             <span class="aula-title">AULA ${String(aulaNaSemana).padStart(2, '0')}</span>
-                            <strong>Subconteúdo:</strong> ${sub}<br>
-                            <strong>Metodologia:</strong> ${planoAtual[`aula_${i}_metodologia`] || '-'}<br>
-                            <strong>Recursos:</strong> ${planoAtual[`aula_${i}_recursos`] || '-'}<br>
-                            <strong>Avaliação:</strong> ${planoAtual[`aula_${i}_avaliacao`] || '-'}
+                            <strong>Subconteúdo:</strong> ${Utils.escapeHtml(sub)}<br>
+                            <strong>Metodologia:</strong> ${Utils.escapeHtml(planoAtual[`aula_${i}_metodologia`] || '-')}<br>
+                            <strong>Recursos:</strong> ${Utils.escapeHtml(planoAtual[`aula_${i}_recursos`] || '-')}<br>
+                            <strong>Avaliação:</strong> ${Utils.escapeHtml(planoAtual[`aula_${i}_avaliacao`] || '-')}
                         </div>`;
                 }
             }
-
+            
             const win = window.open('', '_blank');
             win.document.write(`
                 <html>
                 <head>
                     <title>Plano de Aula - ${usuario.nome}</title>
                     <style>
-                        @page { margin: 1cm; }
-                        body { font-family: Arial, sans-serif; font-size: 11px; color: #000; line-height: 1.3; margin: 0; padding: 0; }
-                        .print-container { width: 100%; border-collapse: collapse; }
-                        .header-content { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 10px; }
-                        .logo { max-width: 65px; display: block; margin: 0 auto 10px; }
-                        .header-text { font-size: 12px; line-height: 1.5; color: #000; }
-                        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-                        .info-table td { border: 1px solid #000; padding: 6px; }
-                        .label { font-weight: bold; background-color: #f2f2f2; width: 140px; }
-                        .section-title { background-color: #e0e0e0; font-weight: bold; padding: 5px; border: 1px solid #000; text-align: center; text-transform: uppercase; margin-top: 10px; }
-                        .content-box { border: 1px solid #000; border-top: none; padding: 10px; min-height: 40px; margin-bottom: 15px; }
-                        .week-title { background-color: #d1e7dd; padding: 4px; border: 1px solid #000; font-weight: bold; text-align: center; margin-top: 10px; margin-bottom: 5px; border-radius: 3px; font-size: 12px; }
-                        .aula-box { border: 1px solid #000; padding: 10px; margin-bottom: 8px; page-break-inside: avoid; }
-                        .aula-title { font-weight: bold; text-decoration: underline; margin-bottom: 5px; display: block; }
-                        .footer-content { margin-top: 20px; text-align: center; }
-                        .signatures { display: flex; justify-content: space-around; margin-top: 30px; margin-bottom: 20px; page-break-inside: avoid; }
-                        .sig-line { border-top: 1px solid #000; width: 250px; text-align: center; padding-top: 5px; font-weight: bold; font-size: 10px; }
-                        .contact-info { font-size: 9px; line-height: 1.4; color: #000; border-top: 1px solid #000; padding-top: 10px; margin-bottom: 10px; }
-                        .sage-tag { font-size: 8px; color: #777; }
+                        @page { margin: 1.5cm; }
+                        body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; }
+                        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        .info-table td { border: 1px solid #000; padding: 8px; vertical-align: top; }
+                        .info-table td:first-child { font-weight: bold; width: 120px; background: #f5f5f5; }
+                        .section-title { background: #4CAF50; color: white; padding: 6px; margin: 15px 0 10px; font-weight: bold; }
+                        .content-box { border: 1px solid #000; padding: 10px; margin-bottom: 15px; }
+                        .week-title { background: #e0e0e0; padding: 5px; margin: 10px 0 5px; font-weight: bold; }
+                        .aula-box { border: 1px solid #ddd; padding: 10px; margin-bottom: 8px; page-break-inside: avoid; }
+                        .aula-title { font-weight: bold; color: #4CAF50; margin-bottom: 5px; }
+                        .footer { margin-top: 30px; text-align: center; font-size: 9px; border-top: 1px solid #ccc; padding-top: 10px; }
                     </style>
                 </head>
-                <body onload="setTimeout(() => { window.print(); window.close(); }, 500);">
-                    <table class="print-container">
-                        <thead>
-                            <tr>
-                                <td>
-                                    <div class="header-content">
-                                        <img src="../../assets/logo-escola.png" class="logo" onerror="this.style.display='none'">
-                                        <div class="header-text">
-                                            Coordenadoria Regional de Desenvolvimento da Educação – CREDE 16<br>
-                                            Escola de Ensino Médio em Tempo Integral Filgueiras Lima – INEP: 23142804
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <table class="info-table">
-                                        <tr><td class="label">PROFESSOR(A):</td><td>${usuario.nome.toUpperCase()}</td><td class="label">DISCIPLINA:</td><td>${nomeDisc.toUpperCase()}</td></tr>
-                                        <tr><td class="label">SÉRIE / TURMA:</td><td>${planoAtual.serie.toUpperCase()}</td><td class="label">MÊS/ANO REF:</td><td>${periodo}</td></tr>
-                                    </table>
-                                    <div class="section-title">Conteúdo Programático Mensal</div>
-                                    <div class="content-box">${planoAtual.conteudo_mensal || ''}</div>
-                                    <div class="section-title">Referências / Recursos Didáticos</div>
-                                    <div class="content-box">${planoAtual.referencias || ''}</div>
-                                    <div class="section-title">Detalhamento das Aulas</div>
-                                    ${aulasHtml || '<div class="content-box">Nenhuma aula detalhada.</div>'}
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td>
-                                    <div class="footer-content">
-                                        <div class="signatures">
-                                            <div class="sig-line">Assinatura do Professor(a)</div>
-                                            <div class="sig-line">Coordenação Pedagógica</div>
-                                        </div>
-                                        <div class="contact-info">
-                                            Rua Vereador Nelson de Sousa Alencar, sn – Veneza | Iguatu – Ceará | CEP: 63.504-356 - Fone: (88) 3581.9463<br>
-                                            E-mail: filgueiraslimacrede16@escola.ce.gov.br | Instagram: @filgueiraslimaiguatu
-                                        </div>
-                                        <div class="sage-tag">
-                                            SAGE | Gerado em ${new Date().toLocaleDateString()}
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tfoot>
+                <body>
+                    <div class="header"><h2>SAGE Planos de Aula</h2><p>Plano Mensal - ${periodo}</p></div>
+                    <table class="info-table">
+                        <tr><td>Professor(a):</td><td>${Utils.escapeHtml(usuario.nome)}</td></tr>
+                        <tr><td>Disciplina:</td><td>${Utils.escapeHtml(nomeDisc)}</td></tr>
+                        <tr><td>Série:</td><td>${planoAtual.serie || '---'}</td></tr>
+                        <tr><td>Status:</td><td>${getStatusNome(planoAtual.status)}</td></tr>
                     </table>
+                    <div class="section-title">📖 Conteúdo Programático</div>
+                    <div class="content-box">${planoAtual.conteudo_mensal || 'Não informado'}</div>
+                    <div class="section-title">📚 Referências</div>
+                    <div class="content-box">${planoAtual.referencias || 'Não informado'}</div>
+                    <div class="section-title">📋 Detalhamento das Aulas</div>
+                    ${aulasHtml || '<div class="content-box">Nenhuma aula detalhada.</div>'}
+                    ${planoAtual.feedback_gestor ? `<div class="section-title">💬 Feedback da Gestão</div><div class="content-box" style="background:#fff3cd;">${Utils.escapeHtml(planoAtual.feedback_gestor)}</div>` : ''}
+                    <div class="footer">Gerado pelo SAGE Planos em ${new Date().toLocaleDateString()}</div>
                 </body>
                 </html>
             `);
             win.document.close();
+            setTimeout(() => win.print(), 500);
         }
-
-        function editarPlano() { if(planoAtual) window.location.href = `plano-form.html?id=${planoAtual.id}`; }
-        function editarPlanoById(id) { window.location.href = `plano-form.html?id=${id}`; }
+        
+        // ============================================================
+        // AÇÕES DOS PLANOS
+        // ============================================================
+        function editarPlano() { 
+            if(planoAtual) window.location.href = `plano-form.html?id=${planoAtual.id}`; 
+        }
+        
+        function editarPlanoById(id) { 
+            window.location.href = `plano-form.html?id=${id}`; 
+        }
         
         async function enviarPlano(id) { 
-            Utils.confirmarAcao('Enviar este plano para coordenação?', async (c) => { 
-                if(c) { try { await API.atualizarPlano(id, { status: 'enviado' }); carregarDados(); } catch(e) { alert(e.message); } } 
+            Utils.confirmarAcao('Enviar este plano para a coordenação? Após enviado, você não poderá editar até que o gestor solicite correções.', async (c) => { 
+                if(c) { 
+                    mostrarLoading(true);
+                    try { 
+                        await API.atualizarPlano(id, { status: 'enviado' }); 
+                        Utils.mostrarMensagem('📤 Plano enviado para análise!', 'success');
+                        await carregarDados(); 
+                    } catch(e) { 
+                        Utils.mostrarMensagem('Erro: ' + e.message, 'error'); 
+                    }
+                    mostrarLoading(false);
+                } 
             }); 
         }
 
         async function excluirPlano(id) { 
-            Utils.confirmarAcao('Deseja realmente excluir?', async (c) => { 
-                if(c) { try { await API.deletarPlano(id); carregarDados(); } catch(e) { alert(e.message); } } 
+            Utils.confirmarAcao('Deseja realmente excluir este plano? Esta ação não pode ser desfeita.', async (c) => { 
+                if(c) { 
+                    mostrarLoading(true);
+                    try { 
+                        await API.deletarPlano(id); 
+                        await carregarDados(); 
+                    } catch(e) { 
+                        Utils.mostrarMensagem('Erro: ' + e.message, 'error'); 
+                    }
+                    mostrarLoading(false);
+                } 
             }); 
         }
-
-        function fecharModal() { document.getElementById('modalPlano').classList.remove('active'); }
+        
+        // ============================================================
+        // UTILITÁRIOS
+        // ============================================================
+        function getMesNome(m) { 
+            const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            return meses[m-1]; 
+        }
+        
+        function getStatusNome(s) { 
+            const nomes = {
+                'rascunho': '📝 Rascunho',
+                'enviado': '📤 Enviado - Aguardando Análise',
+                'aprovado': '✅ Aprovado',
+                'revisar': '🔄 Aguardando Correções'
+            };
+            return nomes[s] || s; 
+        }
+        
+        function fecharModal() { 
+            document.getElementById('modalPlano').classList.remove('active'); 
+            planoAtual = null;
+        }
+        
+        function mostrarLoading(mostrar) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.toggle('active', mostrar);
+        }
     </script>
 </body>
 </html>
